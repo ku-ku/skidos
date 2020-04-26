@@ -1,0 +1,507 @@
+{
+    "transport": "POST",
+    "envelope": "JSON-RPC-2.0",
+    "target": null,
+    "services": {
+        "ru.kih.sin.api2.Core.create": {
+            "name": "create",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.services.naming.EntityNameResolver.nameToUuid": {
+            "name": "nameToUuid",
+            "returns": "string",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "string"
+                }, {
+                    "name": "arg2",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.api2.Core.clone": {
+            "name": "clone",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.mb.MessagesBuses.subscribe": {
+            "name": "subscribe",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "web.AuthFunctions.getCurrentUserCredential": {
+            "name": "getCurrentUserCredential",
+            "returns": "object",
+            "parameters": []
+        },
+        "web.AuthFunctions.getAvailableTenantsForUser": {
+            "name": "getAvailableTenantsForUser",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.api2.Model.getEntity": {
+            "name": "getEntity",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.model.ocapi.CollectionAccessor.clone": {
+            "name": "clone",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }, {
+                    "name": "arg1",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.model.ocapi.CollectionAccessor.update": {
+            "name": "update",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "web.Users.getUserInfo": {
+            "name": "getUserInfo",
+            "returns": "object",
+            "parameters": []
+        },
+        "ru.kih.sin.fs.FileStorage.remove": {
+            "name": "remove",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "web.AutoNumFuctions.getArendatorsKod": {
+            "name": "getArendatorsKod",
+            "returns": "object",
+            "parameters": []
+        },
+        "web.AdminFunctions.clearModelCache": {
+            "name": "clearModelCache",
+            "returns": "null",
+            "parameters": []
+        },
+        "ru.kih.sin.api2.NamedQueries.read": {
+            "name": "read",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.model.ocapi.CollectionAccessor.delete": {
+            "name": "delete",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "web.AdminFunctions.cacheControlAction": {
+            "name": "cacheControlAction",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.reports.ReportsService.getReportDescription": {
+            "name": "getReportDescription",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "web.AutoNumFuctions.saveNumberMaskDescr": {
+            "name": "saveNumberMaskDescr",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "string"
+                }, {
+                    "name": "arg2",
+                    "type": "integer"
+                }, {
+                    "name": "arg3",
+                    "type": "string"
+                }, {
+                    "name": "arg4",
+                    "type": "string"
+                }, {
+                    "name": "arg5",
+                    "type": "string"
+                }]
+        },
+        "web.Users.login": {
+            "name": "login",
+            "returns": "object",
+            "parameters": [{
+                    "name": "login",
+                    "type": "string"
+                }, {
+                    "name": "password",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.api2.NamedQueries.create": {
+            "name": "create",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.api2.FunctionsService.getFunctions": {
+            "name": "getFunctions",
+            "returns": "array",
+            "parameters": []
+        },
+        "ru.kih.sin.mb.MessagesBuses.getSubscriptions": {
+            "name": "getSubscriptions",
+            "returns": "array",
+            "parameters": []
+        },
+        "web.AutoNumFuctions.deleteNumberMaskDescr": {
+            "name": "deleteNumberMaskDescr",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.mb.MessagesBuses.getBuses": {
+            "name": "getBuses",
+            "returns": "array",
+            "parameters": []
+        },
+        "web.AuthFunctions.getUserCredential": {
+            "name": "getUserCredential",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "web.Users.logout": {
+            "name": "logout",
+            "returns": "null",
+            "parameters": []
+        },
+        "ru.kih.sin.mb.MessagesBuses.unsubscribe": {
+            "name": "unsubscribe",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "web.AutoNumFuctions.getSelectedMask": {
+            "name": "getSelectedMask",
+            "returns": "array",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "web.AutoNumFuctions.getListMask": {
+            "name": "getListMask",
+            "returns": "object",
+            "parameters": []
+        },
+        "ru.kih.sin.services.rss.RSSHelper.getRSSItems": {
+            "name": "getRSSItems",
+            "returns": "array",
+            "parameters": []
+        },
+        "ru.kih.sin.api2.Model.removeEntity": {
+            "name": "removeEntity",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "web.AutoNumFuctions.deleteNumberDocs": {
+            "name": "deleteNumberDocs",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.fs.FileStorage.set": {
+            "name": "set",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "web.AdminFunctions.removeFromCache": {
+            "name": "removeFromCache",
+            "returns": "array",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.model.ocapi.CollectionAccessor.create": {
+            "name": "create",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.services.naming.EntityNameResolver.resolvePathAsId": {
+            "name": "resolvePathAsId",
+            "returns": "string",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "web.AutoNumFuctions.saveNumberTenants": {
+            "name": "saveNumberTenants",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "string"
+                }, {
+                    "name": "arg2",
+                    "type": "string"
+                }]
+        },
+        "web.AutoNumFuctions.deleteNumberTenants": {
+            "name": "deleteNumberTenants",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "web.AutoNumFuctions.saveNumberSettings": {
+            "name": "saveNumberSettings",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "boolean"
+                }, {
+                    "name": "arg1",
+                    "type": "string"
+                }, {
+                    "name": "arg2",
+                    "type": "string"
+                }, {
+                    "name": "arg3",
+                    "type": "integer"
+                }, {
+                    "name": "arg4",
+                    "type": "object"
+                }, {
+                    "name": "arg5",
+                    "type": "integer"
+                }, {
+                    "name": "arg6",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.api2.Core.delete": {
+            "name": "delete",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.api2.NamedQueries.update": {
+            "name": "update",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.api2.Tree.getChilds": {
+            "name": "getChilds",
+            "returns": "array",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.api2.Tree.getChild": {
+            "name": "getChild",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.api2.Core.update": {
+            "name": "update",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.api2.NamedQueries.delete": {
+            "name": "delete",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.fs.FileStorage.get": {
+            "name": "get",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.api2.FunctionsService.call": {
+            "name": "call",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "object"
+                }]
+        },
+        "web.AutoNumFuctions.saveNumberDocs": {
+            "name": "saveNumberDocs",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }, {
+                    "name": "arg1",
+                    "type": "string"
+                }, {
+                    "name": "arg2",
+                    "type": "string"
+                }, {
+                    "name": "arg3",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.api2.SecurityAttributesManager.update": {
+            "name": "update",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "ru.kih.sin.services.naming.EntityNameResolver.resolvePath": {
+            "name": "resolvePath",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "ru.kih.sin.model.ocapi.CollectionAccessor.read": {
+            "name": "read",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "web.AuthFunctions.setCurrentTenant": {
+            "name": "setCurrentTenant",
+            "returns": "boolean",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        },
+        "web.AdminFunctions.clearCache": {
+            "name": "clearCache",
+            "returns": "null",
+            "parameters": []
+        },
+        "ru.kih.sin.api2.Model.setEntity": {
+            "name": "setEntity",
+            "returns": "null",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "web.AutoNumFuctions.getEntitys": {
+            "name": "getEntitys",
+            "returns": "array",
+            "parameters": []
+        },
+        "ru.kih.sin.api2.Core.read": {
+            "name": "read",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "object"
+                }]
+        },
+        "web.AutoNumFuctions.getArendatorsName": {
+            "name": "getArendatorsName",
+            "returns": "object",
+            "parameters": []
+        },
+        "web.AutoNumFuctions.getSelectedIds": {
+            "name": "getSelectedIds",
+            "returns": "object",
+            "parameters": [{
+                    "name": "arg0",
+                    "type": "string"
+                }]
+        }
+    }
+}
