@@ -109,6 +109,23 @@ export default {
                 console.log('Error:', e);
             }
             this.loading = false;
+        },
+        month(m){
+            const MONTHS = {
+                0: 'янв.',
+                1: 'фев.',
+                2: 'мар.',
+                3: 'апр.',
+                4: 'мая',
+                5: 'июн.',
+                6: 'июл.',
+                7: 'авг.',
+                8: 'сен.',
+                9: 'окт.',
+                10:'ноя.',
+                11:'дек.'
+            };
+            return (!!m) ? MONTHS[Number(m)] : '';
         }
     },
     mounted(){
@@ -152,11 +169,17 @@ export default {
                 this.skidos.data.map((a) => {
                     const img = a[ci["userpromoactions.promoimage"]];
                     var dates = '';
+/*                    
                     if (!$utils.isEmpty(a[ci["userpromoactions.startdt"]])){
                         dates = moment(new Date(a[ci["userpromoactions.startdt"]])).format('DD.MM');
                         if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
                             dates += '-' + moment(new Date(a[ci["userpromoactions.enddt"]])).format('DD.MM');
                         }
+                    }
+*/
+                    if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
+                        var d = new Date(a[ci["userpromoactions.enddt"]]);
+                        dates = 'до ' + d.getDay() + ' ' + this.month(d.getMonth());
                     }
                     
                     return h('v-list-item', {
@@ -168,8 +191,10 @@ export default {
                                         : null
                                 ]),
                                 h('v-list-item-content', [
-                                    h('div',{class:{'sk-dates': true}}, dates),
-                                    h('div',{class:{'sk-name': true}}, a[ci["userpromoactions.promogoods"]]),
+                                    h('div',{class:{'sk-name': true}}, [
+                                        h('div', {class: {'sk-dates': true}}, dates),
+                                        a[ci["userpromoactions.promogoods"]]
+                                    ]),
                                     h('div',{class:{'sk-price': true}}, [
                                         $utils.isEmpty(a[ci["userpromoactions.newprice"]])
                                             ? null
@@ -245,6 +270,10 @@ export default {
             font-size: 0.6rem;
             color: $gray-color;
             text-align: right;
+            width: auto;
+            margin-left: 0.25rem;
+            float: right;
+            color: $red-color;
         }
         & .sk-price{
             font-size: 1.25rem;

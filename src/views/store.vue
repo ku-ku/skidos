@@ -364,9 +364,9 @@ export default {
                     ]));
                 }
                 if ( !$utils.isEmpty(web) ){
-                    links.push( h('a', {attrs: {href:'tel:'+tel, target:'_blank'}, style:{color: (!!bg) ? bg : '' }}, [
+                    links.push( h('a', {attrs: {href: web, target: '_blank'}, style:{color: (!!bg) ? bg : '' }}, [
                                     (h('svg',{ domProps: {innerHTML:'<use xlink:href="#ico-planet" />'}, attrs: {viewBox:'0 0 496 512'}})),
-                                    web 
+                                    web
                     ]));
                 }
                 
