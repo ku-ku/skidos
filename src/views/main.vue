@@ -146,7 +146,7 @@ export default {
                                 ', ',
                                 h('strong', this.name + '!')
                             ]),
-                            h('img', {attrs: {src: require('@/assets/imgs/logo.svg'), viewBox:"0 0 512 512"}, class:'sk-logo'})
+                            h('img', {attrs: {src: require('@/assets/imgs/my-logo.png'), viewBox:"0 0 512 512"}, class:'sk-logo'})
                         ]),
                         h('v-card-text',[
                             (data.length > 0) 
