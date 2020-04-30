@@ -1,11 +1,11 @@
 import Vue from 'vue';
-import Router from     'vue-router';
-import ViewFirst from  '@/views/first';
-import ViewSignIn from '@/views/signin';
-import ViewMain from   '@/views/main';
-import ViewStores from '@/views/stores';
-import ViewStore from  '@/views/store';
-import ViewProfile from  '@/views/profile';
+import Router      from 'vue-router';
+import ViewFirst   from '@/views/first';
+import ViewSignIn  from '@/views/signin';
+import ViewMain    from '@/views/main';
+import ViewStores  from '@/views/stores';
+import ViewStore   from '@/views/store';
+import ViewProfile from '@/views/profile';
 import store from '@/store';
 
 /**

@@ -4,59 +4,11 @@
       app
       v-if="showAppBar"
       >
-      <div class="d-flex align-center">
-        <v-img
-          alt="Vuetify Logo"
-          class="shrink mr-2"
-          contain
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-          transition="scale-transition"
-          width="40"
-        />
-
-        <v-img
-          alt="Vuetify Name"
-          class="shrink mt-1 hidden-sm-and-down"
-          contain
-          min-width="100"
-          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
-          width="100"
-        />
-      </div>
-
-      <v-spacer></v-spacer>
-
-      <v-btn
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-        text
-      >
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
     </v-app-bar>
-
     <v-content>
-      <router-view />
+        <router-view />
     </v-content>
-    <v-bottom-navigation
-        app
-        :value="activeBtn"
-        color="primary"
-        v-if="showNavi"
-    >
-        <v-btn to="/">
-            <span>главный</span>
-        </v-btn>
-        <v-btn to="/cards">
-          <span>мои карты</span>
-        </v-btn>
-        <v-btn to="/stores">
-          <span>магазины</span>
-        </v-btn>
-        <v-btn to="/profile">
-          <span>профиль</span>
-        </v-btn>
-    </v-bottom-navigation>  
+    <splash v-if="splash" ref="splash" on:hide="splash=false" />
     <v-snackbar v-model="snackbar"
                 :bottom="true"
                 :color="snackbarColor"
@@ -75,38 +27,44 @@
 </template>
 
 <script>
+import Splash from '@/views/splash';
 
 export default {
   name: 'App',
 
   components: {
+      Splash
   },
 
-  data: function(){
+    data: function(){
       return {
+          splash: true,
           snackbar: false,
           snackbarColor: "primary",
           snackbarText: null,
           snackbarTimeout: 0,
           activeBtn: -1
       };
-  },
-  created: function(){
-      window['app'] = this;
-      window['app'].utils = $utils;
-  },
-  mounted: function(){
-    var is_first = false;
-    if (window.localStorage){
-        var v = window.localStorage.getItem('first-show');
-        is_first = !((v)&&("1"===v));
-        localStorage.setItem('first-show', "1"); //TODO:
-    }
-    if (is_first) {
-        this.$router.push({name: 'first'});
-    }
-    this.$router.push({name: 'signin'});
-  },
+    },
+    created: function(){
+        window['app'] = this;
+        window['app'].utils = $utils;
+        var self = this;
+        var _go = function(name){
+            setTimeout(()=>{
+                self.$refs.splash.hide();
+                self.$router.replace({name: name});
+            }, 2500);
+        };
+
+        this.$store.dispatch('profile/check')
+            .then( ()=> {
+                _go('main');
+            })
+            .catch( ()=> {
+                _go('signin');
+            });
+    },
   computed: {
     showAppBar(){
         const {$route} = this;

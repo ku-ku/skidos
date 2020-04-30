@@ -117,6 +117,12 @@ export default {
                     end=fil[ci["ssctenantsadds.endtime"]],
                     isOpen = true, 
                     tm = false;
+                const _fil = {
+                    id: fil[ci["ssctenants.id"]],
+                    title: $utils.isEmpty(fil[ci["ssctenantsadds.fullname"]]) 
+                                ? fil[ci["ssctenants.title"]] 
+                                : fil[ci["ssctenantsadds.fullname"]]
+                };
                 if (!$utils.isEmpty(st)){
                     tm = st;
                     if (!$utils.isEmpty(end)){
@@ -146,8 +152,8 @@ export default {
                                 ])
                             ])
                         ]),
-                        h('v-row', [
-                            h('v-col', {props:{cols:12}}, [
+                        h('v-row', {class:{'justify-space-between': true, 'align-baseline':true}}, [
+                            h('v-col', [
                                 $utils.isEmpty(t) 
                                     ? null
                                     : h('a', {
@@ -157,6 +163,20 @@ export default {
                                         h('svg',{domProps: {innerHTML:'<use xlink:href="#ico-phone" />'}, attrs: {viewBox:'0 0 512 512'}}),
                                         t
                                     ])
+                            ]),
+                            h('v-col', {props: {cols:2}}, [
+                                h('v-btn', {
+                                                props: {icon: true}, 
+                                                class: {'sk-msg': true},
+                                                on: {
+                                                        click: ()=>{
+                                                            _fil.brand = this.parent.brand;
+                                                            this.$emit('chat', _fil);
+                                                        }
+                                                }
+                                            }, [
+                                    h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-msg" />'}, attrs: {viewBox:'0 0 512 512'}})
+                                ])
                             ])
                         ])
                     ])
@@ -171,13 +191,13 @@ export default {
 </script>
 <style lang="scss" scoped>
     @import "@/assets/styles/index";
-    $gray: #757575;
     $is-open: #00796B;
     $no-open: #F44336;
+    $blue-color: #01579B;
     .sk-filials{
         
         & .v-list-item{
-            border: 1px solid lighten($gray, 20%);
+            border: 1px solid lighten($gray-color, 20%);
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.18);
             & .sk-city{
@@ -190,13 +210,21 @@ export default {
             }
             & .sk-tel{
                 font-size: 0.9rem;
-                color: #01579B;
+                color: $blue-color;
                 text-decoration: none;
                 font-weight: bold;
+                white-space: nowrap;
                 & svg{
-                    width: 0.85rem;
-                    height: 0.85rem;
+                    width: 16px;
+                    height: 16px;
                     margin-right: 0.25rem;
+                }
+            }
+            & .sk-msg {
+                & svg{
+                    width: 18px;
+                    height: 18px;
+                    color: $blue-color;
                 }
             }
         

@@ -18,6 +18,7 @@ import SkFilials from '@/views/fils';
 import SkFind from '@/views/find'; 
 import SkShare from '@/views/share'; 
 import SkActions from '@/views/actions'; 
+import SkChat from '@/views/chat'; 
 
 const ST_MODE = {
     'none': -1,
@@ -26,7 +27,8 @@ const ST_MODE = {
     'info':  2,
     'fils':  3,
     'find':  4,
-    'share': 5
+    'share': 5,
+    'chat':  6
 };
 
 export default {
@@ -54,7 +56,8 @@ export default {
         SkFilials,
         SkFind,
         SkShare,
-        SkActions
+        SkActions,
+        SkChat
   },
   data() {
     return {
@@ -64,6 +67,7 @@ export default {
         loading: false,
         qr_bin_data: null,
         error: null,
+        activeStore: null,
         mode: ST_MODE.def
     };
   },
@@ -78,6 +82,11 @@ export default {
                       ci = this.store.columnIndexes;
                 o.id = data[ci["ssctenants.id"]];
                 o.title = data[ci["ssctenants.title"]];
+                o.brand = {
+                    color: data[ci["ssctenantsadds.brandcolor"]],
+                    balcolor: data[ci["ssctenantsadds.balancecolor"]],
+                    logo:   data[ci["ssctenantsadds.brandlogo"]]
+                };
             } else {
                 o.id = '00';
             }
@@ -335,7 +344,7 @@ export default {
                         h('v-card-text', [
                             h('div', {class:{'sk-store-nav': true, 'd-flex':true,'justify-space-around':true,'align-center':true,'flex-nowrap':true}}, [
                                 h('v-btn',{props:{outlined: true}, on:{click:()=>{this.mode=ST_MODE.fils;}}},[
-                                    h('svg',{attrs:{viewBox:'0 0 576 512'},domProps:{innerHTML:'<use xlink:href="#ico-home" />'}})
+                                    h('svg',{attrs:{viewBox:'0 0 640 512'},domProps:{innerHTML:'<use xlink:href="#ico-store" />'}})
                                 ]),
                                 h('v-btn',{props:{outlined: true}, on:{click:()=>{this.mode=ST_MODE.find;}}},[
                                     h('svg',{attrs:{viewBox:'0 0 512 512'},domProps:{innerHTML:'<use xlink:href="#ico-search" />'}})
@@ -388,8 +397,19 @@ export default {
                             ]) );
                         }
                         break;
+                    case ST_MODE.chat:
+                        conte.push( h('sk-chat', {
+                                        props: {store:this.activeStore}
+                                    }));
+                        break;
                     case ST_MODE.fils:
-                        conte.push( h('sk-filials', {props: {parent:this.iStore}}, []) );
+                        conte.push( h('sk-filials', {
+                                        props: {parent:this.iStore},
+                                        on: {chat: (store) => {
+                                                this.activeStore = store;
+                                                this.mode = ST_MODE.chat;
+                                            }}
+                                    }) );
                         break;
                     case ST_MODE.find:
                         conte.push( h(SkFind, {props:{parent:this.iStore}}) );
@@ -409,13 +429,13 @@ export default {
                                                     class: {'sk-qr': true},
                                                     style: {'opacity': 0},
                                                     on: {'load': this.qr_load_image}
-                                        }),
+                                        }) /* TODO:,
                                         h('div', {style:{'text-align':'right', 'margin': '-1rem 0 1.5rem'}}, [
                                             h('v-btn', {
                                                 props: {'x-small': true, text: true},
                                                 on: {click: this.unuse_card}
                                             }, 'отказаться')
-                                        ])
+                                        ]) */
                                 ]));
                             }
                         } else {
@@ -440,7 +460,7 @@ export default {
                         },[
                             h('span',{domProps: {innerHTML:'*подробная информация в <b><i>i</i></b>'}})
                         ]));
-                        conte.push ( h('div', {class:{'sk-links': true}}, links) );
+                        //TODO: conte.push ( h('div', {class:{'sk-links': true}}, links) );
                         break;
                     default:
                         //none
@@ -460,7 +480,10 @@ export default {
             }
         }
         
-        if (this.mode !== ST_MODE.def){
+        if (
+                (this.mode !== ST_MODE.def)
+             && (this.mode !== ST_MODE.chat)
+            ) {
             childs.push(h('v-fab-transition', [
                 h('v-btn', {props: {
                                 fab: true,
@@ -469,7 +492,7 @@ export default {
                                 left: true,
                                 to: '/'
                 }}, [
-                    h('img', {class:{'sk-logo': true}, attrs: {viewBox:'0 0 512 512', src: require('@/assets/imgs/logo.svg')}})
+                    h('img', {class:{'sk-logo': true}, attrs: {viewBox:'0 0 512 512', src: require('@/assets/imgs/my-logo.png')}})
                 ])
             ]));
         }
@@ -502,6 +525,7 @@ export default {
                                     'sk-has-fils':  (this.mode === ST_MODE.fils),
                                     'sk-has-find':  (this.mode === ST_MODE.find),
                                     'sk-has-share': (this.mode === ST_MODE.share),
+                                    'sk-has-chat':  (this.mode === ST_MODE.chat),
                                     'sk-has-card' : (this.hasCard),
                                     'sk-no-card':   (!this.hasCard)
                          }}, childs);
@@ -512,7 +536,6 @@ export default {
 
 <style lang="scss" scoped>
     @import "@/assets/styles/index";
-    $gray-color: #757575;
     
     .sk-store-main{
         width: 100%;
@@ -534,11 +557,16 @@ export default {
         & .v-btn{
             border-radius: 50%;
             background: rgba(0,0,0, 0.18);
-            padding: 0.75rem;
-            line-height: 28px;
+            width: 32px;
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            & .v-btn__content{
+                display: inline;
+            }
             & svg{
-                width: 1rem;
-                height: 1rem;
+                width: 18px;
+                height: 18px;
                 opacity: 0.75;
             }
         }

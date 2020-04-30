@@ -112,10 +112,43 @@
                             required
                             autofocus
                             messages="Введите e-mail, указанный Вами при регистрации"
+                            :readonly="is('forgotted')"
                             :rules="emailRules"
                         >
                             <svg slot="prepend" viewBox="0 0 512 512"><use xlink:href="#ico-at" /></svg>
                         </v-text-field>
+                        <div v-if="is('forgotted')" class="mt-3">
+                            <v-text-field
+                                label="код"
+                                name="code"
+                                type="text"
+                                v-model="code"
+                                required
+                                autofocus
+                                messages="Введите код, отправленный Вам на e-mail"
+                                :rules="codeRules"
+                                >
+                                <svg slot="prepend" viewBox="0 0 512 512"><use xlink:href="#ico-envel-open" /></svg>
+                            </v-text-field>
+                            <v-text-field
+                                label="Пароль"
+                                name="p1"
+                                type="password"
+                                v-model="pwd"
+                                required
+                            >
+                                <svg slot="prepend" viewBox="0 0 512 512"><use xlink:href="#ico-asterisk" /></svg>
+                            </v-text-field>
+                            <v-text-field
+                                label="Повторите пароль"
+                                name="p2"
+                                type="password"
+                                v-model="pwd2"
+                                required
+                            >
+                                <svg slot="prepend" viewBox="0 0 512 512"><use xlink:href="#ico-asterisk" /></svg>
+                            </v-text-field>
+                        </div>
                     </v-card-text>
                     <v-card-actions>
                         <v-btn type="submit" rounded dark width="14rem" color="red darken-4">Сбросить пароль</v-btn>
@@ -129,10 +162,11 @@
 
 <script>
 const modes = {
-    AM_NONE: 0,
-    AM_AUTH: 1,
+    AM_NONE:     0,
+    AM_AUTH:     1,
     AM_REGISTER: 2,
-    AM_FORGOT: 3
+    AM_FORGOT:   3,
+    AM_FORGOTED: 4
 };
 
 export default {
@@ -151,6 +185,10 @@ export default {
         eml: '',
         emailRules: [
             v => /.+@.+/.test(v) || 'укажите корректный e-mail адрес'
+        ],
+        code: '',
+        codeRules: [
+            v => /^(\d{5,})+$/.test(v) || 'укажите код, отправленный Вам на e-mail'
         ],
         error: '',
         agree: false
@@ -184,7 +222,10 @@ export default {
               case 'register':
                   return (this.mode === modes.AM_REGISTER);
               case 'forgot':
-                  return (this.mode === modes.AM_FORGOT);
+                  return (this.mode === modes.AM_FORGOT) 
+                       ||(this.mode === modes.AM_FORGOTTED);
+              case 'forgotted':
+                  return (this.mode === modes.AM_FORGOTTED);
               default:
                   return false;
           }
@@ -199,6 +240,9 @@ export default {
                   break;
               case 'forgot':
                 this.mode = modes.AM_FORGOT;
+                break;
+              case 'forgoted':
+                this.mode = modes.AM_FORGOTTED;
                 break;
               default:
                   this.mode = modes.AM_AUTH;
@@ -287,7 +331,18 @@ export default {
                             +'<small>Дополнительная информация: ' + e.message + '</small>';
             }
         })();
-      }    //on_register
+      },    //on_register
+      on_forgot(e){
+        e.preventDefault();
+        if ( $utils.isEmpty(this.eml) ) {
+            this.valid = false;
+            this.error = 'для регистрации необходимо заполнить все данные';
+            $('input[name="eml"]').trigger('focus');
+            return false;
+        }
+        this.set('forgoted');
+        return false;
+      }
   }
 };
 </script>

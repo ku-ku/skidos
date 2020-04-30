@@ -18,6 +18,7 @@ import {
         VProgressLinear,
         VCol
 } from 'vuetify/lib';
+import color from 'color';
 
 export default {
   name: 'ViewMain',
@@ -120,7 +121,21 @@ export default {
               break;
         }
         this.$router.push({ name: 'store', params: { id: id } });
-      }
+      },
+      _short: function(title){
+            var res;
+            var n = title.indexOf(' ');
+            if ( n > 0 ){
+                res = title.charAt(0) + title.charAt(n + 1);
+            } else if (title.length > 2){
+                res = title.substr(0, 2);
+            } else {
+                res = title;
+            }
+            return res.toUpperCase();            
+      }  //_short
+      
+      
   },
   render: function(h){
       var ci, data, childs = [];
@@ -176,16 +191,22 @@ export default {
                                 data.map((item)=>{
                                     const id    = item[ci["accounts.id"]],
                                           title = item[ci["accounts.tenantid.title"]],
-                                          bc    = item[ci["ssctenantsadds.brandcolor"]], 
+                                          bc    = $utils.isEmpty(item[ci["ssctenantsadds.brandcolor"]]) ? '' : item[ci["ssctenantsadds.brandcolor"]], 
                                           loytt = item[ci["ssctenantsadds.shortloyalty"]];
-                                  
+                                    const brdc  = $utils.isEmpty(bc) ? '' : color(bc).darken(0.2);
+                                    
                                     return h('v-list-item', {
                                         props: {key: id},
-                                        style: {'background-color': (!bc) ? '' : bc},
                                         on: {click:()=>{this.use_card(item, 'card');}}
                                     }, [
-                                        h('v-col',{props:{colls:4}, class:{'sk-title':true}},title),
-                                        h('v-col',{props:{colls:8}, class:{'sk-loytt': true}},loytt)
+                                        h('v-list-item-content', [
+                                            h('div', {
+                                                    class:{'sk-short': true}, 
+                                                    style:{'background-color': bc, 'border-color': brdc}
+                                                }, this._short(title)),
+                                            h('div', {class:{'sk-title':true}}, title),
+                                            h('div', {class:{'sk-loytt': true}}, loytt)
+                                        ])
                                     ]);
                                 })
                             ])
@@ -220,11 +241,12 @@ export default {
                                   
                                     return h('v-list-item', {
                                         props: {key: id},
-                                        style: {'background-color': (!bc) ? '' : bc},
                                         on: {click:()=>{this.use_card(item, 'store');}}
                                     }, [
-                                        h('v-col',{props:{colls:4}, class:{'sk-title':true}},title),
-                                        h('v-col',{props:{colls:8}, class:{'sk-loytt': true}},loytt)
+                                        h('v-list-item-content', [
+                                            h('div', {class: {'sk-title': true}}, title),
+                                            h('div', {class: {'sk-loytt': true}}, loytt)
+                                        ])
                                     ]);
                                 })
                             ])
@@ -243,7 +265,9 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-    $main-color: #ffa41b;
+    @import "@/assets/styles/index";
+    
+    
     main{
     }
     .sk-logo{
@@ -284,13 +308,54 @@ export default {
             border-radius: $brd-rrr;
             background-color: #fff;
             padding-bottom: 3rem;
+            & .v-list {
+                & .v-list-item{
+                    font-size: 0.75rem;
+                    color: $gray-color !important;
+                    line-height: 1.115;
+                    & .sk-title{
+                        font-size:1.125rem;
+                        color: #000;
+                    }
+                }
+            }
+            
             &.sk-my-cards{
                 margin-bottom: -1.5rem;
+                & .v-list {
+                    margin-left: 20px;
+                    & .v-list-item{
+                        border: 1px solid #d7d9dc;
+                        border-radius: 0.5rem;
+                        margin-bottom: 0.85rem;
+                        box-shadow: 0 2px 6px #d7d9dc;
+                        min-height: 4rem;
+                        padding-left: 28px;
+                        & .sk-short{
+                            display: block;
+                            border-radius: 8px;
+                            align-self: center;
+                            position: absolute;
+                            left: -22px;
+                            width: 44px;
+                            height: 38px;
+                            line-height: 38px;
+                            text-align: center;
+                            color: #fff;
+                            box-shadow: 0 2px 4px rgba(0,0,0, 0.18);
+                            border: 1px solid #fff;
+                        }
+                    }
+                }
             }
             &.sk-stores{
-                background-color: #ECEFF1;
                 & .v-list{
-                    background-color: #ECEFF1 !important;
+                    & .v-list-item{
+                        border-top: 1px solid #ccc;
+                         & .sk-title{
+                             font-size: 1rem;
+                         }
+                    }
                 }
             }
             & .v-card__title{
@@ -319,25 +384,17 @@ export default {
             $step: 360/10;
             @mixin colors(){
                 @for $i from 1 through $group-size {
+                    $color: hsl(($i - 1)*$step, 80%, 60%);
                     & .v-list-item:nth-child(#{$group-size}n + #{$i}){
-                        $color: hsl(($i - 1)*$step, 80%, 60%);
-                        background-color: $color;
-                        border: 1px solid darken($color, 20%);
+                        & .sk-short{
+                            background-color: $color;
+                            border: 1px solid darken($color, 20%);
+                        }
                     }
                 }
             }
             @include colors;
             
-            & .v-list-item {
-                font-size: 0.85rem;
-                color: #fff !important;
-                line-height: 1.115;
-                border-radius: 0.5rem;
-                margin-bottom: 0.5rem;
-                box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.18);
-                min-height: 4rem;
-                & .sk-title{font-size:1.125rem;}
-            }
         }   /*sk-card-list*/
     }
     

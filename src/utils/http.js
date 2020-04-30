@@ -66,7 +66,15 @@ function get(url, options) {
  * @param {Object} options
  * @return {Promise}
  */
-function post(url, options) {
+function post(u, o) {
+    var options, url = u;
+    if (typeof url === "object"){
+        options = url;
+        url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
+    } else {
+        options = o;
+    }
+    
     const now = new Date();
     const defaultContext = {
         dateBegin: getDate(now),

@@ -129,7 +129,6 @@ export default {
         }
     },
     mounted(){
-        console.log('A:', this);
         this.load();
     },
     render: function(h){
@@ -155,9 +154,11 @@ export default {
             childs.push( h('swiper', {
                             class: {swiper: true, 'swiper-container': true},
                             ref: 'swiper',
-                            props: {options: { 
+                            props: {'auto-update': true,
+                                    'auto-destroy': true,
+                                    options: { 
                                         slidesPerView: 'auto',
-                                        centeredSlides: true,             
+                                        //centeredSlides: true,             
                                         spaceBetween: 12,
                                         loop: true
                             }}
@@ -169,14 +170,6 @@ export default {
                 this.skidos.data.map((a) => {
                     const img = a[ci["userpromoactions.promoimage"]];
                     var dates = '';
-/*                    
-                    if (!$utils.isEmpty(a[ci["userpromoactions.startdt"]])){
-                        dates = moment(new Date(a[ci["userpromoactions.startdt"]])).format('DD.MM');
-                        if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
-                            dates += '-' + moment(new Date(a[ci["userpromoactions.enddt"]])).format('DD.MM');
-                        }
-                    }
-*/
                     if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
                         var d = new Date(a[ci["userpromoactions.enddt"]]);
                         dates = 'до ' + d.getDay() + ' ' + this.month(d.getMonth());
@@ -188,11 +181,13 @@ export default {
                                 h('v-list-item-icon', {class:{"mr-3": true}}, [
                                     (!!img) 
                                         ? h('v-img',{props: {src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref}})
-                                        : null
+                                        : null,
+                                    ($utils.isEmpty(dates))
+                                        ? null
+                                        : h('div', {class: {'sk-dates': true}}, dates)
                                 ]),
                                 h('v-list-item-content', [
                                     h('div',{class:{'sk-name': true}}, [
-                                        h('div', {class: {'sk-dates': true}}, dates),
                                         a[ci["userpromoactions.promogoods"]]
                                     ]),
                                     h('div',{class:{'sk-price': true}}, [
@@ -242,6 +237,7 @@ export default {
     }
     .swiper {
         margin-top: 2rem;
+        padding: 0 1rem;
         & .swiper-slide {
             width: auto;
             & img{
@@ -259,8 +255,10 @@ export default {
             border-top: 1px solid #ccc;
         }
         & .v-list-item__icon{
+            flex-direction: column;
             margin: 0 16px 0 0 !important;
             align-self: center !important;
+            justify-content: space-around;
         }
         & .v-image{
             width: 48px;
@@ -268,12 +266,8 @@ export default {
         }
         & .sk-dates{
             font-size: 0.6rem;
-            color: $gray-color;
-            text-align: right;
-            width: auto;
-            margin-left: 0.25rem;
-            float: right;
             color: $red-color;
+            margin-top: 0.5rem;
         }
         & .sk-price{
             font-size: 1.25rem;
