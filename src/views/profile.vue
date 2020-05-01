@@ -11,6 +11,16 @@
                             label="Ваше имя"
                             name="u"
                             type="text"
+                            v-model="title"
+                            required
+                            autofocus
+                        >
+                            <svg slot="prepend" viewBox="0 0 496 512"><use xlink:href="#ico-morda" /></svg>
+                        </v-text-field>
+                        <v-text-field
+                            label="логин"
+                            name="l"
+                            type="text"
                             v-model="login"
                             required
                             autofocus
@@ -55,16 +65,20 @@
                         >
                             <svg slot="prepend" viewBox="0 0 320 512"><use xlink:href="#ico-mobile" /></svg>
                         </v-text-field>
-                        <v-switch v-model="agree">
-                            <template v-slot:label><div style="text-align:justify;font-size:0.9rem;">Отправляя данную форму, я согласен с <a href='#'>правилами использования приложения</a></div></template>
-                        </v-switch>
-                        <v-alert type="warning"  class="my-5" v-show="!/^$/.test(error)">
+                        <a href='//моикарты.рф/static/terms_of_use.html' target="_blank">правила использования данного приложения</a>
+                        <v-alert :type="alert"  class="my-5" v-show="!/^$/.test(error)">
                             <div v-html="error"></div>
                         </v-alert>
                     </v-card-text>
                     <v-card-actions>
                         <v-spacer />
-                        <v-btn type="submit" rounded dark width="14rem" color="red darken-4">Изменить данные</v-btn>
+                        <v-btn type="submit" 
+                               rounded 
+                               dark 
+                               width="14rem" 
+                               color="red darken-4"
+                               :loading="loading"
+                               >Изменить данные</v-btn>
                         <div class="d-flex mt-3 justify-space-between" style="width:14rem;">
                             <v-btn type="button" small text to="/">На главную</v-btn>
                             <v-btn type="button" small text v-on:click.stop="signout">
@@ -79,15 +93,17 @@
 </template>
 
 <script>
+const stub_pwd = 'stub_XXX';
 
 export default {
   name: 'ViewProfile',
   data() {
     return {
         valid: false,
+        title: '',
         login: '',
-        pwd: 'stub',
-        pwd2: 'stub',
+        pwd: stub_pwd,
+        pwd2: stub_pwd,
         tel: '',
         telRules: [
             v => /^[\+]?\d{2,}?[(]?\d{2,}[)]?[-\s\.]?\d{2,}?[-\s\.]?\d{2,}[-\s\.]?\d{0,9}$/im.test(v) || 'укажите Ваш телефон для связи'
@@ -97,7 +113,9 @@ export default {
             v => /.+@.+/.test(v) || 'укажите корректный e-mail адрес'
         ],
         error: '',
-        agree: false
+        agree: false,
+        alert: 'warning',
+        loading: false
     };
   },
   computed: {
@@ -121,10 +139,35 @@ export default {
         this.loading = true;
         try{
             var resp = await $http.post(url, opts);
+            console.log('Profile:', resp);
             if (resp.error){
                 throw resp.error;
+            } else if ((resp.result.data)&&(resp.result.data.length>0)){
+                const data = resp.result.data[0],
+                        ci = resp.result.columnIndexes;
+/*
+ * 
+"sscusers.name": 2
+"sscusers.password": 4
+"sscusers.tenantid": 5
+"sscusers.title": 3
+"sscusersadds.email": 12
+"sscusersadds.phone": 13
+ */                
+                this.login = data[ci["sscusers.name"]];
+                this.title = $utils.isEmpty(data[ci["sscusers.title"]]) ? this.login : data[ci["sscusers.title"]];
+                this.pwd = stub_pwd;
+                this.pwd2= stub_pwd;
+                this.tel = data[ci["sscusersadds.phone"]];
+                this.eml = data[ci["sscusersadds.email"]];
+                this.error='';
+                this.agree=false;
+                if ($utils.isEmpty(this.login)){
+                    this.login = this.title;
+                }
+            } else {
+                throw 'Данные профиля недоступны';
             }
-            console.log('Profile:', resp);
         } catch(e){
             app.msg({text:'Ошибка получения данных профиля, попробуйте получить позднее.', type:'warning'});
             console.log('ERR on profile read:', e);
@@ -132,8 +175,11 @@ export default {
         this.loading = false;
     },
     on_profile: function(e){
+        this.error = '';
+        this.alert = 'warning';
         e.preventDefault();
-        if ( $utils.isEmpty(this.login) || 
+        if ( $utils.isEmpty(this.title) || 
+             $utils.isEmpty(this.login) || 
              $utils.isEmpty(this.pwd)   ||
              $utils.isEmpty(this.tel)   ||
              $utils.isEmpty(this.eml)
@@ -149,13 +195,7 @@ export default {
             $('input[name="p1"]').trigger('focus');
             return false;
         }
-        if (!this.agree){
-            this.error = 'Вы должны согласиться с правилами использования нашего приложения';
-            return false;
-        }
-
-        var self = this;
-
+        this.loading = true;
         const url = process.env.VUE_APP_BACKEND_API + '/skidosapi/reg-user';
         const options = {
             dataType:'json',
@@ -163,9 +203,10 @@ export default {
             contentType:'application/json;charset=utf-8',
             data: JSON.stringify({client: 
                 {   
+                    "id": this.userId,
                     "name": this.login,
-                    "title": this.login,
-                    "password": this.pwd,
+                    "title": this.title,
+                    "password": (this.pwd === stub_pwd) ? null : this.pwd,
                     "email": this.eml,
                     "phone":this.tel
                 }
@@ -175,18 +216,18 @@ export default {
         (async () => {
             try {
                 var res = await $.ajax(url, options);
-                if ((!!res.id)&&("null"!==res.id)){
-                    self.$store.dispatch('profile/login', {user: { login: self.login, password: self.pwd }})
+                if (!!res.success){
+                    this.alert = 'success';
+                    this.error = 'данные профиля обновлены';
+                    this.loading = false;
                 } else {
-                    if ((!!res.success)&&(res.success==="user exists")){
-                        throw {message:'пользователь уже существует'};
-                    } else {
-                        throw (res.error) ? res.error : res.success;
-                    }
+                    throw (res.error) ? res.error : {message: 'неопознанная ошибка'};
                 }
             } catch(e){
                 console.log(e);
-                self.error = 'Возникла ошибка при регистрации - попробуйте повторить попытку позднее.<br />'
+                this.loading = false;
+                this.alert = 'warning';
+                this.error = 'Возникла ошибка при обновлении профиля - попробуйте повторить попытку позднее.<br />'
                             +'<small>Дополнительная информация: ' + e.message + '</small>';
             }
         })();
