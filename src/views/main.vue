@@ -60,7 +60,13 @@ export default {
               });
           }
           return totals;
-      }
+      },
+      hasCards(){
+        return ((!!this.cards)&&(this.cards.data.length>0)); 
+      },
+      hasStores(){
+        return ((!!this.stores)&&(this.stores.data.length>0));
+     }
   },
   mounted() {
     if (!this.cards){
@@ -141,7 +147,7 @@ export default {
       var ci, data, childs = [];
       if ( this.loading ){
           childs.push(h('v-progress-linear',{props:{indeterminate:true}}));
-      } else if ( (!!this.cards)&&(this.cards.data.length>0) ){
+      } else if ( this.hasCards || this.hasStores ){
         /** 
          * list of all accounts 
          * */
@@ -164,21 +170,23 @@ export default {
                             h('img', {attrs: {src: require('@/assets/imgs/my-logo.png'), viewBox:"0 0 512 512"}, class:'sk-logo'})
                         ]),
                         h('v-card-text',[
-                            (data.length > 0) 
+                            (this.hasCards) 
                                 ? 'у Вас ' + data.length + ' карт'
-                                : 'у Вас нет зарегистрированных карт',
-                            h('div',{class:{'sk-bonuces':true}},[
-                                (this.allBonuces > 0) 
-                                ? 'накоплено всего ' + this.allBonuces + ' бонусов'
-                                : 'нет накопленных бонусов'
-                            ])
+                                : 'у Вас еще нет зарегистрированных карт',
+                            (this.hasCards) 
+                                ? h('div',{class:{'sk-bonuces':true}}, [
+                                    (this.allBonuces > 0) 
+                                    ? 'накоплено всего ' + this.allBonuces + ' бонусов'
+                                    : 'нет накопленных бонусов'])
+                                : h('div', {class:{'sk-no-cards': true}}, 'Вы можете оформить в любом магазине')
                         ])
-                    ]
-        ));
+                    ])
+        );
         /**
          * Own list
          */
-        childs.push(
+        if ( this.hasCards ){
+            childs.push(
                     h('v-card', {
                         class: {'sk-card-list': true, 'sk-my-cards': true}
                     },[
@@ -212,15 +220,13 @@ export default {
                             ])
                         ])
                 ])
-        );
+            );
+        }
 
         /**
          * Other's
          */
-        if (
-                (!!this.stores)
-              &&(this.stores.data.length>0)
-            ){
+        if ( this.hasStores ){
             data = this.stores.data;
             ci   = this.stores.columnIndexes;
             childs.push(
@@ -266,8 +272,7 @@ export default {
 </script>
 <style lang="scss" scoped>
     @import "@/assets/styles/index";
-    
-    
+
     main{
     }
     .sk-logo{
@@ -296,6 +301,9 @@ export default {
             line-height: 1.115;            
             & .sk-bonuces{
                 font-size: 1.75rem;
+            }
+            & .sk-no-cards{
+                font-size: 1rem;
             }
         }
     }
@@ -348,16 +356,6 @@ export default {
                     }
                 }
             }
-            &.sk-stores{
-                & .v-list{
-                    & .v-list-item{
-                        border-top: 1px solid #ccc;
-                         & .sk-title{
-                             font-size: 1rem;
-                         }
-                    }
-                }
-            }
             & .v-card__title{
                 justify-content: space-between;
                 & h3{
@@ -370,6 +368,19 @@ export default {
                     width: 22px;
                     height: 22px;
                     color: $main-color;
+                }
+            }
+            &.sk-stores{
+                & .v-list{
+                    & .v-list-item{
+                        border-top: 1px solid #ccc;
+                         & .sk-title{
+                             font-size: 1rem;
+                         }
+                    }
+                }
+                & .v-card__title svg{
+                    color: $gray-color;
                 }
             }
             & .v-btn{

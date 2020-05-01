@@ -1,10 +1,16 @@
 <template>
-    <v-row class="fill-height flex-md-column" align="center" justify="center">
-        <div class="v-banner sk-banner-signin"> 
+    <v-row class="fill-height flex-md-column" justify="center">
+        <div class="v-banner sk-banner-signin">
             <img v-if="is('auth')" src="@/assets/imgs/family.png" />
-            <img v-if="is('register')" src="@/assets/imgs/hands.png" />
+            <img v-else-if="is('register')" src="@/assets/imgs/hands.png" />
+            <div v-else class="d-flex align-center justify-space-between" style="padding:0 2rem;border-bottom: 1px solid #ccc;">
+                <h2 style="font-weight:300;color:#5e6ff3;">моикарты.рф</h2>
+                <div style="width:32px;height:32px;">
+                    <v-img src="@/assets/imgs/my-logo.png" />
+                </div>
+            </div>
         </div>
-        <v-col cols="10" sm="8" md="4">
+        <v-col cols="10" sm="8" md="4" style="margin:0 auto;">
             <v-form v-on:submit="on_auth($event)" action="#" v-if="is('auth')" v-model="valid">
                 <v-card class="elevation-2">
                     <v-card-text>
@@ -88,9 +94,14 @@
                         >
                             <svg slot="prepend" viewBox="0 0 320 512"><use xlink:href="#ico-mobile" /></svg>
                         </v-text-field>
-                        <v-switch v-model="agree">
-                            <template v-slot:label><div style="text-align:justify;font-size:0.9rem;">Отправляя данную форму, я согласен с <a href='#'>правилами использования приложения</a></div></template>
+                        <v-switch v-model="agree" hide-details>
+                            <template v-slot:label>
+                                <div style="text-align:justify;font-size:0.9rem;">
+                                    Отправляя данную форму, я согласен  
+                                </div>
+                            </template>
                         </v-switch>
+                        <a href='//моикарты.рф/static/terms_of_use.html' target="_blank">с правилами использования данного приложения</a>
                         <v-alert type="warning"  class="my-5" v-show="!/^$/.test(error)">
                             <div v-html="error"></div>
                         </v-alert>
@@ -117,7 +128,7 @@
                         >
                             <svg slot="prepend" viewBox="0 0 512 512"><use xlink:href="#ico-at" /></svg>
                         </v-text-field>
-                        <div v-if="is('forgotted')" class="mt-3">
+                        <div v-if="is('reset')" class="mt-3">
                             <v-text-field
                                 label="код"
                                 name="code"
@@ -149,6 +160,9 @@
                                 <svg slot="prepend" viewBox="0 0 512 512"><use xlink:href="#ico-asterisk" /></svg>
                             </v-text-field>
                         </div>
+                        <v-alert :type="alert"  class="my-5" v-show="!/^$/.test(error)">
+                            <div v-html="error"></div>
+                        </v-alert>
                     </v-card-text>
                     <v-card-actions>
                         <v-btn type="submit" rounded dark width="14rem" color="red darken-4">Сбросить пароль</v-btn>
@@ -166,7 +180,7 @@ const modes = {
     AM_AUTH:     1,
     AM_REGISTER: 2,
     AM_FORGOT:   3,
-    AM_FORGOTED: 4
+    AM_RESET:    4
 };
 
 export default {
@@ -184,14 +198,15 @@ export default {
         ],
         eml: '',
         emailRules: [
-            v => /.+@.+/.test(v) || 'укажите корректный e-mail адрес'
+            v => ($utils.isEmpty(v) || /.+@.+/.test(v)) || 'укажите корректный e-mail адрес'
         ],
         code: '',
         codeRules: [
             v => /^(\d{5,})+$/.test(v) || 'укажите код, отправленный Вам на e-mail'
         ],
         error: '',
-        agree: false
+        agree: false,
+        alert: 'warning'    //for messages, TODO:
     };
   },
   mounted: function(){
@@ -199,8 +214,10 @@ export default {
   },
   watch: {
         mode: function(val){
-            this.valid = false;
+            this.valid = true;
             this.error = '';
+            this.alert = 'warning';
+            var inp = null;
             switch(val){
                 case modes.AM_AUTH:
                     this.title = 'Авторизация';
@@ -208,9 +225,15 @@ export default {
                 case modes.AM_REGISTER:
                     this.title = 'Регистрация';
                     break;
+                case modes.AM_FORGOT:
+                    inp = 'input[name="eml"]';
+                    break;
+                case modes.AM_RESET:
+                    inp = 'input[name="code"]';
+                    break;
             }
             this.$nextTick(() => {
-                $('input[name="u"]').trigger('focus');
+                $(this.$el).find(inp || 'input[name="u"]').trigger('focus');
             });
         }     //mode
   },
@@ -223,9 +246,9 @@ export default {
                   return (this.mode === modes.AM_REGISTER);
               case 'forgot':
                   return (this.mode === modes.AM_FORGOT) 
-                       ||(this.mode === modes.AM_FORGOTTED);
-              case 'forgotted':
-                  return (this.mode === modes.AM_FORGOTTED);
+                       ||(this.mode === modes.AM_RESET);
+              case 'reset':
+                  return (this.mode === modes.AM_RESET);
               default:
                   return false;
           }
@@ -241,8 +264,8 @@ export default {
               case 'forgot':
                 this.mode = modes.AM_FORGOT;
                 break;
-              case 'forgoted':
-                this.mode = modes.AM_FORGOTTED;
+              case 'reset':
+                this.mode = modes.AM_RESET;
                 break;
               default:
                   this.mode = modes.AM_AUTH;
@@ -332,6 +355,73 @@ export default {
             }
         })();
       },    //on_register
+      async _get_code(){
+        const url = process.env.VUE_APP_BACKEND_API + '/skidosapi/reset-pass';
+        const opts = {
+            dataType:'json',
+            method: 'POST',
+            contentType:'application/json;charset=utf-8',   
+            data: JSON.stringify({"email": this.eml, "mode":"reset"})
+        };
+        try {
+            var res = await $.ajax(url, opts);
+            console.log('send forgot:', res);
+            if (res.success){
+                this.set('reset');
+            } else {
+                throw {message:'пользователь с указанным e-mail не существует'};
+            }
+        } catch(e){
+            console.log('Error on get code:', e);
+            this.valid = false;
+            this.error = 'Возникла ошибка.<br />' 
+                        + ((e)&&(e.message) 
+                            ? '<small>Дополнительная информация: ' + e.message + '</small>' : 'Попробуйте еще раз.');
+        }
+      },    //_get_code
+      async _reset_pw(){
+        if ( $utils.isEmpty(this.pwd)
+             || $utils.isEmpty(this.pwd2)
+             || $utils.isEmpty(this.code)
+            ) {
+            this.valid = false;
+            this.error = 'для регистрации необходимо заполнить все данные';
+            $('input[name="code"]').trigger('focus');
+            return false;
+        }
+        if (this.pwd!==this.pwd2){
+            this.valid = false;
+            this.error = 'пароли не совпадают';
+            $('input[name="p1"]').trigger('focus');
+            return false;
+        }
+        const url = process.env.VUE_APP_BACKEND_API + '/skidosapi/reset-pass';
+        const opts = {
+            dataType:'json',
+            method: 'POST',
+            contentType:'application/json;charset=utf-8',
+            data: JSON.stringify({"mode":"newpass", "email": this.eml, "code": this.code, "password": this.pwd})
+        };
+        try {
+            var res = await $.ajax(url, opts);
+            console.log('send pass:', res);
+            if (!!res.success){
+                this.alert = 'success';
+                this.error = 'Пароль успешно изменен. Вы можете авторизоваться с новым паролем.';
+                setTimeout(()=>{
+                    this.set('auth');
+                }, 3000);
+            } else {
+                throw {message: 'Неверный код подтверждения'};
+            }
+        } catch(e){
+            console.log('Error on get code:', e);
+            this.valid = false;
+            this.error = 'Возникла ошибка.<br />' 
+                        + ((e)&&(e.message) 
+                            ? '<small>Дополнительная информация: ' + e.message + '</small>' : 'Попробуйте еще раз.');
+        }
+      },    //_reset_pw
       on_forgot(e){
         e.preventDefault();
         if ( $utils.isEmpty(this.eml) ) {
@@ -340,7 +430,14 @@ export default {
             $('input[name="eml"]').trigger('focus');
             return false;
         }
-        this.set('forgoted');
+        switch( this.mode ) {
+            case modes.AM_FORGOT:
+                this._get_code();
+                break;
+            case modes.AM_RESET:
+                this._reset_pw();
+                break;
+        }
         return false;
       }
   }

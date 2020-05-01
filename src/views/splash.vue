@@ -1,12 +1,17 @@
 <script>
 require('@/assets/imgs/my-logo.png');
-
+import {
+        VImg
+} from 'vuetify/lib';
 export default {
     name: 'Splash',
     data: function(){
         return {
             kuku: true
         };
+    },
+    components: {
+        VImg
     },
     computed: {
         hasUser(){
@@ -40,20 +45,37 @@ export default {
     },
     render(h){
         return h('div', {class:'sk-splash'}, [
-            h('div', [
+            h('div', {class: {'sk-splash-logo': true}}, [
                 h('h1', [
                     this.tod,
                     this.hasUser ? ', ' : '',
                     this.hasUser ? h('strong', this.name) : null
                 ]),
-                h('img', {attrs: {src: require('@/assets/imgs/my-logo.png')}, class:{'sk-logo':true}})
+                h('div', {style:{width:'128px',height:'128px'}}, [
+                    h('v-img', {
+                                    props: {
+                                        src: require('@/assets/imgs/my-logo.png')
+                                    }, 
+                                    class:{'sk-logo':true}
+                                })
+                ])
             ]),
-            h('h3', 'моикарты.рф')
+            h('h3', {class: {'sk-splash-title': true}}, 'моикарты.рф')
         ]);
     }
 }
 </script>
 <style lang="scss" scoped>
+    @-webkit-keyframes splash {
+        transform: translateX(50%);
+    }
+    @-moz-keyframes splash {
+        transform: translateX(50%);
+    }
+    @keyframes splash {
+        transform: translateX(50%);
+    }    
+
     .sk-splash {
         position:absolute; 
         width: 100%; 
@@ -61,26 +83,25 @@ export default {
         top:0; 
         left:0; 
         z-index:10000; 
-        background-color:white;
+        margin: 0;
+        padding:0;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         text-align: center;
-        margin: 0;
-        padding:0;
-        background: rgb(245,157,14); /* Old browsers */
+        background: rgb(245,157,14);
         background: -moz-linear-gradient(top,  rgba(245,157,14,1) 0%, rgba(255,163,14,1) 100%); /* FF3.6-15 */
         background: -webkit-linear-gradient(top,  rgba(245,157,14,1) 0%,rgba(255,163,14,1) 100%); /* Chrome10-25,Safari5.1-6 */
         background: linear-gradient(to bottom,  rgba(245,157,14,1) 0%,rgba(255,163,14,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
         filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f59d0e', endColorstr='#ffa30e',GradientType=0 ); /* IE6-9 */
-        & > div{
+        overflow: hidden;
+        & .sk-splash-logo{
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-self: stretch;
             justify-content: center;
             height: calc(100% - 110px);
-            
         }
         & h1{
             color: #fff;
@@ -89,10 +110,6 @@ export default {
                 display: block;
                 font-weight: 400;
             }
-        }
-        & .sk-logo{
-            width: 128px;
-            height: 128px;
         }
         & h3{
             font-weight: 300;
