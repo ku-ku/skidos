@@ -45,30 +45,29 @@ export default {
         };
     },
     methods: {
-        refresh(self){
+        async refresh(self){
             var url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
-                options = {
+                opts = {
                     type: 'core-read',
-                    query: 'sin2:/v:2c697aa3-0ad1-4b0c-85ef-a3b7616167ee?filter=eq(field("' 
-                           + ( (!!self) ? '.id' : '.parentId' )
-                           + '"), param("' + this.parent.id + '", "id"))'
+                    query: 'sin2:/v:2c697aa3-0ad1-4b0c-85ef-a3b7616167ee?filter=eq(field(".parentId"), param("' + this.parent.id + '", "id"))'
                 };
+            if (self){
+                opts.query = 'sin2:/v:c4e208aa-a355-49bf-8c00-4175a9ed5006/?id=' + this.parent.id;
+            }
             this.loading = true;
-            (async ()=>{
-                try {
-                    var res = await $http.post(url, options);
-                    if (!!res.error){
-                        throw res.error;
-                    }
-                    if ((!!res.result.data) && (res.result.data.length>0)){
-                        this.fils = res.result;
-                    } else {
-                        this.refresh(true);
-                    }
-                }catch(e){
-                    this.error = e;
+            try {
+                var res = await $http.post(url, opts);
+                if (!!res.error){
+                    throw res.error;
                 }
-            })();
+                if ((!!res.result.data) && (res.result.data.length>0)){
+                    this.fils = res.result;
+                } else if (!self) {
+                    this.refresh(true);
+                }
+            }catch(e){
+                this.error = e;
+            }
             this.loading = false;
         },
         isOpen(st, end){
