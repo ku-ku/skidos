@@ -5,6 +5,7 @@ module.exports = {
   "transpileDependencies": [
     "vuetify"
   ],
+
   configureWebpack: {
     resolve: {
         extensions: ['.js', '.vue', '.json'],
@@ -37,6 +38,7 @@ module.exports = {
       })
     ]
   },
+
   devServer: {
     proxy: {
       '^/wp': {
@@ -57,6 +59,11 @@ module.exports = {
         pathRewrite: {'^/api': ''}
       }
     }
+  },
+
+  publicPath: '',
+
+  pluginOptions: {
+    cordovaPath: 'src-cordova'
   }
-  
 };
