@@ -5,7 +5,8 @@ const user = $utils.lsRead('auth') || {
 };
 
 const state = {
-  user
+  user,
+  _hTimer: false
 };
 
 const mutations = {
@@ -25,6 +26,26 @@ const mutations = {
     _user.isAuthenticated = false;
     _user.lastAccess = (new Date()).getTime();
     $utils.lsSave('auth', _user);
+    if (!!state._hTimer){
+        clearInterval(state._hTimer);
+    }
+    state._hTimer = setInterval(()=>{
+        const opts = {
+            type: 'auth'
+        };
+        const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc&user=ping&password='+(new Date()).getTime();
+        (async ()=>{
+            try {
+                var resp = await $http.post(url, opts);
+                if (!!resp.error){
+                    throw resp.error;
+                }
+            }catch(e){
+                window["app"].pingFail();
+            }
+        })();
+    }, 10*60*1000);
+    console.log('Ping timer set #', state._hTimer);
   },
   removeCredentials(state) {
     state.user = {
@@ -113,6 +134,9 @@ const actions = {
              .catch(onFail);
     };
     return new Promise(promise);
+  },
+  check2(){
+      
   },
   logout(ctx) {
     const {commit} = ctx;

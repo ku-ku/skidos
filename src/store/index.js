@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import profile from '@/store/modules/profile';
+import settings from '@/store/modules/settings';
 
 Vue.use(Vuex);
 
@@ -28,7 +29,8 @@ const getters = {
 };
 
 const modules = {
-    profile
+    profile,
+    settings
 };
 
 export default new Vuex.Store({

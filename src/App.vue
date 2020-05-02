@@ -30,11 +30,11 @@
 import Splash from '@/views/splash';
 
 export default {
-  name: 'App',
+    name: 'App',
 
-  components: {
-      Splash
-  },
+    components: {
+        Splash
+    },
 
     data: function(){
       return {
@@ -65,36 +65,42 @@ export default {
                 _go('signin');
             });
     },
-  computed: {
-    showAppBar(){
-        const {$route} = this;
-        if (typeof $route.meta.showAppBar !== 'undefined') {
-            return $route.meta.showAppBar;
-        } else {
-            return false;
+    computed: {
+        showAppBar(){
+            const {$route} = this;
+            if (typeof $route.meta.showAppBar !== 'undefined') {
+                return $route.meta.showAppBar;
+            } else {
+                return false;
+            }
+        },
+        showNavi(){
+            const {$route} = this;
+            if (typeof $route.meta.showNavi !== 'undefined') {
+                return $route.meta.showNavi;
+            } else {
+                return false;
+            }
+        },
+        user(){
+            return this.$store.state.profile.user.name;
         }
     },
-    showNavi(){
-        const {$route} = this;
-        if (typeof $route.meta.showNavi !== 'undefined') {
-            return $route.meta.showNavi;
-        } else {
-            return false;
+    methods: {
+        msg: function(e){
+            if ($utils.isEmpty(e.text)){
+                this.snackbar = false;
+                return;
+            }
+            this.snackbarColor = (!!e.color) ?  e.color : "primary";
+            this.snackbarTimeout = (!!e.timeout) ? e.timeout : 6000;
+            this.snackbarText = e.text;
+            this.snackbar = true;
+        },
+        pingFail(){
+            this.$router.replace({name: 'signin'});
         }
     }
-  },
-  methods: {
-      msg: function(e){
-          if ($utils.isEmpty(e.text)){
-              this.snackbar = false;
-              return;
-          }
-          this.snackbarColor = (!!e.color) ?  e.color : "primary";
-          this.snackbarTimeout = (!!e.timeout) ? e.timeout : 6000;
-          this.snackbarText = e.text;
-          this.snackbar = true;
-      }
-  }
 };
 </script>
 

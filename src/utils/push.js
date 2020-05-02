@@ -1,6 +1,6 @@
 import Store from '@/store';
 
-let PushController;
+var PushController;
 
 function onRegistration(data) {
   const {registrationId} = data;
@@ -44,7 +44,9 @@ function onUnregisterError(data) {
 function init() {
   if (typeof window.PushNotification !== 'undefined') {
     const options = {
-      android: {},
+      android: {
+          senderID: process.env.VUE_APP_SENDER_ID
+      },
       ios: {
         alert: 'true',
         badge: 'true',

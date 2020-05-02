@@ -492,7 +492,7 @@ export default {
                                 left: true,
                                 to: '/'
                 }}, [
-                    h('img', {class:{'sk-logo': true}, attrs: {viewBox:'0 0 512 512', src: require('@/assets/imgs/my-logo.png')}})
+                    h('v-img', {class:{'sk-logo': true}, props: {src: require('@/assets/imgs/my-logo.png')}})
                 ])
             ]));
         }
@@ -586,10 +586,11 @@ export default {
             background-color: #00897B;
             color: #fff;
             background-size: cover;
-            min-height: 140px;
+            min-height: 200px;
             & h1{
                 font-size: 1.5rem;
                 padding: 0 0.75rem;
+                font-weight: 300;
             }
             & .sk-bonuces{
                 text-align: center;
