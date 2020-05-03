@@ -11,6 +11,8 @@
                     <use xlink:href="#ico-left" />
                 </svg>
             </v-btn>
+            <h3 :style="{color: brandColor}"
+                >{{store.title}}</h3>
         </div>
         <div class="sk-messages-conte">
             <v-list v-if="hasMessages">
@@ -232,15 +234,18 @@ $lighten-gray: #d7d9dc;
 $lighten-gray-msg: lighten($lighten-gray, 10%);
 $def-mgs-color: #5676ee;
 .sk-messages {
-    padding: 0;
+    padding: 2rem 0 0 0;
     
     & .sk-top-bar{
-        padding: 1rem 0;
-        background: transparent;
+        padding: 1rem;
         position: absolute;
         z-index: 4;
         top: 0;
+        left: 0;
         width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         & .v-btn{
             border-radius: 50%;
             background: rgba(0,0,0, 0.18);
@@ -256,6 +261,9 @@ $def-mgs-color: #5676ee;
                 height: 18px;
                 opacity: 0.75;
             }
+        }
+        & h3{
+            font-weight: 400;
         }
     }
     
