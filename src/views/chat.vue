@@ -1,5 +1,17 @@
 <template>
     <div class="sk-messages">
+        <div class="sk-top-bar">
+            <v-btn dark
+                   icon 
+                   small
+                   tile
+                   @click="back"
+                >
+                <svg viewBox="0 0 192 512">
+                    <use xlink:href="#ico-left" />
+                </svg>
+            </v-btn>
+        </div>
         <div class="sk-messages-conte">
             <v-list v-if="hasMessages">
                 <v-list-item 
@@ -31,23 +43,26 @@
             absolute
             height="auto"
             width="100%"
+            class="sk-send-bottom"
             >
             <v-textarea
-                class="mx-2"
                 label="написать"
                 rows="2"
                 v-model="s"
                 :loading="sending"
                 :error="sendErr"
+                @focus="adjust($event)"
+                @blur="adjust($event)"
             >
                 <template v-slot:append>
-                    <v-btn text class="sk-send" @click="send">
+                    <v-btn text small class="sk-send" @click="send"
+                           :style="{'color':brandColor}">
                         <svg viewBox="0 0 512 512"><use xlink:href="#ico-send-plane" /></svg>
                     </v-btn>
                 </template>
             </v-textarea>
         </v-bottom-navigation>
-    </div>
+    </div><!--.sk-messages-->
 </template>
 <script>
 /*
@@ -81,6 +96,7 @@ botmsgs.replmsg	7
         mounted(){
             this.load();
             this.$nextTick(()=>{
+                window.scrollTo(1, 0);
                 this.adjust();
             });
         },
@@ -98,14 +114,27 @@ botmsgs.replmsg	7
             }
         },
         methods: {
-            adjust(){
-                var pane = $('.sk-messages');
-                pane.find('textarea').trigger('focus');
-                pane.find('.v-input__append-inner').css({'align-self': 'stretch', 'align-items': 'stretch'});
+            adjust(e){
+                if ((!!e)&&("blur"===e.type)){
+                    window.scrollTo(1, 0);
+                }
+                
+                var brand = $('.sk-store-brand'),
+                    conte = $('.sk-card-conte');
                 var h1 = $(window).height(),
-                    h2 = pane.offset().top,
-                    h3 = pane.find('.v-bottom-navigation').height();
-                pane.find('.sk-messages-conte').css({height: (h1-h2-h3) + 'px'});
+                    h2 = brand.height(),
+                    h3 = 0;
+            
+//                conte.css({height: (h1-h2+22) + 'px'});
+                
+                var pane = $('.sk-messages'),
+                    bottom=$('.sk-send-bottom');
+                bottom.find('textarea').trigger('focus');
+                h2 = pane.offset().top;
+                h3 = bottom.height();
+//                pane.find('.sk-messages-conte').css({height: (h1-h2-h3) + 'px'});
+                pane.css({height: (h1-h2-h3-1) + 'px'});
+                bottom.find('.v-input__append-inner').css({margin:'0',padding:'0', 'align-self': 'stretch', 'align-items': 'stretch'});
             },
             ci(name){
                 return (!!this.msgs) ? this.msgs.columnIndexes[name] : -1;
@@ -124,6 +153,9 @@ botmsgs.replmsg	7
             scrollLast(){
                 const conte = $('.sk-messages-conte');
                 conte.animate({scrollTop: conte[0].scrollHeight}, 600);
+            },
+            back(){
+                this.$emit('exit');
             },
             async load(id){
                 const opts = {
@@ -196,57 +228,108 @@ botmsgs.replmsg	7
     }
 </script>
 <style lang="scss" scoped>
-    .sk-messages {
-        & .v-item-group.v-bottom-navigation{
-            box-shadow: none !important;
-            & .sk-send{
-                width: 48px;
-                min-width: 48px;
-                max-width: 48px;
-                padding: 0 !important;
-                margin:  0 !important;
-                & svg{
-                    width: 18px;
-                    height: 18px;
-                }
+$lighten-gray: #d7d9dc;
+$lighten-gray-msg: lighten($lighten-gray, 10%);
+$def-mgs-color: #5676ee;
+.sk-messages {
+    padding: 0;
+    
+    & .sk-top-bar{
+        padding: 1rem 0;
+        background: transparent;
+        position: absolute;
+        z-index: 4;
+        top: 0;
+        width: 100%;
+        & .v-btn{
+            border-radius: 50%;
+            background: rgba(0,0,0, 0.18);
+            width: 32px;
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            & .v-btn__content{
+                display: inline;
             }
-        }
-        & .v-text-field .v-input__append-inner{
-                margin: 0 !important;
-                padding:0 !important;
-                align-self: stretch;
-                align-items: stretch;
-        }
-        & .sk-messages-conte{
-            overflow: auto;
-        }
-        & .v-list-item{
-            & .sk-my, & .sk-reply{
-                padding: 0.75rem;
-                white-space: normal;
-                height: auto;
-                min-height: 1.5rem;
-                & .sk-dt{
-                    font-size: 0.6rem;
-                    opacity: 0.7;
-                    text-align: right;
-                }
-            }
-            & .sk-my{
-                background-color: #5676ee;
-                margin: 0 0 8px 15%;
-                color: #fff;
-                border-radius: 6px 6px 0 6px;
-                box-shadow: -2px 2px 4px rgba(0,0,0,0.18);
-            }
-            & .sk-reply{
-                background-color: lighten(#d7d9dc, 10%);
-                margin: 0 15% 8px 0;
-                color: #000;
-                border-radius: 6px 6px 6px 0;
-                border: 1px solid #d7d9dc;
-                box-shadow: 2px 2px 4px rgba(0,0,0,0.18);
+            & svg{
+                width: 18px;
+                height: 18px;
+                opacity: 0.75;
             }
         }
     }
+    
+    
+    & .sk-messages-conte{
+        overflow: auto;
+        height: 100%;
+        & .v-list{
+            padding:0 0 2rem 0;
+            border-radius: 0;
+            & .v-list-item{
+                padding: 0;
+                & .sk-my, & .sk-reply{
+                    padding: 0.75rem;
+                    white-space: normal;
+                    height: auto;
+                    min-height: 1.5rem;
+                    & .sk-dt{
+                        font-size: 0.6rem;
+                        opacity: 0.7;
+                        text-align: right;
+                    }
+                }
+                & .sk-my{
+                    background-color: $def-mgs-color;
+                    margin: 0 0 8px 15%;
+                    color: #fff;
+                    border-radius: 6px 6px 0 6px;
+                    box-shadow: -2px 2px 4px rgba(0,0,0,0.18);
+                }
+                & .sk-reply{
+                    background-color: $lighten-gray-msg;
+                    margin: 0 15% 8px 0;
+                    color: #000;
+                    border-radius: 6px 6px 6px 0;
+                    border: 1px solid $lighten-gray;
+                    box-shadow: 2px 2px 4px rgba(0,0,0,0.18);
+                }
+            }
+        }
+    }
+}
+.v-item-group.v-bottom-navigation.sk-send-bottom{
+    box-shadow: none !important;
+    padding: 0 0.5rem;
+    background: $lighten-gray-msg;
+    border-top: 1px solid $lighten-gray;
+    & .sk-send{
+        padding: 0 !important;
+        margin:  0 !important;
+        width: 42px;
+        max-width: 42px;
+        min-width: 42px;
+        height: 42px;
+        background: $lighten-gray-msg;
+        border: 1px solid $lighten-gray;
+        border-radius: 500px;
+        color: $def-mgs-color;
+        & svg{
+            width: 16px;
+            height: 16px;
+        }
+    }
+}
+.v-application--is-ltr {
+    & .v-text-field {
+        & .v-input__append-inner{
+            margin: 0 !important;
+            margin-left: 0 !important;
+            padding:0 !important;
+            padding-left: 0 !important;
+            align-self: stretch;
+            align-items: stretch;
+        }
+    }
+}
 </style>

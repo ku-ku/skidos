@@ -134,13 +134,14 @@ export default {
                 }}, [
                     h('v-list-item-content', [
                         h('v-row', [
-                            h('v-col', {props:{cols:6}}, (!!a) 
-                                ? [
-                                    h('div', {class:{'sk-city':true}}, (!!a.city)  ? a.city.name : ''),
-                                    h('div', {class:{'sk-addr':true}}, ((!!a.street) ? 'ул.' + a.street.name : '') 
-                                                                        + ((!!a.number) ? ', ' + a.number : ''))
-                                ] 
-                                : null),
+                            h('v-col', {props:{cols:6}}, 
+                                (!!a) 
+                                    ? [
+                                        h('div', {class:{'sk-city':true}}, (!!a.city)  ? a.city.name : ''),
+                                        h('div', {class:{'sk-addr':true}}, ((!!a.street) ? 'ул.' + a.street.name : '') 
+                                                                            + ((!!a.number) ? ', ' + a.number : ''))
+                                    ] 
+                                    : null),
                             h('v-col', {props:{cols:6}}, [
                                 h('div', {class:{'sk-state': true, 'sk-open': isOpen}}, [
                                     h('i'),
@@ -194,7 +195,6 @@ export default {
     $no-open: #F44336;
     $blue-color: #01579B;
     .sk-filials{
-        
         & .v-list-item{
             border: 1px solid lighten($gray-color, 20%);
             border-radius: 6px;

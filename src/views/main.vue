@@ -201,7 +201,6 @@ export default {
                                           title = item[ci["accounts.tenantid.title"]],
                                           bc    = $utils.isEmpty(item[ci["ssctenantsadds.brandcolor"]]) ? '' : item[ci["ssctenantsadds.brandcolor"]], 
                                           loytt = item[ci["ssctenantsadds.shortloyalty"]];
-                                    const brdc  = $utils.isEmpty(bc) ? '' : color(bc).darken(0.2);
                                     
                                     return h('v-list-item', {
                                         props: {key: id},
@@ -209,8 +208,8 @@ export default {
                                     }, [
                                         h('v-list-item-content', [
                                             h('div', {
-                                                    class:{'sk-short': true}, 
-                                                    style:{'background-color': bc, 'border-color': brdc}
+                                                    class: {'sk-short': true}, 
+                                                    style: {'background-color': bc}
                                                 }, this._short(title)),
                                             h('div', {class:{'sk-title':true}}, title),
                                             h('div', {class:{'sk-loytt': true}}, loytt)

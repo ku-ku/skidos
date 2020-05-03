@@ -399,7 +399,10 @@ export default {
                         break;
                     case ST_MODE.chat:
                         conte.push( h('sk-chat', {
-                                        props: {store:this.activeStore}
+                                        props: {store: this.activeStore},
+                                        on: {exit: ()=>{
+                                            this.mode = ST_MODE.fils;
+                                        }}
                                     }));
                         break;
                     case ST_MODE.fils:
@@ -492,21 +495,11 @@ export default {
                                 left: true,
                                 to: '/'
                 }}, [
-                    h('v-img', {class:{'sk-logo': true}, props: {src: require('@/assets/imgs/my-logo.png')}})
+                    h('v-img', {class:{'sk-logo': true}, props: {src: '/'+require('@/assets/imgs/my-logo.png')}})
                 ])
             ]));
         }
-/*        
-        childs.push(
-            h('v-container', {class:'sk-go-my'}, [
-                    h('v-row', {class: {'justify-center': true}}, [
-                        h('v-col', {props: {cols: 7}}, [
-                            h('v-btn', {props: {outlined: true, block: true, to: '/'}}, 'мои карты')
-                        ])
-                    ])
-            ])
-        );
- */     if (this.hasStore){
+        if (this.hasStore){
             childs.push( h('sk-actions', {
                     props: {store: this.iStore},
                     class: {'d-none': !((this.mode === ST_MODE.def) || (this.mode === ST_MODE.qr))},
@@ -872,6 +865,15 @@ export default {
             & .sk-links{
                 margin-top: 2rem;
             }
+        }
+    }
+    
+    .sk-has-chat{
+        & .sk-store-brand{
+            display: none;
+        }
+        & .sk-card-conte{
+            display: block;
         }
     }
     
