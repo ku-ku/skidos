@@ -175,7 +175,7 @@ export default {
                                                         }
                                                 }
                                             }, [
-                                    h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-msg" />'}, attrs: {viewBox:'0 0 512 512'}})
+                                    h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-chat" />'}, attrs: {viewBox:'0 0 512 512'}})
                                 ])
                             ])
                         ])

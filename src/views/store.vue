@@ -68,11 +68,19 @@ export default {
         qr_bin_data: null,
         error: null,
         activeStore: null,
-        mode: ST_MODE.def
+        mode: ST_MODE.def,
+        scroll: {
+            hScroll: null,
+            hTimer: null
+        }
     };
   },
-  mounted: function(){
-      this.refresh();
+  mounted(){
+        this.scroll.hScroll = window.addEventListener('scroll', this.onScroll);
+        this.refresh();
+  },
+  beforeDestroy(){
+      window.removeEventListener('scroll', this.scroll.hScroll);
   },
   computed: {
         iStore(){
@@ -148,7 +156,6 @@ export default {
             console.log('Err on store:', e);
             this.error = {error: e};
         }
-        //this.mode = ST_MODE.def;
         this.loading = false;
       },    //refresh
       card_by: async function(id, that){
@@ -236,6 +243,19 @@ export default {
       },
       show_info(){
           this.info = !this.info;
+      },
+      onScroll(){
+        if (this.scroll.hTimer){
+            clearTimeout(this.scroll.hTimer);
+        }
+        this.scroll.hTimer = setTimeout( ()=>{
+            var fab = $(this.$el).find('.sk-btn-chat');
+            if ( fab.length > 0 ){
+                var y = $(this.$el).innerHeight();
+                y -= ($(window).height()+window.scrollY-24);
+                fab.css({bottom: y + "px"});
+            }
+        }, 10);
       }
   },
   watch: {
@@ -262,7 +282,8 @@ export default {
         }   //card
   },
   render: function( h ){
-        var childs = [];
+        var childs = [],
+            fab    = null;
         if (!this.store){
             childs.push(
                 h('v-card',{class:{'store-loading':true},key:'store-loading'},[
@@ -292,7 +313,6 @@ export default {
                       tel= data[0][ci["ssctenantsadds.phone"]],
                       web= data[0][ci["ssctenantsadds.uri"]],
                       short=data[0][ci["ssctenantsadds.shortloyalty"]];
-              
                 var ly = data[0][ci["ssctenantsadds.loyalty"]];
                 if (!$utils.isEmpty(ly)){
                     ly = ly.replace(/;/g, '<br />');
@@ -469,6 +489,30 @@ export default {
                         //none
                 }   //switch( this.mode...
                 
+                if (
+                        (this.mode !== ST_MODE.chat)
+                     && (this.mode !== ST_MODE.fils)
+                    ){
+                    fab = h('v-fab-transition', [
+                        h('v-btn', {props: {
+                                        fab: true,
+                                        bottom: true,
+                                        right: true,
+                                        small: true,
+                                        dark: true,
+                                        color: bg
+                                    },
+                                    class: {'sk-btn-chat': true},
+                                    on: {click:(store)=>{
+                                                this.activeStore = this.iStore;
+                                                this.mode = ST_MODE.chat;
+                                        }}
+                                }, [
+                            h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-chat" />'}, attrs: {viewBox:'0 0 512 512'}})
+                        ])
+                    ]);
+                }
+               
                 if ( conte.length > 0 ){
                     childs.push(
                         h('v-card', {
@@ -480,24 +524,7 @@ export default {
                         ])
                     );
                 }
-            }
-        }
-        
-        if (
-                (this.mode !== ST_MODE.def)
-             && (this.mode !== ST_MODE.chat)
-            ) {
-            childs.push(h('v-fab-transition', [
-                h('v-btn', {props: {
-                                fab: true,
-                                light: true,
-                                bottom: true,
-                                left: true,
-                                to: '/'
-                }}, [
-                    h('v-img', {class:{'sk-logo': true}, props: {src: '/'+require('@/assets/imgs/my-logo.png')}})
-                ])
-            ]));
+            }   //else NORMAL
         }
         if (this.hasStore){
             childs.push( h('sk-actions', {
@@ -509,6 +536,11 @@ export default {
                             }
                     }}
             }) );
+        }
+        
+        if (!!fab){
+            childs.push(fab);
+            setTimeout(()=>{window.scrollTo(0, 1);}, 500);
         }
         
         return h('main', {class: {
@@ -536,6 +568,7 @@ export default {
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        position: relative;
     }
     
     .sk-top-bar{
@@ -565,14 +598,6 @@ export default {
         }
     }
 
-    .v-btn--fab{
-        margin: 0 0 1.5rem 1.5rem;
-        padding: 0.5rem;
-        & .sk-logo{
-            width: 32px;
-            height: 32px;
-        }
-    }
     .sk-store-brand{
         & .v-card__title{
             padding:0;
@@ -867,6 +892,20 @@ export default {
             }
         }
     }
+    
+    .v-btn--fab.sk-btn-chat{
+        position: absolute;
+        background-color: $main-color;
+        padding: 0.5rem;
+        bottom: 2rem;
+        right: 2rem;
+        & svg{
+            color: #fff;
+            width: 18px;
+            height: 18px;
+        }
+    }
+
     
     .sk-has-chat{
         & .sk-store-brand{

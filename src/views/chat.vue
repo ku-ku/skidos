@@ -167,7 +167,9 @@ botmsgs.replmsg	7
                 if (isNew){
                     opts.query += 'eq(field(".id"), param("' + id + '", "id"))';
                 } else {
-                    opts.query += 'eq(field(".userId"), param("' + this.userId + '", "id"))&sort=botmessages.redDt';
+                    opts.query += 'and(eq(field(".userId"), param("' + this.userId + '", "id")),';
+                    opts.query += 'eq(field(".tenantId"), param("' + this.store.id + '", "id")))';
+                    opts.query += '&sort=botmessages.redDt';
                 }
                 
                 try {

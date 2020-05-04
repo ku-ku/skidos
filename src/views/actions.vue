@@ -14,7 +14,8 @@ import {
         VListItemTitle,
         VListItemSubtitle,
         VListItemAction,
-        VSkeletonLoader
+        VSkeletonLoader,
+        VTextField
        } from 'vuetify/lib';
 import { Swiper, SwiperSlide, directive } from 'vue-awesome-swiper';
 import 'swiper/css/swiper.css';
@@ -49,13 +50,20 @@ export default {
         VListItemAction,
         VSkeletonLoader,
         Swiper,
-        SwiperSlide
+        SwiperSlide,
+        VTextField
     },
     data(){
         return {
             loading: false,
             acts: null,
-            skidos: null
+            skidos: null,
+            order: {
+                id: null,
+                n: null,
+                valid: true,
+                loading: false
+            }
         };
     },
     computed: {
@@ -112,20 +120,44 @@ export default {
         },
         month(m){
             const MONTHS = {
-                0: 'янв.',
-                1: 'фев.',
-                2: 'мар.',
-                3: 'апр.',
-                4: 'мая',
-                5: 'июн.',
-                6: 'июл.',
-                7: 'авг.',
-                8: 'сен.',
-                9: 'окт.',
-                10:'ноя.',
-                11:'дек.'
+                1: 'янв.',
+                2: 'фев.',
+                3: 'мар.',
+                4: 'апр.',
+                5: 'мая',
+                6: 'июн.',
+                7: 'июл.',
+                8: 'авг.',
+                9: 'сен.',
+                10: 'окт.',
+                11:'ноя.',
+                12:'дек.'
             };
             return (!!m) ? MONTHS[Number(m)] : '';
+        },
+        on_order(id){
+            this.order.n = 1;
+            this.order.id = id;
+            this.order.loading = false;
+            this.order.valid = true;
+            this.$nextTick(()=>{
+                var i = $(this.$el).find('.sk-order-now input');
+                i.css({'text-align': 'right'});
+                i.trigger('focus');
+            });
+        },
+        do_order(){
+            this.order.valid = !isNaN(parseFloat(this.order.n));
+            if (!this.order.valid){
+                return;
+            }
+            this.order.loading = true;
+            setTimeout(()=>{
+                this.order.loading = false;
+                this.order.id = null;
+                app.msg({'text':'Эта функция еще не реализована',color:'warning'});
+            }, 1000);
+            
         }
     },
     mounted(){
@@ -168,15 +200,17 @@ export default {
             const ci = this.skidos.columnIndexes;
             childs.push( h('v-list', {class:{'sk-skidos':true}}, [
                 this.skidos.data.map((a) => {
-                    const img = a[ci["userpromoactions.promoimage"]];
+                    const id = a[ci["userpromoactions.id"]],
+                          img = a[ci["userpromoactions.promoimage"]];
+                    const ordering = (!$utils.isEmpty(this.order.id)&& id === this.order.id);
                     var dates = '';
                     if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
                         var d = new Date(a[ci["userpromoactions.enddt"]]);
-                        dates = 'до ' + d.getDay() + ' ' + this.month(d.getMonth());
+                        dates = 'до ' + d.getDate() + ' ' + this.month(d.getMonth());
                     }
                     
                     return h('v-list-item', {
-                                key: 'sk-' + a[ci["userpromoactions.id"]]
+                                key: 'sk-' + id
                             }, [
                                 h('v-list-item-icon', {class:{"mr-3": true}}, [
                                     (!!img) 
@@ -191,21 +225,59 @@ export default {
                                         a[ci["userpromoactions.promogoods"]]
                                     ]),
                                     h('div',{class:{'sk-price': true}}, [
-                                        $utils.isEmpty(a[ci["userpromoactions.newprice"]])
-                                            ? null
-                                            : a[ci["userpromoactions.newprice"]],
-                                        $utils.isEmpty(a[ci["userpromoactions.oldprice"]])
-                                            ? null
-                                            : h('span', {class:{'sk-old':true}}, a[ci["userpromoactions.oldprice"]])
+                                        h('div',
+                                            $utils.isEmpty(a[ci["userpromoactions.newprice"]])
+                                                ? null
+                                                : a[ci["userpromoactions.newprice"]],
+                                            $utils.isEmpty(a[ci["userpromoactions.oldprice"]])
+                                                ? null
+                                                : h('span', {class:{'sk-old':true}}, a[ci["userpromoactions.oldprice"]])
+                                        ),
+                                        ordering 
+                                            ? null 
+                                            : h('v-btn', {
+                                                props:{
+                                                    'x-small': true,
+                                                    rounded: true,
+                                                    dark: true,
+                                                    color:'#ad0900',
+                                                    outlined: true
+                                                },
+                                                class:{'sk-order': true},
+                                                on: {click:()=>{this.on_order(id);}}
+                                            }, 'заказать')
                                     ]),
                                     $utils.isEmpty(a[ci["userpromoactions.promoproducer"]])
                                         ? null
-                                        : h('div', {class: {'sk-produ': true}}, a[ci["userpromoactions.promoproducer"]])
+                                        : h('div', {class: {'sk-produ': true}}, a[ci["userpromoactions.promoproducer"]]),
+                                    ordering 
+                                        ? h('div',{class:{'sk-order-now':true}}, [
+                                            'количество: ',
+                                            h('v-text-field', {props: {
+                                                clearable: true,
+                                                autofocus: true,
+                                                value: this.order.n,
+                                                error: !this.order.valid
+                                            }}),
+                                            h('v-btn', {
+                                                props:{
+                                                    'x-small': true,
+                                                    rounded: true,
+                                                    dark: true,
+                                                    color: 'primary',
+                                                    outlined: true,
+                                                    loading: this.order.loading
+                                                },
+                                                class:{'sk-order': true},
+                                                on: {click:this.do_order}
+                                            }, 'заказать')
+                                        ])
+                                        : null
                                 ])
+                                
                     ]);
                 })
             ]));
-            
         } else if (this.loading) {
             for (var i=0; i<3; i++){
                 childs.push(
@@ -272,6 +344,9 @@ export default {
         & .sk-price{
             font-size: 1.25rem;
             color: $red-color;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             & .sk-old {
                 font-size: 0.85rem;
                 display: inline-block;
@@ -283,6 +358,19 @@ export default {
         & .sk-produ{
             font-size: 0.75rem;
             color: $gray-color;
+        }
+        & .sk-order-now{
+            font-size: 0.75rem;
+            color: $gray-color;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            & .v-input {
+                margin: 0 0.5rem;
+                & input{
+                    text-align: right !important;
+                }
+            }
         }
     }
 </style>
