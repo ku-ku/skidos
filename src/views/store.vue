@@ -88,13 +88,20 @@ export default {
             if ( (this.store) && (this.store.data) && (this.store.data.length>0) ){
                 const data = this.store.data[0],
                       ci = this.store.columnIndexes;
-                o.id = data[ci["ssctenants.id"]];
+                const keys = Object.keys(ci);
                 o.title = data[ci["ssctenants.title"]];
                 o.brand = {
                     color: data[ci["ssctenantsadds.brandcolor"]],
                     balcolor: data[ci["ssctenantsadds.balancecolor"]],
                     logo:   data[ci["ssctenantsadds.brandlogo"]]
                 };
+                var s, n;
+                keys.map((key)=>{
+                    n = key.lastIndexOf('.');
+                    s = (n < 0) ? key : key.substr(n + 1);
+                    o[s] = data[ci[key]];
+                });
+                o.id = data[ci["ssctenants.id"]];
             } else {
                 o.id = '00';
             }
@@ -150,6 +157,7 @@ export default {
                 throw resp.error;
             }
             this.store = resp.result;
+            this.$store.commit('active/setStore', this.iStore);
             var ci = resp.result.columnIndexes;
             await this.card_by(this.store.data[0][ci["ssctenants.id"]], 'store');
         } catch(e){

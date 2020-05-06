@@ -57,13 +57,7 @@ export default {
         return {
             loading: false,
             acts: null,
-            skidos: null,
-            order: {
-                id: null,
-                n: null,
-                valid: true,
-                loading: false
-            }
+            skidos: null
         };
     },
     computed: {
@@ -91,7 +85,6 @@ export default {
             this.loading = true;
             try{
                 var res = await $http.post(url, opts);
-                console.log('Banners: ', res);
                 if (!!res.error){
                     throw res.error;
                 }
@@ -100,7 +93,6 @@ export default {
                 opts.query = 'sin2:/v:9d6c4649-cf13-45b6-9b6a-b1af97513204?filter=eq(field(".mainOrgId")'
                            + ',param("' + this.store.id + '", "id"))';
                 res = await $http.post(url, opts);
-                console.log('Actions: ', res);
                 if (!!res.result){
                     this.skidos = res.result;
                 }
@@ -135,18 +127,7 @@ export default {
             };
             return (!!m) ? MONTHS[Number(m)] : '';
         },
-        on_order(id){
-            this.order.n = 1;
-            this.order.id = id;
-            this.order.loading = false;
-            this.order.valid = true;
-            this.$nextTick(()=>{
-                var i = $(this.$el).find('.sk-order-now input');
-                i.css({'text-align': 'right'});
-                i.trigger('focus');
-            });
-        },
-        on_order2(a){
+        on_order(a){
             const ci = this.skidos.columnIndexes;
             const keys = Object.keys(ci);
             var s, n, _a = {};
@@ -160,19 +141,6 @@ export default {
                                 name: 'order',
                                 params: {store: this.store.id, order: _a.id}
             });
-        },
-        do_order(){
-            this.order.valid = !isNaN(parseFloat(this.order.n));
-            if (!this.order.valid){
-                return;
-            }
-            this.order.loading = true;
-            setTimeout(()=>{
-                this.order.loading = false;
-                this.order.id = null;
-                app.msg({'text':'Эта функция еще не реализована',color:'warning'});
-            }, 1000);
-            
         }
     },
     mounted(){
@@ -217,7 +185,6 @@ export default {
                 this.skidos.data.map((a) => {
                     const id = a[ci["userpromoactions.id"]],
                           img = a[ci["userpromoactions.promoimage"]];
-                    const ordering = (!$utils.isEmpty(this.order.id)&& id === this.order.id);
                     var dates = '';
                     if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
                         var d = new Date(a[ci["userpromoactions.enddt"]]);
@@ -227,12 +194,16 @@ export default {
                     return h('v-list-item', {
                                 key: 'sk-' + id,
                                 on: {click: ()=>{
-                                    this.on_order2(a);
+                                    this.on_order(a);
                                 }}
                             }, [
                                 h('v-list-item-icon', {class:{"mr-3": true}}, [
                                     (!!img) 
-                                        ? h('v-img',{props: {src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref}})
+                                        ? h('v-img',{props: {
+                                                                src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref,
+                                                                'max-height': 86,
+                                                                contain: true
+                                                            }})
                                         : null,
                                     ($utils.isEmpty(dates))
                                         ? null
@@ -250,49 +221,14 @@ export default {
                                             $utils.isEmpty(a[ci["userpromoactions.oldprice"]])
                                                 ? null
                                                 : h('span', {class:{'sk-old':true}}, a[ci["userpromoactions.oldprice"]])
-                                        ),
-                                        ordering 
-                                            ? null 
-                                            : h('v-btn', {
-                                                props:{
-                                                    'x-small': true,
-                                                    rounded: true,
-                                                    dark: true,
-                                                    color:'#ad0900',
-                                                    outlined: true
-                                                },
-                                                class:{'sk-order': true},
-                                                on: {click:()=>{this.on_order(id);}}
-                                            }, 'заказать')
-                                    ]),
-                                    $utils.isEmpty(a[ci["userpromoactions.promoproducer"]])
-                                        ? null
-                                        : h('div', {class: {'sk-produ': true}}, a[ci["userpromoactions.promoproducer"]]),
-                                    ordering 
-                                        ? h('div',{class:{'sk-order-now':true}}, [
-                                            'количество: ',
-                                            h('v-text-field', {props: {
-                                                clearable: true,
-                                                autofocus: true,
-                                                value: this.order.n,
-                                                error: !this.order.valid
-                                            }}),
-                                            h('v-btn', {
-                                                props:{
-                                                    'x-small': true,
-                                                    rounded: true,
-                                                    dark: true,
-                                                    color: 'primary',
-                                                    outlined: true,
-                                                    loading: this.order.loading
-                                                },
-                                                class:{'sk-order': true},
-                                                on: {click:this.do_order}
-                                            }, 'заказать')
-                                        ])
-                                        : null
+                                        )]),
+                                        $utils.isEmpty(a[ci["userpromoactions.promoproducer"]])
+                                            ? null
+                                            : h('div', {class: {'sk-produ': true}}, a[ci["userpromoactions.promoproducer"]])
+                                ]),
+                                h('v-list-item-action', [
+                                    h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-right" />'}})
                                 ])
-                                
                     ]);
                 })
             ]));
@@ -388,6 +324,13 @@ export default {
                 & input{
                     text-align: right !important;
                 }
+            }
+        }
+        & .v-list-item__action{
+            & svg{
+                color: lighten($gray-color, 20%);
+                width: 24px;
+                height: 24px;
             }
         }
     }
