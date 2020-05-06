@@ -1,26 +1,15 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import active from '@/store/modules/active';
 import profile from '@/store/modules/profile';
 import settings from '@/store/modules/settings';
 
 Vue.use(Vuex);
 
 const state = {
-  notification: undefined
 };
 
 const mutations = {
-  setNotification(state, payload = {}) {
-    const {
-      title = 'Возникла проблема',
-      message = 'Повторите запрос позже.'
-    } = payload;
-
-    state.notification = {title, message};
-  },
-  removeNotification(state) {
-    state.notification = undefined;
-  }
 };
 
 const actions = {};
@@ -29,6 +18,7 @@ const getters = {
 };
 
 const modules = {
+    active,
     profile,
     settings
 };

@@ -146,6 +146,21 @@ export default {
                 i.trigger('focus');
             });
         },
+        on_order2(a){
+            const ci = this.skidos.columnIndexes;
+            const keys = Object.keys(ci);
+            var s, n, _a = {};
+            keys.map((key)=>{
+                n = key.lastIndexOf('.');
+                s = (n < 0) ? key : key.substr(n + 1);
+                _a[s] = a[ci[key]];
+            });
+            this.$store.commit('active/setAction', _a);
+            this.$router.push({
+                                name: 'order',
+                                params: {store: this.store.id, order: _a.id}
+            });
+        },
         do_order(){
             this.order.valid = !isNaN(parseFloat(this.order.n));
             if (!this.order.valid){
@@ -210,7 +225,10 @@ export default {
                     }
                     
                     return h('v-list-item', {
-                                key: 'sk-' + id
+                                key: 'sk-' + id,
+                                on: {click: ()=>{
+                                    this.on_order2(a);
+                                }}
                             }, [
                                 h('v-list-item-icon', {class:{"mr-3": true}}, [
                                     (!!img) 

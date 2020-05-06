@@ -6,6 +6,7 @@ import ViewMain    from '@/views/main';
 import ViewStores  from '@/views/stores';
 import ViewStore   from '@/views/store';
 import ViewProfile from '@/views/profile';
+import ViewOrder   from '@/views/order';
 import store from '@/store';
 
 /**
@@ -77,6 +78,17 @@ const router = new Router({
         path: '/store/:id',
         name: 'store',
         component: ViewStore,
+        props: true,
+        meta: {
+            showAppBar: false,
+            showNavi: false
+        },
+        beforeEnter: isAuth
+      },
+      {
+        path: '/store/:store/order/:order',
+        name: 'order',
+        component: ViewOrder,
         props: true,
         meta: {
             showAppBar: false,
