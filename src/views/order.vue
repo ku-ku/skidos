@@ -58,6 +58,9 @@ export default {
         };
     },
     computed: {
+        user(){
+            return this.$store.state.profile.user;
+        },
         prod(){
             return this.$store.state.active.action;
         },
@@ -73,7 +76,6 @@ export default {
         this.$nextTick(()=>{
             var i = $(this.$el).find('.sk-choice input');
             i.css({'text-align': 'center'});
-            i.trigger('focus');
             this.state = modes.OM_READY;
         });
     },
@@ -104,7 +106,8 @@ export default {
         }
     },
     render(h){
-        const prod = this.prod;
+        const prod = this.prod,
+              accent = 'red darken-4';
         return h('v-card', {
             key: 'ord-' + prod.id,
             class: {'sk-order': true /*, 'fill-height': true*/},
@@ -122,18 +125,17 @@ export default {
                                 }}, [
                         h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-left" />'}})
                     ]),
-                    h('h3', prod.mainorgname),
-                    h('v-img', {
-                        props: {
-                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.magaz.brandlogo.ref,
-                            width: 48,
-                            'max-width': 48,
-                            height: 48,
-                            'max-height': 48
-                            
-                        }
-                    })
+                    h('h3', prod.mainorgname)
                 ]),
+                /* h('v-img', {
+                    props: {
+                        src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.magaz.brandlogo.ref,
+                        width: 96,
+                        'max-width': 96,
+                        height: 96,
+                        'max-height': 96
+                    }, class: {'sk-logo': true}
+                }),*/
                 h('v-img', {props: {
                         'max-height': 240,
                         contain: true,
@@ -149,13 +151,12 @@ export default {
                     h('v-btn',  {props: {
                                             'x-small': true,
                                             rounded: true,
-                                            color:'default',
+                                            color:'grey darken-1',
                                             outlined: true
                                         },
                                  on: {click: ()=>{this.pm(false);}}
                     }, '-'),
                     h('v-text-field', {props: {
-                        autofocus: true,
                         value: this.n,
                         color: 'default',
                         error: !this.valid
@@ -163,7 +164,7 @@ export default {
                     h('v-btn',  {props: {
                                             'x-small': true,
                                             rounded: true,
-                                            color:'default',
+                                            color:'grey darken-1',
                                             outlined: true
                                         },
                                  on: {click: ()=>{this.pm(true);}}
@@ -172,15 +173,15 @@ export default {
                 h('div', {class:{'sk-price': true}}, this.totals + ' руб.'),
                 h('div', {class:{'sk-days': true}}, [
                     h('v-btn', {props: {
-                                            outlined: true, rounded: true, 'x-small': true,
-                                            width: '8rem', color: 'default', 'input-value': this.today
+                                            outlined: true, rounded: true, 'small': true,
+                                            width: '8rem', color: this.today ? accent : 'default', 'input-value': this.today
                                        },
                                 class: {'mr-3': true},
                                 on: {click: ()=>{this.day(true);}}
                                 }, 'сегодня'),
                     h('v-btn', {props: {
-                                            outlined: true, rounded: true, 'x-small': true,
-                                            width: '8rem', color: 'default', 'input-value': !this.today
+                                            outlined: true, rounded: true, 'small': true,
+                                            width: '8rem', color: this.today ? 'default' : accent, 'input-value': !this.today
                                        },
                                 on: {click: ()=>{this.day(false);}}
                                 }, 'завтра')
@@ -188,25 +189,41 @@ export default {
                 h('div', {class:{'sk-times': true}}, [
                     h('v-btn', {props: {
                                             outlined: true, rounded: true, 'x-small': true,
-                                            width: 'auto', color: 'default', 'input-value': (this.time===times.TM_AM)
+                                            width: 'auto', 
+                                            color: (this.time===times.TM_AM) ? accent : 'default', 
+                                            'input-value': (this.time===times.TM_AM)
                                        },
                                 class: {'mr-3': true},
                                 on: {click: ()=>{this.time = times.TM_AM;}}
                                 }, '8:00 - 12:00'),
                     h('v-btn', {props: {
                                             outlined: true, rounded: true, 'x-small': true,
-                                            width: 'auto', color: 'default', 'input-value': (this.time===times.TM_PM)
+                                            width: 'auto', 
+                                            color: (this.time===times.TM_PM) ? accent : 'default', 
+                                            'input-value': (this.time===times.TM_PM)
                                        },
                                 class: {'active': this.today, 'mr-3': true},
                                 on: {click: ()=>{this.time = times.TM_PM;}}
                                 }, '12:00 - 18:00'),
                     h('v-btn', {props: {
                                             outlined: true, rounded: true, 'x-small': true,
-                                            width: 'auto', color: 'default', 'input-value': (this.time===times.TM_EV)
+                                            width: 'auto', 
+                                            color: (this.time===times.TM_EV) ? accent : 'default', 
+                                            'input-value': (this.time===times.TM_EV)
                                        },
                                 class: {'active': this.today},
                                 on: {click: ()=>{this.time = times.TM_EV;}}
                                 }, '18:00 - 21:00')
+                ]),
+                h('div', {class:{'sk-addr':true}}, [
+                    h('svg', {attrs: {viewBox:"0 0 384 512"}, domProps:{innerHTML: '<use xlink:href="#ico-map-marker" />'}}), 
+                    'Адрес доставки: ', 
+                    ((this.user.adds)&&!$utils.isEmpty(this.user.adds.addrstring))
+                        ? this.user.adds.addrstring 
+                        : h('span', [
+                                        'Вы можете указать в',
+                                        h('v-btn', {props:{text: true, small: true, to:{name:'profile'}}}, 'настройках профиля')
+                            ])
                 ]),
                 h('v-btn',  {props: {
                                         rounded: true,
@@ -216,7 +233,8 @@ export default {
                                         width: '12rem',
                                         loading: (this.state === modes.OM_ORDER)
                                     },
-                             on: {click: this.do_order}
+                             on: {click: this.do_order},
+                             class: {'mt-5': true}
                 }, 'заказать')
             ])
         ]);
@@ -229,6 +247,7 @@ export default {
     .sk-order{
         color: $gray-color;
         padding: 1rem;
+        height: 100%;
         & .sk-top-bar{
             padding: 1rem;
             position: absolute;
@@ -237,7 +256,7 @@ export default {
             left: 0;
             width: 100%;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             & .v-btn{
                 border-radius: 50%;
@@ -259,18 +278,21 @@ export default {
             }
             & h3{
                 font-weight: 400;
-                font-size: 1.125rem;
+                font-size: 1.5rem;
                 white-space: nowrap;
                 overflow: hidden; 
                 text-overflow: ellipsis;
             }
-            & .v-image{
-                border: #fff;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.18);
-                border-radius: 50%;
-                & .v-image__image{
-                    background-size: cover;
-                }
+        }
+        & .sk-logo{
+            border: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+            border-radius: 0 0 0 500px;
+            position: absolute;
+            right: 0;
+            top: 0;
+            & .v-image__image{
+                background-size: cover;
             }
         }
         & .v-card__title{
@@ -292,19 +314,19 @@ export default {
                 align-items: center;
                 justify-content: center;
                 & .v-btn{
-                    width: 36px;
-                    height: 36px;
-                    min-width: 36px;
-                    line-height: 36px;
-                    font-size: 1.25rem;
+                    width: 46px;
+                    height: 46px;
+                    min-width: 46px;
+                    line-height: 46px;
+                    font-size: 1.75rem;
                     border-radius: 500px;
                     padding: 0;
                     box-shadow: 0 0 4px rgba(0,0,0,0.18);
                 }
                 & .v-text-field{
-                    width: 3rem;
-                    max-width: 3rem;
-                    margin: 0 1rem;
+                    width: 4rem;
+                    max-width: 4rem;
+                    margin: 0 2rem;
                     & input{
                         text-align: center;  
                     }
@@ -319,6 +341,17 @@ export default {
             }
             & .sk-days, & .sk-times{
                 margin-bottom: 1.5rem;
+                display: flex;
+                flex-wrap: nowrap;
+                flex-direction: row;
+                justify-content: space-around;
+            }
+            & .sk-addr{
+                & svg{
+                    width: 18px;
+                    height: 18px;
+                    margin-right: 0.25rem;
+                }
             }
         }
     }

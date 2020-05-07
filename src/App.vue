@@ -100,6 +100,11 @@ export default {
         pingFail(){
             this.$router.replace({name: 'signin'});
         }
+    },
+    watch: {
+        user(val){
+            console.log('APP: user:', val);
+        }
     }
 };
 </script>

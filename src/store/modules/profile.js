@@ -47,6 +47,9 @@ const mutations = {
     }, 10*60*1000);
     console.log('Ping timer set #', state._hTimer);
   },
+  setAdds: function(state, adds){
+      state.user.adds = adds;
+  },
   removeCredentials(state) {
     state.user = {
       login: null,
@@ -58,7 +61,7 @@ const mutations = {
 
 const actions = {
     login(store, payload) {
-        const { commit } = store;
+        const { commit, dispatch } = store;
         const { user } = payload;
         const promise = (resolve, reject) => {
             /**
@@ -69,6 +72,7 @@ const actions = {
                 if (res.result) {
                     res.result.password = user.password;
                     commit('setSubject', res.result);
+                    dispatch('readAdds');
                     resolve(res);
                 } else {
                     reject(res.error);
@@ -93,9 +97,31 @@ const actions = {
                 .fail(onFail);
         };
         return new Promise(promise);
-  },
+  },    //login
+  async readAdds(store){
+        if ((!!store.state.user)&&(!!store.state.user.adds)){
+            return;
+        }
+        const opts = {
+              type: 'core-read',
+              query: 'sin2:/v:b841fde1-394a-4ab1-8ca7-48446f58c27e?id=' 
+                      + store.state.user.id + '&fields=sscusersadds.addrstring,sscusersadds.email,sscusersadds.phone'
+        }, 
+        url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
+        try {
+            var res = await $http.post(url, opts);
+            if ((!!res.result)
+                && (res.result.data.length>0)){
+                store.commit('setAdds', $utils.sin2obj(res.result.columnIndexes, res.result.data[0]));
+            } else {
+                throw 'No user adds #' + store.state.user.id;
+            }
+        }catch(e){
+            console.log('ERR on user', e);
+        }
+  },    //readAdds
   check: function(store) {
-    const {commit} = store;
+    const {commit, dispatch} = store;
     console.log('chk: ', state.user);
     const promise = (resolve, reject) => {
         /**
@@ -106,6 +132,7 @@ const actions = {
             if ((res)&&(res.result)){
                 commit('setSubject', res.result);
                 commit('setFlag', {isAuthenticated:true});
+                dispatch('readAdds');
                 resolve(res);
             } else {
                 reject(res.error);
@@ -134,9 +161,6 @@ const actions = {
              .catch(onFail);
     };
     return new Promise(promise);
-  },
-  check2(){
-      
   },
   logout(ctx) {
     const {commit} = ctx;
@@ -179,9 +203,6 @@ const getters = {
     return state.user.login
         ? state.user.login
         : '';
-  },
-  password(state) {
-    return state.user.password ? $utils.b64ToUtf8(state.user.password) : '';
   }
 };
 

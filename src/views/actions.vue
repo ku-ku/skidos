@@ -194,7 +194,7 @@ export default {
                     return h('v-list-item', {
                                 key: 'sk-' + id,
                                 on: {click: ()=>{
-                                    this.on_order(a);
+                                    (!!this.store.hasonline) ? this.on_order(a) : void(0);
                                 }}
                             }, [
                                 h('v-list-item-icon', {class:{"mr-3": true}}, [
@@ -226,9 +226,11 @@ export default {
                                             ? null
                                             : h('div', {class: {'sk-produ': true}}, a[ci["userpromoactions.promoproducer"]])
                                 ]),
-                                h('v-list-item-action', [
-                                    h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-right" />'}})
-                                ])
+                                (!!this.store.hasonline) 
+                                        ? h('v-list-item-action', [
+                                            h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-right" />'}})
+                                        ])
+                                        : null
                     ]);
                 })
             ]));

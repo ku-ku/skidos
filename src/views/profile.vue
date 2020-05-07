@@ -65,7 +65,16 @@
                         >
                             <svg slot="prepend" viewBox="0 0 320 512"><use xlink:href="#ico-mobile" /></svg>
                         </v-text-field>
-                        <a href='//моикарты.рф/static/terms_of_use.html' target="_blank">правила использования данного приложения</a>
+                        <v-text-field
+                            label="адрес"
+                            name=addr
+                            type="text"
+                            v-model="addr"
+                            messages="адрес, используемый для доставки"
+                        >
+                            <svg slot="prepend" viewBox="0 0 384 512"><use xlink:href="#ico-map-marker" /></svg>
+                        </v-text-field>
+                        <a class="mt-3 d-block" href='//моикарты.рф/static/terms_of_use.html' target="_blank">правила использования данного приложения</a>
                         <v-alert :type="alert"  class="my-5" v-show="!/^$/.test(error)">
                             <div v-html="error"></div>
                         </v-alert>
@@ -112,6 +121,7 @@ export default {
         emailRules: [
             v => /.+@.+/.test(v) || 'укажите корректный e-mail адрес'
         ],
+        addr: '',
         error: '',
         agree: false,
         alert: 'warning',
@@ -153,6 +163,7 @@ export default {
 "sscusers.title": 3
 "sscusersadds.email": 12
 "sscusersadds.phone": 13
+sscusersadds.addrstring                    
  */                
                 this.login = data[ci["sscusers.name"]];
                 this.title = $utils.isEmpty(data[ci["sscusers.title"]]) ? this.login : data[ci["sscusers.title"]];
@@ -160,6 +171,7 @@ export default {
                 this.pwd2= stub_pwd;
                 this.tel = data[ci["sscusersadds.phone"]];
                 this.eml = data[ci["sscusersadds.email"]];
+                this.addr= data[ci["sscusersadds.addrstring"]];
                 this.error='';
                 this.agree=false;
                 if ($utils.isEmpty(this.login)){
@@ -203,12 +215,13 @@ export default {
             contentType:'application/json;charset=utf-8',
             data: JSON.stringify({client: 
                 {   
-                    "id": this.userId,
-                    "name": this.login,
-                    "title": this.title,
-                    "password": (this.pwd === stub_pwd) ? null : this.pwd,
-                    "email": this.eml,
-                    "phone":this.tel
+                    "id":         this.userId,
+                    "name":       this.login,
+                    "title":      this.title,
+                    "password":  (this.pwd === stub_pwd) ? null : this.pwd,
+                    "email":      this.eml,
+                    "phone":      this.tel,
+                    "addrstring": this.addr
                 }
             })
         };

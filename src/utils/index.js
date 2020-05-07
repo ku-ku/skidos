@@ -145,6 +145,17 @@ function uuidv4() {
   });
 }
 
+function sin2obj(cols, data){
+    const keys = Object.keys(cols);
+    var s, n, o = {};
+    keys.map((key)=>{
+        n = key.lastIndexOf('.');
+        s = (n < 0) ? key : key.substr(n + 1);
+        o[s] = data[cols[key]];
+    });
+    return o;
+}
+
 export {
   isEmpty,
   formatDate,
@@ -153,6 +164,7 @@ export {
   utf8ToB64,
   b64ToUtf8,
   uuidv4,
+  sin2obj,
   lsRead,
   lsSave
 };
