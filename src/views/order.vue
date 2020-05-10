@@ -8,15 +8,16 @@ import {
         VImg,
         VBtn,
         VSubheader,
-        VSkeletonLoader,
-        VTextField
+        VTextField,
+        VAlert
        } from 'vuetify/lib';
 const modes = {
-    OM_ERROR: -1,
-    OM_NONE: 0,
+    OM_ERROR:  -1,
+    OM_NONE:    0,
     OM_LOADING: 1,
-    OM_READY: 2,
-    OM_ORDER: 3
+    OM_READY:   2,
+    OM_ORDER:   3,
+    OM_SUCCESS: 4
 };
 const times = {
     TM_AM: 0,
@@ -35,8 +36,8 @@ export default {
         VImg,
         VBtn,
         VSubheader,
-        VSkeletonLoader,
-        VTextField
+        VTextField,
+        VAlert
     },
     props: {
         order: {
@@ -75,7 +76,7 @@ export default {
     mounted(){
         this.$nextTick(()=>{
             var i = $(this.$el).find('.sk-choice input');
-            i.css({'text-align': 'center'});
+            i.css({'text-align': 'center', 'max-height': '3rem'});
             this.state = modes.OM_READY;
         });
     },
@@ -93,16 +94,68 @@ export default {
         day(today){
             this.today = today;
         },
-        do_order(){
+        async do_order(){
             this.valid = !isNaN(parseFloat(this.n));
             if (!this.valid){
                 return;
             }
             this.state = modes.OM_ORDER;
-            setTimeout(()=>{
+            
+            const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
+                  id_to_ord = $utils.uuidv4();
+            var dt = new Date();
+            dt.setMilliseconds(0);
+            dt.setSeconds(0);
+            dt.setMinutes(0);
+            if (!this.today){
+                dt.setDate(dt.getDate() + 1);
+            }
+            switch(this.time){
+                case times.TM_AM:
+                    dt.setHours(12);
+                    break;
+                case times.TM_PM:
+                    dt.setHours(18);
+                    break;
+                case times.TM_EV:
+                    dt.setHours(21);
+                    break;
+            }
+      
+            const opts = {
+                type: 'core-create',
+                query: 'sin2:/v:17474bad-e636-4f67-9258-7d153d6a40ad',
+                params: [
+                    {id: 'id', type:'id', value: id_to_ord},
+                    {id: 'regDt', type: 'dateTime', value: new Date()},
+                    {id: 'deliveryDate', type: 'dateTime', value: dt},
+                    {id: 'tenantID', type:'id', value: $utils.isEmpty(this.prod.orgid) ? this.prod.mainorgid : this.prod.orgid}, 
+                    {id: 'productID', type:'id', value: this.prod.id},
+                    {id: 'userID', type:'id', value: this.$store.state.profile.user.id},
+                    {id: 'Amount', type:'float', value: parseFloat(this.n)},
+                    {id: 'operSum', type:'float', value: this.totals}
+                ]
+            };
+            
+            try{
+                var res = await $http.post(url, opts);
+                console.log(res);
+                if (!!res.error){
+                    throw res.error;
+                }
+                this.state = modes.OM_SUCCESS;
+                this.$nextTick(() => {
+                    this.$vuetify.goTo(this.$refs.alert, {
+                        duration: 300,
+                        offset: 0,
+                        easing: 'easeInOutCubic'
+                    });
+                });
+            }catch(e){
                 this.state = modes.OM_READY;
-                app.msg({'text':'Эта функция еще не реализована',color:'warning'});
-            }, 1000);
+                console.log('ERR order:', e);
+                app.msg({'text':'Заказ не оформлен - попробуйте еще раз',color:'warning'});
+            }
         }
     },
     render(h){
@@ -127,15 +180,6 @@ export default {
                     ]),
                     h('h3', prod.mainorgname)
                 ]),
-                /* h('v-img', {
-                    props: {
-                        src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.magaz.brandlogo.ref,
-                        width: 96,
-                        'max-width': 96,
-                        height: 96,
-                        'max-height': 96
-                    }, class: {'sk-logo': true}
-                }),*/
                 h('v-img', {props: {
                         'max-height': 240,
                         contain: true,
@@ -159,7 +203,12 @@ export default {
                     h('v-text-field', {props: {
                         value: this.n,
                         color: 'default',
-                        error: !this.valid
+                        error: !this.valid,
+                        'hide-details': true,
+                        'single-line': true
+                    }, style:{
+                        'font-size': '2rem',
+                        'height': '2.5rem'
                     }}),
                     h('v-btn',  {props: {
                                             'x-small': true,
@@ -225,7 +274,50 @@ export default {
                                         h('v-btn', {props:{text: true, small: true, to:{name:'profile'}}}, 'настройках профиля')
                             ])
                 ]),
-                h('v-btn',  {props: {
+                (this.state === modes.OM_SUCCESS) 
+                    ? h('v-alert', {props: {
+                                        width: '100%',
+                                        dense: true,
+                                        dark: true,
+                                        color: 'primary'
+                                    },  
+                                        class: {'mt-5': true},
+                                        ref: "alert"
+                                    }
+                                , [
+                        h('svg', {attrs: {viewBox:"0 0 512 512"}, domProps:{innerHTML: '<use xlink:href="#ico-chk-circle" />'}}),
+                        'ВАШ ЗАКАЗ ОФОРМЛЕН, ',
+                        h('div', {class:{'small':true, 'my-3': true}}, 'ожидайте сообщение о его готовности'),
+                        h('div', {class:{'text-center':true, }}, [
+                            h('v-btn', {
+                                props: {
+                                            dense: true,
+                                            dark: true,
+                                            color: 'primary',
+                                            small: true,
+                                            rounded: true
+
+                                }, on: {
+                                    click: ()=>{this.$router.go(-1);}
+                                }
+                            }, [
+                                h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-left" />'}}),
+                                ' назад к списку'
+                            ]),
+                            h('div', {class:{'small':true, 'my-3': true}}, [
+                              'историю заказов Вы можете посмотреть в разделе',
+                                h('v-btn', {
+                                    props: {
+                                                'x-small': true,
+                                                text: true,
+                                                to: '/orders'
+                                            }
+                                        }, '«мои заказы»'
+                                )
+                            ])
+                        ])
+                    ])
+                    : h('v-btn',  {props: {
                                         rounded: true,
                                         dark: true,
                                         outlined: true,
@@ -235,7 +327,7 @@ export default {
                                     },
                              on: {click: this.do_order},
                              class: {'mt-5': true}
-                }, 'заказать')
+                        }, 'заказать')
             ])
         ]);
     }
@@ -311,7 +403,7 @@ export default {
             flex-direction: column;
             & .sk-choice{
                 display: flex;
-                align-items: center;
+                align-items: baseline;
                 justify-content: center;
                 & .v-btn{
                     width: 46px;
@@ -351,6 +443,22 @@ export default {
                     width: 18px;
                     height: 18px;
                     margin-right: 0.25rem;
+                }
+            }
+        }
+        & .v-alert{
+            svg{
+                width: 18px;
+                height: 18px;
+                margin-right: 0.5rem;
+            }
+            & .v-alert__wrapper{
+                display: block;
+                & .v-btn{
+                   margin: 0.5rem auto;
+                }
+                & .small{
+                    font-size: 0.7rem;
                 }
             }
         }

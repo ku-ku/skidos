@@ -98,6 +98,18 @@ function formatAddress(address) {
   return result.replace(/,\s$/, '');
 }
 
+function short(s){
+    var res, n = s.indexOf(' ');
+    if ( n > 0 ){
+        res = s.charAt(0) + s.charAt(n + 1);
+    } else if (s.length > 2){
+        res = s.substr(0, 2);
+    } else {
+        res = s;
+    }
+    return res.toUpperCase();
+}
+
 /**
  * Convert object to encode body for 'application/x-www-form-urlencoded'
  * request
@@ -160,6 +172,7 @@ export {
   isEmpty,
   formatDate,
   formatAddress,
+  short,
   encode,
   utf8ToB64,
   b64ToUtf8,

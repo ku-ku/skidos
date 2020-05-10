@@ -19,8 +19,6 @@ import {
        } from 'vuetify/lib';
 import { Swiper, SwiperSlide, directive } from 'vue-awesome-swiper';
 import 'swiper/css/swiper.css';
-import moment from 'moment';
-
     
 export default {
     name: 'SkActions',
@@ -214,15 +212,14 @@ export default {
                                         a[ci["userpromoactions.promogoods"]]
                                     ]),
                                     h('div',{class:{'sk-price': true}}, [
-                                        h('div',
-                                            $utils.isEmpty(a[ci["userpromoactions.newprice"]])
-                                                ? null
-                                                : a[ci["userpromoactions.newprice"]],
-                                            $utils.isEmpty(a[ci["userpromoactions.oldprice"]])
-                                                ? null
-                                                : h('span', {class:{'sk-old':true}}, a[ci["userpromoactions.oldprice"]])
-                                        )]),
-                                        $utils.isEmpty(a[ci["userpromoactions.promoproducer"]])
+                                        $utils.isEmpty(a[ci["userpromoactions.newprice"]])
+                                            ? null
+                                            : a[ci["userpromoactions.newprice"]],
+                                        $utils.isEmpty(a[ci["userpromoactions.oldprice"]])
+                                            ? null
+                                            : h('span', {class:{'sk-old': true}}, a[ci["userpromoactions.oldprice"]])
+                                    ]),
+                                    $utils.isEmpty(a[ci["userpromoactions.promoproducer"]])
                                             ? null
                                             : h('div', {class: {'sk-produ': true}}, a[ci["userpromoactions.promoproducer"]])
                                 ]),
@@ -302,7 +299,7 @@ export default {
             color: $red-color;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             & .sk-old {
                 font-size: 0.85rem;
                 display: inline-block;

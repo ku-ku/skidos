@@ -7,6 +7,7 @@ import ViewStores  from '@/views/stores';
 import ViewStore   from '@/views/store';
 import ViewProfile from '@/views/profile';
 import ViewOrder   from '@/views/order';
+import ViewOrders  from '@/views/orders';
 import store from '@/store';
 
 /**
@@ -90,6 +91,16 @@ const router = new Router({
         name: 'order',
         component: ViewOrder,
         props: true,
+        meta: {
+            showAppBar: false,
+            showNavi: false
+        },
+        beforeEnter: isAuth
+      },
+      {
+        path: '/orders',
+        name: 'orders',
+        component: ViewOrders,
         meta: {
             showAppBar: false,
             showNavi: false

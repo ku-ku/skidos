@@ -41,7 +41,8 @@ export default {
         return {
             loading: false,
             error:   null,
-            fils:    null
+            $fills:  null,
+            coords:  null
         };
     },
     methods: {
@@ -61,7 +62,7 @@ export default {
                     throw res.error;
                 }
                 if ((!!res.result.data) && (res.result.data.length>0)){
-                    this.fils = res.result;
+                    this.$fills = res.result;
                 } else if (!self) {
                     this.refresh(true);
                 }
@@ -71,6 +72,9 @@ export default {
             this.loading = false;
         },
         isOpen(st, end){
+            if ('00:00'===st){
+                return true;
+            }
             const now = new Date();
             var tt;
             tt = (st.indexOf(":")<0) ? [0, 0] : st.split(":");
@@ -84,14 +88,51 @@ export default {
             );
             console.log('times:', now, dt1, dt2);
             return now.getTime() >= dt1.getTime() && now.getTime() <= dt2.getTime();
-        }
+        },
+        dist: function(ll) {
+            if ( (!this.coords) || (!ll.lat) || (!ll.lon) ){
+                return -1;
+            }
+            var d = Math.sin(ll.lat * Math.PI) * Math.sin(this.coords.latitude * Math.PI) +
+                    Math.cos(ll.lat * Math.PI) * Math.cos(this.coords.latitude * Math.PI) * Math.cos(Math.abs(ll.lon - this.coords.longitude) * Math.PI);
+                    // Return the distance in meters
+            return Math.acos(d) * 6370981.162;
+        }     //dist
+
     },
     created() {
+        if(!!navigator.geolocation){
+            navigator.geolocation.getCurrentPosition((pos)=>{
+                this.coords = pos.coords;
+            }, (e)=>{
+                console.log('NAVI ERR:', e);
+            }, {
+
+            }, {timeout:5000, enableHighAccuracy:true});
+        }
         this.refresh(false);
     },
     computed: {
         hasFils(){
-            return ((!!this.fils) && (!!this.fils.data) && (this.fils.data.length>0));
+            return ((!!this.$fills) && (!!this.$fills.data) && (this.$fills.data.length>0));
+        },
+        fills(){
+            if (!!this.coords){
+                const ci = this.$fills.columnIndexes;
+                const distIndex = ci["ssctenants.name"]; //TODO: "distance"
+/*                
+ssctenantsadds.lat	
+ssctenantsadds.lon
+*/
+                this.$fills.data.map((f)=>{
+                    var ll = {
+                        lat: f[ci["ssctenantsadds.lat"]],
+                        lon: f[ci["ssctenantsadds.lon"]]
+                    };
+                    f[distIndex] = this.dist(ll);
+                });
+            }
+            return this.$fills;
         }
     },
     render: function(h){
@@ -107,13 +148,16 @@ export default {
                 h('v-list-item', {props:{key:'sk-fils-nodata'},class:{'d-none':true}})  //stub
             );
         } else {
-            const ci = this.fils.columnIndexes,
+            const ci = this.$fills.columnIndexes,
                   now = new Date(); 
-            this.fils.data.map( (fil) => {
+            this.$fills.data.map( (fil) => {
                 var a = fil[ci["ssctenantsadds.location"]],
+                    title=fil[ci["ssctenants.title"]],
                     t = fil[ci["ssctenantsadds.phone"]],
                     st= fil[ci["ssctenantsadds.starttime"]],
                     end=fil[ci["ssctenantsadds.endtime"]],
+                    bc =fil[ci["ssctenantsadds.brandcolormain"]],
+                    
                     isOpen = true, 
                     tm = false;
                 const _fil = {
@@ -123,16 +167,29 @@ export default {
                                 : fil[ci["ssctenantsadds.fullname"]]
                 };
                 if (!$utils.isEmpty(st)){
-                    tm = st;
-                    if (!$utils.isEmpty(end)){
-                        tm += '-' + end;
-                        isOpen = this.isOpen(st, end);
+                    if ('00:00'===st){
+                        tm = 'круглосуточно';
+                        isOpen = true;
+                    } else {
+                        tm = st;
+                        if (!$utils.isEmpty(end)){
+                            tm += '-' + end;
+                            isOpen = this.isOpen(st, end);
+                        }
                     }
                 }    
                 childs.push( h('v-list-item', {props: {
-                    key:'sk-fil-' + fil[ci["ssctenants.id"]]
-                }}, [
+                        key:'sk-fil-' + fil[ci["ssctenants.id"]]
+                    },
+                    style:{'border-color': $utils.isEmpty(bc) ? '' : bc}
+                }, [
                     h('v-list-item-content', [
+                        $utils.isEmpty(title) 
+                            ? null
+                            : h('div', {
+                                            class:{'sk-title':true},
+                                            style:{'border-color': $utils.isEmpty(bc) ? '' : bc}
+                                       }, title),
                         h('v-row', [
                             h('v-col', {props:{cols:6}}, 
                                 (!!a) 
@@ -158,11 +215,9 @@ export default {
                                     ? null
                                     : h('a', {
                                                 attrs: {href:'tel:' + t, target:'_blank'},
-                                                class: {'sk-tel': true}
-                                            }, [
-                                        h('svg',{domProps: {innerHTML:'<use xlink:href="#ico-phone" />'}, attrs: {viewBox:'0 0 512 512'}}),
-                                        t
-                                    ])
+                                                class: {'sk-tel': true},
+                                                style: {'color': $utils.isEmpty(bc) ? '' : bc}
+                                            }, t)
                             ]),
                             h('v-col', {props: {cols:2}}, [
                                 h('v-btn', {
@@ -198,7 +253,19 @@ export default {
         & .v-list-item{
             border: 1px solid lighten($gray-color, 20%);
             border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+            margin-bottom: 2rem;
+            & .sk-title{
+                font-size: 0.7rem;
+                position: absolute;
+                color: $gray-color;
+                width: auto;
+                padding: 0.25rem 0.5rem;
+                border: 1px solid #ccc;
+                border-radius: 9px;
+                background: #fff;
+                top: -12px;
+            }
             & .sk-city{
                 font-size: 0.85rem;
                 font-weight: 300;
@@ -214,8 +281,8 @@ export default {
                 font-weight: bold;
                 white-space: nowrap;
                 & svg{
-                    width: 16px;
-                    height: 16px;
+                    width: 14px;
+                    height: 14px;
                     margin-right: 0.25rem;
                 }
             }
@@ -223,7 +290,7 @@ export default {
                 & svg{
                     width: 18px;
                     height: 18px;
-                    color: $blue-color;
+                    color: $gray-color;
                 }
             }
         

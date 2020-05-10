@@ -36,16 +36,7 @@ var StoreItem = {
     },
     computed:{
         short: function(){
-            var res, s = this.info[this.ci["ssctenants.title"]];
-            var n = s.indexOf(' ');
-            if ( n > 0 ){
-                res = s.charAt(0) + s.charAt(n + 1);
-            } else if (s.length > 2){
-                res = s.substr(0, 2);
-            } else {
-                res = s;
-            }
-            return res.toUpperCase();
+            return $utils.short(this.info[this.ci["ssctenants.title"]]);
         },      //short
         owner: function(){
             var _p = this.$parent;

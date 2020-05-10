@@ -424,6 +424,13 @@ export default {
                                             links
                             ]) );
                         }
+                        conte.push( h('v-btn', {props:{
+                            to: {name: 'orders'},
+                            text: true
+                        }, class: {'mt-3': true, 'sk-go-orders': true}}, [
+                            h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-bags" />'}, attrs: {viewBox:'0 0 576 512'}}),
+                            'история заказов'
+                        ]));
                         break;
                     case ST_MODE.chat:
                         conte.push( h('sk-chat', {
@@ -478,12 +485,12 @@ export default {
                                                     class: {'sk-take': true},
                                                     props: {outlined: true, loading: this.loading},
                                                     on:    {click: this.take_card}
-                                                }, 'Получить карту'),
+                                                }, 'Стать клиентом'),
                                     h('v-btn', {
                                                     class: {'sk-link': true},
                                                     props: {outlined: true, disabled: true}
                                                },
-                                    'Привязать')
+                                    'Привязать карту')
                             ]));
                         }
                         links.push( h('div', {
@@ -914,7 +921,14 @@ export default {
         }
     }
 
-    
+    .sk-go-orders{
+        & svg{
+            width: 1.35rem;
+            height: 1.35rem;
+            margin-right: 0.5rem;
+            color: $gray-color;
+        }
+    }
     .sk-has-chat{
         & .sk-store-brand{
             display: none;
