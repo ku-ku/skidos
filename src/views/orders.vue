@@ -124,6 +124,7 @@ export default {
                     childs.push(h('v-list', {props:{flat:true}}, [
                         this.ords.data.map((o)=>{
                             var img = o[ci["orderjournal.productid.promoimage"]];
+                            var wait= $utils.isEmpty(o[ci["orderjournal.tenantdate"]]);
                             return h('v-list-item', {
                                 key: 'ord-' + o[ci["orderjournal.id"]]
                             },[
@@ -137,15 +138,18 @@ export default {
                                         }})
                                     ]),
                                 h('v-list-item-content', [
-                                    h('v-list-item-title', o[ci["orderjournal.productid.promogoods"]]),
+                                    h('v-list-item-title', [
+                                        h('div', {class: {'sk-ten-dt': true, 'sk-wait': wait}}, [
+                                            wait ? h('svg', {attrs: {viewBox:"0 0 512 512"}, domProps:{innerHTML: '<use xlink:href="#ico-clock" />'}})
+                                                 : h('svg', {attrs: {viewBox:"0 0 512 512"}, domProps:{innerHTML: '<use xlink:href="#ico-chk-circle" />'}}),
+                                            wait ? 'в обработке' 
+                                                 : $utils.formatDate(o[ci["orderjournal.tenantdate"]], 'dd.MM.yyyy HH:mm')
+                                        ]),
+                                        o[ci["orderjournal.productid.promogoods"]]
+                                    ]),
                                     h('v-list-item-subtitle', {class:{'sk-dates': true}}, [
                                         h('div', {class: {'sk-reg': true}}, [
                                             $utils.formatDate(o[ci["orderjournal.regdt"]], 'dd.MM.yyyy HH:mm'),
-                                        ]),
-                                        h('div', {class: {'sk-ten': true}}, [
-                                            $utils.isEmpty(o[ci["orderjournal.tenantdate"]])
-                                                ? 'в обработке'
-                                                : $utils.formatDate(o[ci["orderjournal.tenantdate"]], 'dd.MM.yyyy HH:mm')
                                         ])
                                     ])
                                 ]),
@@ -239,6 +243,30 @@ export default {
                     display: flex;
                     align-items: center;
                }
+               & .sk-ten-dt{
+                    position: absolute;
+                    top: -12px;
+                    right: 1rem;
+                    font-size: 0.75rem;
+                    border-radius: 9px;
+                    border: 1px solid #ccc;
+                    color: $gray-color;
+                    width: auto;
+                    padding: 0.25rem 0.5rem;
+                    background: #fff;
+                    & svg{
+                        width: 0.75rem;
+                        height: 0.75rem;
+                        margin-right: 0.25rem;
+                        color: #01579B;
+                    }
+                    &.sk-wait{
+                        color: $red-color;
+                        & svg{
+                            color: $red-color;
+                        }
+                    }
+               }
                & .v-btn--fab{
                    & svg{
                        width: 18px;
@@ -249,8 +277,6 @@ export default {
             }
             & .sk-dates{
                font-size: 0.75rem;
-               display: flex;
-               justify-content: space-between;
             }
             & .sk-ammount{
                font-size: 1rem;

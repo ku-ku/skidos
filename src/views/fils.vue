@@ -41,8 +41,11 @@ export default {
         return {
             loading: false,
             error:   null,
-            $fills:  null,
-            coords:  null
+            fills:   null,
+            coords:  {
+                latitude: 45.058129,
+                longitude: 38.982569
+            }
         };
     },
     methods: {
@@ -62,7 +65,8 @@ export default {
                     throw res.error;
                 }
                 if ((!!res.result.data) && (res.result.data.length>0)){
-                    this.$fills = res.result;
+                    this.fills = res.result;
+                    this.sortByDist();
                 } else if (!self) {
                     this.refresh(true);
                 }
@@ -75,14 +79,22 @@ export default {
             if ('00:00'===st){
                 return true;
             }
+            if ($utils.isEmpty(st)||$utils.isEmpty(end)){
+                return true;
+            }
             const now = new Date();
-            var tt;
-            tt = (st.indexOf(":")<0) ? [0, 0] : st.split(":");
+            var tt = [0, 0];
+            if (st.indexOf){
+                tt = (st.indexOf(":")<0) ? [0, 0] : st.split(":");
+            }
             var dt1 = new Date(
                     now.getFullYear(), now.getMonth(), now.getDate(), tt[0], tt[1], 0
             );
-    
-            tt = (end.indexOf(":")<0) ? [23, 59] : end.split(":");
+            if (end.indexOf){
+                tt = (end.indexOf(":")<0) ? [23, 59] : end.split(":");
+            } else {
+                tt = [23, 59];
+            }
             var dt2 = new Date(
                     now.getFullYear(), now.getMonth(), now.getDate(), tt[0], tt[1], 0
             );
@@ -90,49 +102,73 @@ export default {
             return now.getTime() >= dt1.getTime() && now.getTime() <= dt2.getTime();
         },
         dist: function(ll) {
-            if ( (!this.coords) || (!ll.lat) || (!ll.lon) ){
+            if ( (!this.coords) || (!ll.latitude) || (!ll.longitude) ){
                 return -1;
             }
-            var d = Math.sin(ll.lat * Math.PI) * Math.sin(this.coords.latitude * Math.PI) +
-                    Math.cos(ll.lat * Math.PI) * Math.cos(this.coords.latitude * Math.PI) * Math.cos(Math.abs(ll.lon - this.coords.longitude) * Math.PI);
-                    // Return the distance in meters
-            return Math.acos(d) * 6370981.162;
-        }     //dist
-
+            //радиус Земли
+            const R = 6372795;
+            //перевод коордитат в радианы
+            var lat1 = this.coords.latitude * Math.PI / 180,
+                lat2 = ll.latitude * Math.PI / 180,
+                long1 = this.coords.longitude * Math.PI / 180,
+                long2 = ll.longitude * Math.PI / 180;
+                //вычисление косинусов и синусов широт и разницы долгот
+            var cl1 = Math.cos(lat1);
+            var cl2 = Math.cos(lat2);
+            var sl1 = Math.sin(lat1);
+            var sl2 = Math.sin(lat2);
+            var delta = long2 - long1;
+            var cdelta = Math.cos(delta);
+            var sdelta = Math.sin(delta);
+            //вычисления длины большого круга
+            var y = Math.sqrt(Math.pow(cl2 * sdelta, 2) + Math.pow(cl1 * sl2 - sl1 * cl2 * cdelta, 2));
+            var x = sl1 * sl2 + cl1 * cl2 * cdelta;
+            var ad = Math.atan2(y, x);
+            var dist = ad * R; //расстояние между двумя координатами в метрах
+            return dist;
+        },     //dist
+        sortByDist(){
+            if ((!!this.coords)&&(this.hasFils)){
+                const ci = this.fills.columnIndexes;
+                const distIndex = ci["ssctenantsadds.distance"];
+/*                
+ssctenantsadds.lat	
+ssctenantsadds.lon
+*/
+                this.fills.data.map((f)=>{
+                    var ll = {
+                        latitude:  f[ci["ssctenantsadds.lat"]],
+                        longitude: f[ci["ssctenantsadds.lon"]]
+                    };
+                    f[distIndex] = this.dist(ll);
+                });
+                var sorted = this.fills.data.sort((a, b)=>{
+                    if (!a[distIndex]){
+                        return 1;
+                    } else if (!b[distIndex]){
+                        return -1;
+                    } 
+                    return a[distIndex]<b[distIndex] ? -1 : 1;
+                });
+                this.fills.data = sorted;
+            }
+        }   //sortByDist
     },
     created() {
         if(!!navigator.geolocation){
             navigator.geolocation.getCurrentPosition((pos)=>{
                 this.coords = pos.coords;
+                this.sortByDist();
             }, (e)=>{
                 console.log('NAVI ERR:', e);
             }, {
-
             }, {timeout:5000, enableHighAccuracy:true});
         }
         this.refresh(false);
     },
     computed: {
         hasFils(){
-            return ((!!this.$fills) && (!!this.$fills.data) && (this.$fills.data.length>0));
-        },
-        fills(){
-            if (!!this.coords){
-                const ci = this.$fills.columnIndexes;
-                const distIndex = ci["ssctenants.name"]; //TODO: "distance"
-/*                
-ssctenantsadds.lat	
-ssctenantsadds.lon
-*/
-                this.$fills.data.map((f)=>{
-                    var ll = {
-                        lat: f[ci["ssctenantsadds.lat"]],
-                        lon: f[ci["ssctenantsadds.lon"]]
-                    };
-                    f[distIndex] = this.dist(ll);
-                });
-            }
-            return this.$fills;
+            return ((!!this.fills) && (!!this.fills.data) && (this.fills.data.length>0));
         }
     },
     render: function(h){
@@ -148,16 +184,16 @@ ssctenantsadds.lon
                 h('v-list-item', {props:{key:'sk-fils-nodata'},class:{'d-none':true}})  //stub
             );
         } else {
-            const ci = this.$fills.columnIndexes,
+            const ci = this.fills.columnIndexes,
                   now = new Date(); 
-            this.$fills.data.map( (fil) => {
+            this.fills.data.map( (fil) => {
                 var a = fil[ci["ssctenantsadds.location"]],
                     title=fil[ci["ssctenants.title"]],
-                    t = fil[ci["ssctenantsadds.phone"]],
-                    st= fil[ci["ssctenantsadds.starttime"]],
-                    end=fil[ci["ssctenantsadds.endtime"]],
-                    bc =fil[ci["ssctenantsadds.brandcolormain"]],
-                    
+                    t    = fil[ci["ssctenantsadds.phone"]],
+                    st   = fil[ci["ssctenantsadds.starttime"]],
+                    end  = fil[ci["ssctenantsadds.endtime"]],
+                    bc   = fil[ci["ssctenantsadds.brandcolormain"]],
+                    dist = fil[ci["ssctenantsadds.distance"]],
                     isOpen = true, 
                     tm = false;
                 const _fil = {
@@ -187,9 +223,14 @@ ssctenantsadds.lon
                         $utils.isEmpty(title) 
                             ? null
                             : h('div', {
-                                            class:{'sk-title':true},
-                                            style:{'border-color': $utils.isEmpty(bc) ? '' : bc}
-                                       }, title),
+                                            class: {'sk-title':true},
+                                            style: {'border-color': $utils.isEmpty(bc) ? '' : bc}
+                                }, [
+                                    title,
+                                    $utils.isEmpty(dist) || (dist < 0)
+                                        ? null
+                                        : h('span', {class:{'sk-dist': true}}, (dist < 1000) ? Math.round(dist) + 'м.' : Math.round(dist/1000) + 'км.')
+                                ]),
                         h('v-row', [
                             h('v-col', {props:{cols:6}}, 
                                 (!!a) 
@@ -265,6 +306,10 @@ ssctenantsadds.lon
                 border-radius: 9px;
                 background: #fff;
                 top: -12px;
+                & .sk-dist{
+                    display: inline-block;
+                    margin-left: 0.5rem;
+                }
             }
             & .sk-city{
                 font-size: 0.85rem;
