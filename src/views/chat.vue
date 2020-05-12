@@ -76,12 +76,15 @@ botmsgs.replmsg	7
  */    
     export default{
         name: 'SkChat',
+/*        
         props: {
             store: {
                type: Object,
                required: true
             }
         },
+* 
+*/
         data(){
             return {
                s: '',
@@ -105,6 +108,9 @@ botmsgs.replmsg	7
         computed: {
             hasMessages(){
                 return (!!this.msgs) && (this.msgs.data) && (this.msgs.data.length>0);
+            },
+            store(){
+                return this.$store.state.active.store;
             },
             userId(){
                 return this.$store.state.profile.user.id;
@@ -158,6 +164,7 @@ botmsgs.replmsg	7
             },
             back(){
                 this.$emit('exit');
+                this.$router.go(-1);
             },
             async load(id){
                 const opts = {

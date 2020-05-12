@@ -71,7 +71,7 @@ export default {
         mode: ST_MODE.def,
         scroll: {
             hScroll: null,
-            hTimer: null
+            hTimer: null    //TODO: unused
         }
     };
   },
@@ -123,7 +123,7 @@ export default {
         cardNum(){
             if (this.hasCard){
                 var ci = this.card.columnIndexes;
-                return this.card.data[0][ci["accounts.regnum"]] || '-';
+                return this.card.data[0][ci["accounts.regnum"]] || '';
             }
             return '';
         },
@@ -252,19 +252,17 @@ export default {
       show_info(){
           this.info = !this.info;
       },
+      switchMode(mode){
+        this.mode = (this.mode===mode) ? ST_MODE.def : mode;
+      },
       onScroll(){
-        if (this.scroll.hTimer){
-            clearTimeout(this.scroll.hTimer);
+        var fab = $(this.$el).find('.sk-btn-chat');
+        if ( fab.length > 0 ){
+            var y = $(this.$el).innerHeight();
+            y -= ($(window).height() + window.scrollY-24);
+            fab.css({bottom: y + "px"});
         }
-        this.scroll.hTimer = setTimeout( ()=>{
-            var fab = $(this.$el).find('.sk-btn-chat');
-            if ( fab.length > 0 ){
-                var y = $(this.$el).innerHeight();
-                y -= ($(window).height()+window.scrollY-24);
-                fab.css({bottom: y + "px"});
-            }
-        }, 10);
-      }
+      }     //onScroll
   },
   watch: {
         card: function(val){
@@ -371,22 +369,19 @@ export default {
                         },  titleVNodes), /*v-card-title*/
                         h('v-card-text', [
                             h('div', {class:{'sk-store-nav': true, 'd-flex':true,'justify-space-around':true,'align-center':true,'flex-nowrap':true}}, [
-                                h('v-btn',{props:{outlined: true}, on:{click:()=>{this.mode=ST_MODE.fils;}}},[
+                                h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.fils);}}},[
                                     h('svg',{attrs:{viewBox:'0 0 640 512'},domProps:{innerHTML:'<use xlink:href="#ico-store" />'}})
                                 ]),
-                                h('v-btn',{props:{outlined: true}, on:{click:()=>{this.mode=ST_MODE.find;}}},[
+                                h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.find);}}},[
                                     h('svg',{attrs:{viewBox:'0 0 512 512'},domProps:{innerHTML:'<use xlink:href="#ico-search" />'}})
                                 ]),
-                                h('v-btn', {props:{outlined: true}, on: {click: ()=>{
-                                                    this.mode = (this.mode===ST_MODE.qr) ? ST_MODE.def : ST_MODE.qr;
-                                                }
-                                            } },[
+                                h('v-btn', {props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.qr);}}},[
                                     h('svg', {attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-qrcode" />'}})
                                 ]),
-                                h('v-btn',{props:{outlined: true}, on:{click:()=>{this.mode=ST_MODE.share;}}},[
+                                h('v-btn',{props:{outlined: true}, on:{click:()=>{this.switchMode(ST_MODE.share);}}},[
                                     h('svg',{attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-share" />'}})
                                 ]),
-                                h('v-btn',{props:{outlined: true}, on:{click:()=>{this.mode=ST_MODE.info;}}},[
+                                h('v-btn',{props:{outlined: true}, on:{click:()=>{this.switchMode(ST_MODE.info);}}},[
                                     h('svg',{attrs:{viewBox:'0 0 192 512'},domProps:{innerHTML:'<use xlink:href="#ico-info" />'}})
                                 ])
                             ])
@@ -415,7 +410,9 @@ export default {
                         }
                         if (this.hasCard){
                             conte.push( h('h3', {class: {'sk-card-inf': true}},
-                                'карта № ' + this.cardNum  + ' оформлена ' + this.cardDt
+                                $utils.isEmpty(this.cardNum) 
+                                    ? 'дата регистрации: ' + this.cardDt
+                                    : 'карта № ' + this.cardNum  + ' оформлена ' + this.cardDt
                             ));
                         }
                         if ( links.length > 0 ) {
@@ -426,9 +423,14 @@ export default {
                         }
                         conte.push( h('v-btn', {props:{
                             to: {name: 'orders'},
-                            text: true
+                            outlined: true,
+                            color: 'primary'
                         }, class: {'mt-3': true, 'sk-go-orders': true}}, [
-                            h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-bags" />'}, attrs: {viewBox:'0 0 576 512'}}),
+                            h('svg', {
+                                        domProps: {innerHTML:'<use xlink:href="#ico-bags" />'}, 
+                                        attrs: {viewBox:'0 0 576 512'},
+                                        style: {color: 'primary'}
+                                    }),
                             'история заказов'
                         ]));
                         break;
@@ -498,7 +500,6 @@ export default {
                         },[
                             h('span',{domProps: {innerHTML:'*подробная информация в <b><i>i</i></b>'}})
                         ]));
-                        //TODO: conte.push ( h('div', {class:{'sk-links': true}}, links) );
                         break;
                     default:
                         //none
@@ -515,13 +516,16 @@ export default {
                                         right: true,
                                         small: true,
                                         dark: true,
-                                        color: bg
+                                        color: bg,
+                                        to: {name:'chat'}
                                     },
                                     class: {'sk-btn-chat': true},
+/*                                    
                                     on: {click:(store)=>{
                                                 this.activeStore = this.iStore;
                                                 this.mode = ST_MODE.chat;
                                         }}
+ */
                                 }, [
                             h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-chat" />'}, attrs: {viewBox:'0 0 512 512'}})
                         ])
@@ -923,10 +927,9 @@ export default {
 
     .sk-go-orders{
         & svg{
-            width: 1.35rem;
-            height: 1.35rem;
+            width: 1rem;
+            height: 1rem;
             margin-right: 0.5rem;
-            color: $gray-color;
         }
     }
     .sk-has-chat{

@@ -84,6 +84,12 @@ export default {
         },
         user(){
             return this.$store.state.profile.user.name;
+        },
+        prod(){
+            return this.$store.state.active.store;
+        },
+        hasProd(){
+            return (!!this.prod)&&(!$utils.isEmpty(this.prod.id));
         }
     },
     methods: {
@@ -99,11 +105,6 @@ export default {
         },
         pingFail(){
             this.$router.replace({name: 'signin'});
-        }
-    },
-    watch: {
-        user(val){
-            console.log('APP: user:', val);
         }
     }
 };

@@ -8,6 +8,7 @@ import ViewStore   from '@/views/store';
 import ViewProfile from '@/views/profile';
 import ViewOrder   from '@/views/order';
 import ViewOrders  from '@/views/orders';
+import ViewChat    from '@/views/chat';
 import store from '@/store';
 
 /**
@@ -101,6 +102,16 @@ const router = new Router({
         path: '/orders',
         name: 'orders',
         component: ViewOrders,
+        meta: {
+            showAppBar: false,
+            showNavi: false
+        },
+        beforeEnter: isAuth
+      },
+      {
+        path: '/chat',
+        name: 'chat',
+        component: ViewChat,
         meta: {
             showAppBar: false,
             showNavi: false
