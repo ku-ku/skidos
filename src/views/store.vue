@@ -69,18 +69,10 @@ export default {
         error: null,
         activeStore: null,
         mode: ST_MODE.def,
-        scroll: {
-            hScroll: null,
-            hTimer: null    //TODO: unused
-        }
     };
   },
   mounted(){
-        this.scroll.hScroll = window.addEventListener('scroll', this.onScroll);
         this.refresh();
-  },
-  beforeDestroy(){
-      window.removeEventListener('scroll', this.scroll.hScroll);
   },
   computed: {
         iStore(){
@@ -254,15 +246,7 @@ export default {
       },
       switchMode(mode){
         this.mode = (this.mode===mode) ? ST_MODE.def : mode;
-      },
-      onScroll(){
-        var fab = $(this.$el).find('.sk-btn-chat');
-        if ( fab.length > 0 ){
-            var y = $(this.$el).innerHeight();
-            y -= ($(window).height() + window.scrollY-24);
-            fab.css({bottom: y + "px"});
-        }
-      }     //onScroll
+      }
   },
   watch: {
         card: function(val){
@@ -913,10 +897,10 @@ export default {
     }
     
     .v-btn--fab.sk-btn-chat{
-        position: absolute;
+        position: fixed;
         background-color: $main-color;
         padding: 0.5rem;
-        bottom: 2rem;
+        top: 85%;
         right: 2rem;
         & svg{
             color: #fff;
@@ -932,13 +916,4 @@ export default {
             margin-right: 0.5rem;
         }
     }
-    .sk-has-chat{
-        & .sk-store-brand{
-            display: none;
-        }
-        & .sk-card-conte{
-            display: block;
-        }
-    }
-    
 </style>

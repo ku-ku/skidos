@@ -165,7 +165,9 @@ export default {
                             h('div', {class: {'sk-name': true}}, [
                                 this.tod(),
                                 ', ',
-                                h('strong', this.name + '!')
+                                h('div', {class:{'sk-go-profile':true}}, [
+                                    h('v-btn', {props:{text:true, to:{name:'profile'}, dark:true, 'x-large': true}}, this.name + '!')
+                                ])
                             ]),
                             h('img', {attrs: {src: require('@/assets/imgs/my-logo.png'), viewBox:"0 0 512 512"}, class:'sk-logo'})
                         ]),
@@ -287,11 +289,6 @@ export default {
             text-shadow: 1px 1px 3px rgba(0,0,0,0.18);
             justify-content: space-between;
             align-items: flex-start;
-            & strong{
-                display: block;
-                font-size: 2.5rem;
-                font-weight: 300;
-            }
         }
         & .v-card__text{
             text-align: center;
@@ -303,6 +300,13 @@ export default {
             }
             & .sk-no-cards{
                 font-size: 1rem;
+            }
+        }
+        & .sk-go-profile{
+            & .v-btn{
+                font-size: 2.5rem;
+                font-weight: 300;
+                padding-left: 0;
             }
         }
     }

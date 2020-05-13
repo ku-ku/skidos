@@ -61,7 +61,6 @@ const mutations = {
 
 const actions = {
     login(store, payload) {
-        const { commit, dispatch } = store;
         const { user } = payload;
         const promise = (resolve, reject) => {
             /**
@@ -69,13 +68,19 @@ const actions = {
              * @param {Object} res
              */
             function onSuccess(res) {
-                if (res.result) {
+                if (!!res.result) {
+                    console.log('login-success:', res);
                     res.result.password = user.password;
-                    commit('setSubject', res.result);
-                    dispatch('readAdds');
-                    resolve(res);
+                    store.commit('setSubject', res.result);
+                    store.dispatch('readAdds');
+                    if (resolve){
+                        resolve(res);
+                    }
                 } else {
-                    reject(res.error);
+                    console.log('login-success.fail:', res.error);
+                    if (reject){
+                        reject(res.error);
+                    }
                 }
             }
             /**
@@ -172,6 +177,9 @@ const actions = {
        */
       function onSuccess(res) {
         commit('removeCredentials');
+        try {
+            document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        }catch(e){}
         resolve(res);
       }
 

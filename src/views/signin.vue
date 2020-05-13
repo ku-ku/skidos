@@ -15,7 +15,7 @@
                 <v-card class="elevation-2">
                     <v-card-text>
                         <v-text-field
-                            label="Имя"
+                            label="Логин"
                             name="u"
                             type="text"
                             v-model="login"
@@ -32,7 +32,7 @@
                         >
                             <svg slot="prepend" viewBox="0 0 512 512"><use xlink:href="#ico-asterisk" /></svg>
                         </v-text-field>
-                        <v-alert type="warning" class="my-5" v-show="!/^$/.test(error)">
+                        <v-alert color="warning" dark class="my-5" v-show="!/^$/.test(error)">
                             {{ error }}
                         </v-alert>
                     </v-card-text>
@@ -47,7 +47,7 @@
                 <v-card class="elevation-4">
                     <v-card-text>
                         <v-text-field
-                            label="Ваше имя"
+                            label="Логин"
                             name="u"
                             type="text"
                             v-model="login"
@@ -94,12 +94,8 @@
                         >
                             <svg slot="prepend" viewBox="0 0 320 512"><use xlink:href="#ico-mobile" /></svg>
                         </v-text-field>
-                        <v-switch v-model="agree" hide-details>
-                            <template v-slot:label>
-                                <div style="text-align:justify;font-size:0.9rem;">
-                                    Отправляя данную форму, я согласен  
-                                </div>
-                            </template>
+                        <v-switch v-model="agree">
+                            <template v-slot:label>Отправляя данную форму, я согласен</template>
                         </v-switch>
                         <a href='//моикарты.рф/static/terms_of_use.html' target="_blank">с правилами использования данного приложения</a>
                         <v-alert type="warning"  class="my-5" v-show="!/^$/.test(error)">
@@ -295,8 +291,9 @@ export default {
         
         return false;
       },     //on_auth
-      on_register: function(e){
+      on_register: async function(e){
         e.preventDefault();
+        this.error = '';
         if ( $utils.isEmpty(this.login) || 
              $utils.isEmpty(this.pwd)   ||
              $utils.isEmpty(this.tel)   ||
@@ -336,24 +333,24 @@ export default {
             })
         };
 
-        (async () => {
-            try {
-                var res = await $.ajax(url, options);
-                if ((!!res.id)&&("null"!==res.id)){
-                    self.$store.dispatch('profile/login', {user: { login: self.login, password: self.pwd }})
+        try {
+            var res = await $.ajax(url, options);
+            if (!$utils.isEmpty(res.id)&&("null"!==res.id)){
+                self.$store.dispatch('profile/login', {user: { login: self.login, password: self.pwd }}).then(()=>{
+                    self.$router.replace({name:'main'});
+                });
+            } else {
+                if ((!!res.success)&&(res.success==="user exists")){
+                    throw {message:'пользователь уже существует'};
                 } else {
-                    if ((!!res.success)&&(res.success==="user exists")){
-                        throw {message:'пользователь уже существует'};
-                    } else {
-                        throw (res.error) ? res.error : res.success;
-                    }
+                    throw (res.error) ? res.error : res.res;
                 }
-            } catch(e){
-                console.log(e);
-                self.error = 'Возникла ошибка при регистрации - попробуйте повторить попытку позднее.<br />'
-                            +'<small>Дополнительная информация: ' + e.message + '</small>';
             }
-        })();
+        } catch(e){
+            console.log(e);
+            self.error = 'Возникла ошибка при регистрации - попробуйте повторить попытку позднее.<br />'
+                        +'<small>Дополнительная информация: ' + e.message + '</small>';
+        }
       },    //on_register
       async _get_code(){
         const url = process.env.VUE_APP_BACKEND_API + '/skidosapi/reset-pass';
