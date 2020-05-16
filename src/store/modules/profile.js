@@ -19,16 +19,18 @@ const mutations = {
     state.user.tenantId = payload.tenantId;
     state.user.login = payload.name;
     state.user.name  = payload.title;
-    state.user.password = $utils.utf8ToB64(payload.password);
     state.user.isAuthenticated = true;
+    state.user.password = $utils.utf8ToB64(payload.password);
     
     var _user = Object.assign({}, state.user);
     _user.isAuthenticated = false;
     _user.lastAccess = (new Date()).getTime();
+    
     $utils.lsSave('auth', _user);
     if (!!state._hTimer){
         clearInterval(state._hTimer);
     }
+    
     state._hTimer = setInterval(()=>{
         const opts = {
             type: 'auth'
@@ -45,7 +47,6 @@ const mutations = {
             }
         })();
     }, 10*60*1000);
-    console.log('Ping timer set #', state._hTimer);
   },
   setAdds: function(state, adds){
       state.user.adds = adds;
@@ -104,9 +105,6 @@ const actions = {
         return new Promise(promise);
   },    //login
   async readAdds(store){
-        if ((!!store.state.user)&&(!!store.state.user.adds)){
-            return;
-        }
         const opts = {
               type: 'core-read',
               query: 'sin2:/v:b841fde1-394a-4ab1-8ca7-48446f58c27e?id=' 
@@ -126,8 +124,8 @@ const actions = {
         }
   },    //readAdds
   check: function(store) {
-    const {commit, dispatch} = store;
-    console.log('chk: ', state.user);
+    var pwd = '';
+    
     const promise = (resolve, reject) => {
         /**
          * Action on success
@@ -135,9 +133,10 @@ const actions = {
          */
         function onSuccess(res) {
             if ((res)&&(res.result)){
-                commit('setSubject', res.result);
-                commit('setFlag', {isAuthenticated:true});
-                dispatch('readAdds');
+                res.result.password = pwd;
+                store.commit('setSubject', res.result);
+                store.commit('setFlag', {isAuthenticated:true});
+                store.dispatch('readAdds');
                 resolve(res);
             } else {
                 reject(res.error);
@@ -154,9 +153,12 @@ const actions = {
             reject({message: 'No user in store'});
             return;
         }
+        
+        pwd = $utils.b64ToUtf8(state.user.password);
+        
         const options = {
             type: 'auth',
-            basicAuth: 'Basic ' + btoa(state.user.login + ':' + $utils.b64ToUtf8(state.user.password))
+            basicAuth: 'Basic ' + btoa(state.user.login + ':' + pwd)
         };
         
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';

@@ -96,7 +96,7 @@ export default {
                 tt = [23, 59];
             }
             var dt2 = new Date(
-                    now.getFullYear(), now.getMonth(), now.getDate(), tt[0], tt[1], 0
+                now.getFullYear(), now.getMonth(), now.getDate() + (tt[0] < 8 ? 1 : 0), tt[0], tt[1], 0
             );
             console.log('times:', now, dt1, dt2);
             return now.getTime() >= dt1.getTime() && now.getTime() <= dt2.getTime();
@@ -262,14 +262,11 @@ ssctenantsadds.lon
                             ]),
                             h('v-col', {props: {cols:2}}, [
                                 h('v-btn', {
-                                                props: {icon: true}, 
+                                                props: {
+                                                    icon: true,
+                                                    to: {name:'chat'}
+                                                }, 
                                                 class: {'sk-msg': true},
-                                                on: {
-                                                        click: ()=>{
-                                                            _fil.brand = this.parent.brand;
-                                                            this.$emit('chat', _fil);
-                                                        }
-                                                }
                                             }, [
                                     h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-chat" />'}, attrs: {viewBox:'0 0 512 512'}})
                                 ])

@@ -56,7 +56,10 @@ export default {
                                     props: {
                                         src: require('@/assets/imgs/my-logo.png')
                                     }, 
-                                    class:{'sk-logo':true}
+                                    class:{'sk-logo':true},
+                                    on: {click:()=>{
+                                            this.hide();
+                                    }}
                                 })
                 ])
             ]),

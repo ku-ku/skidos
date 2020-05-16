@@ -73,12 +73,13 @@ export default {
         swiper: directive
     },    
     methods: {
-        async load(){
+        async load(id){
+            id = $utils.isEmpty(id) ? this.store.id : id;
             var url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
                 opts = {
                     type: 'core-read',
                     query: 'sin2:/v:c1de84bd-de9a-45cb-b775-5e8b233e25e8?filter=eq(field(".mainOrgId")'
-                           + ',param("' + this.store.id + '", "id"))'
+                           + ',param("' + id + '", "id"))'
                 };
             this.loading = true;
             try{
@@ -89,7 +90,7 @@ export default {
                 this.acts = res.result;
                 
                 opts.query = 'sin2:/v:9d6c4649-cf13-45b6-9b6a-b1af97513204?filter=eq(field(".mainOrgId")'
-                           + ',param("' + this.store.id + '", "id"))';
+                           + ',param("' + id + '", "id"))';
                 res = await $http.post(url, opts);
                 if (!!res.result){
                     this.skidos = res.result;
@@ -141,8 +142,15 @@ export default {
             });
         }
     },
-    mounted(){
+    created(){
         this.load();
+    },
+    watch:{
+        store(val){
+            if (!!val){
+                this.load(val.id);
+            }
+        }
     },
     render: function(h){
         var childs = [];
@@ -171,7 +179,6 @@ export default {
                                     'auto-destroy': true,
                                     options: { 
                                         slidesPerView: 'auto',
-                                        //centeredSlides: true,             
                                         spaceBetween: 12,
                                         loop: true
                             }}
@@ -245,7 +252,8 @@ export default {
         
         return h('div', {
             key: 'sk-acts-' + this.store.id,
-            class: {'sk-actions': true}
+            class: {'sk-actions': true},
+            attrs: {'data-store-id': this.store.id}
         }, childs);
     }
 }

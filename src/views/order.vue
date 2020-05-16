@@ -62,7 +62,7 @@ export default {
         user(){
             return this.$store.state.profile.user;
         },
-        prod(){
+        prod(){ /*Product*/
             return this.$store.state.active.action;
         },
         magaz(){
@@ -268,7 +268,7 @@ export default {
                     h('svg', {attrs: {viewBox:"0 0 384 512"}, domProps:{innerHTML: '<use xlink:href="#ico-map-marker" />'}}), 
                     'Адрес доставки: ', 
                     ((this.user.adds)&&!$utils.isEmpty(this.user.adds.addrstring))
-                        ? this.user.adds.addrstring 
+                        ? this.user.adds.addrstring
                         : h('span', [
                                         'Вы можете указать в',
                                         h('v-btn', {props:{text: true, small: true, to:{name:'profile'}}}, 'настройках профиля')

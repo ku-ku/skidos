@@ -68,10 +68,10 @@ export default {
         qr_bin_data: null,
         error: null,
         activeStore: null,
-        mode: ST_MODE.def,
+        mode: ST_MODE.def
     };
   },
-  mounted(){
+  created(){
         this.refresh();
   },
   computed: {
@@ -136,12 +136,14 @@ export default {
         }
   },
   methods: {
-      refresh: async function(){
+      refresh: async function(id){
+        id = $utils.isEmpty(id) ? this.id : id;
+        this.mode = ST_MODE.def;
         this.loading = true;
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
         var options = {
             type: 'core-read',
-            query: 'sin2:/v:c4e208aa-a355-49bf-8c00-4175a9ed5006/?id=' + this.id
+            query: 'sin2:/v:c4e208aa-a355-49bf-8c00-4175a9ed5006/?id=' + id
         };
         try {
             var resp = await $http.post(url, options);
@@ -249,6 +251,10 @@ export default {
       }
   },
   watch: {
+        id: function(val){
+            console.log('set store #', val);
+            this.refresh(val);
+        },
         card: function(val){
             if (!val){
                 this.qr_bin_data = null;
@@ -418,14 +424,6 @@ export default {
                             'история заказов'
                         ]));
                         break;
-                    case ST_MODE.chat:
-                        conte.push( h('sk-chat', {
-                                        props: {store: this.activeStore},
-                                        on: {exit: ()=>{
-                                            this.mode = ST_MODE.fils;
-                                        }}
-                                    }));
-                        break;
                     case ST_MODE.fils:
                         conte.push( h('sk-filials', {
                                         props: {parent:this.iStore},
@@ -503,13 +501,7 @@ export default {
                                         color: bg,
                                         to: {name:'chat'}
                                     },
-                                    class: {'sk-btn-chat': true},
-/*                                    
-                                    on: {click:(store)=>{
-                                                this.activeStore = this.iStore;
-                                                this.mode = ST_MODE.chat;
-                                        }}
- */
+                                    class: {'sk-btn-chat': true}
                                 }, [
                             h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-chat" />'}, attrs: {viewBox:'0 0 512 512'}})
                         ])

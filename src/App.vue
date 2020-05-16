@@ -6,7 +6,9 @@
       >
     </v-app-bar>
     <v-content>
-        <router-view />
+        <keep-alive include="ViewMain,ViewStore">
+            <router-view />
+        </keep-alive>
     </v-content>
     <splash v-if="splash" ref="splash" on:hide="splash=false" />
     <v-snackbar v-model="snackbar"
