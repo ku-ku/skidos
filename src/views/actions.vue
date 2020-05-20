@@ -3,7 +3,9 @@ import {
         VCard,
         VCardText,
         VCardTitle,
+        VCardActions,
         VImg,
+        VBadge,
         VBtn,
         VList,
         VSubheader,
@@ -15,7 +17,8 @@ import {
         VListItemSubtitle,
         VListItemAction,
         VSkeletonLoader,
-        VTextField
+        VTextField,
+        VBottomSheet
        } from 'vuetify/lib';
 import { Swiper, SwiperSlide, directive } from 'vue-awesome-swiper';
 import 'swiper/css/swiper.css';
@@ -33,9 +36,11 @@ export default {
     },
     components: {
         VCard,
-        VCardText,
         VCardTitle,
+        VCardText,
+        VCardActions,
         VImg,
+        VBadge,
         VBtn,
         VList, 
         VSubheader,
@@ -49,7 +54,8 @@ export default {
         VSkeletonLoader,
         Swiper,
         SwiperSlide,
-        VTextField
+        VTextField,
+        VBottomSheet
     },
     data(){
         return {
@@ -67,6 +73,12 @@ export default {
         },
         hasSkidos(){
             return (this.skidos) && (this.skidos.data) && (this.skidos.data.length>0);
+        },
+        hasBasket(){
+            return this.$store.getters["basket/has"](this.store.id);
+        },
+        basketAt(){
+            return this.$store.getters["basket/at"];
         }
     },
     directives: {
@@ -94,6 +106,7 @@ export default {
                 res = await $http.post(url, opts);
                 if (!!res.result){
                     this.skidos = res.result;
+                    this.sorting();
                 }
                 
                 this.$nextTick(()=>{
@@ -108,6 +121,25 @@ export default {
                 console.log('Error:', e);
             }
             this.loading = false;
+        },
+        sorting(){
+            if (!this.hasSkidos){
+                return;
+            }
+            const ci = this.skidos.columnIndexes;
+            const idIdx = ci["userpromoactions.id"],
+                  nmIdx = ci["userpromoactions.promogoods"];
+            var n1, n2, in1, in2;
+            var data = this.skidos.data.sort((sk1, sk2) => {
+                n1  = sk1[nmIdx];
+                n2  = sk2[nmIdx];
+                in1 = this.$store.getters["basket/has"](sk1[idIdx]);
+                in2 = this.$store.getters["basket/has"](sk2[idIdx]);
+                return ((!!in1)&&(!!in2)) 
+                        ? 0 : (!!in1)&&(!in2) 
+                        ? -1 : (!in1)&&(!in2) ? n1.localeCompare(n2) : 1;
+            });
+            this.skidos.data = data;
         },
         month(m){
             const MONTHS = {
@@ -140,7 +172,11 @@ export default {
                                 name: 'order',
                                 params: {store: this.store.id, order: _a.id}
             });
+        },
+        do_order(){
+            this.$store.dispatch("basket/save");
         }
+        
     },
     created(){
         this.load();
@@ -150,6 +186,15 @@ export default {
             if (!!val){
                 this.load(val.id);
             }
+        },
+        basketAt(val){
+            this.sorting();
+            this.$nextTick(()=>{
+                var n = this.$store.getters["basket/numof"];
+                if ( n > 0 ){
+                    $(".v-bottom-sheet").css({display:'unset'});
+                }
+            });
         }
     },
     render: function(h){
@@ -186,10 +231,12 @@ export default {
             ));
         } if (this.hasSkidos){
             const ci = this.skidos.columnIndexes;
+            var data = this.skidos.data;
             childs.push( h('v-list', {class:{'sk-skidos':true}}, [
-                this.skidos.data.map((a) => {
+                data.map((a) => {
                     const id = a[ci["userpromoactions.id"]],
                           img = a[ci["userpromoactions.promoimage"]];
+                    const inCart = this.$store.getters["basket/has"](id);
                     var dates = '';
                     if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
                         var d = new Date(a[ci["userpromoactions.enddt"]]);
@@ -199,7 +246,7 @@ export default {
                     return h('v-list-item', {
                                 key: 'sk-' + id,
                                 on: {click: ()=>{
-                                    (!!this.store.hasonline) ? this.on_order(a) : void(0);
+                                        (!!this.store.hasonline) ? this.on_order(a) : void(0);
                                 }}
                             }, [
                                 h('v-list-item-icon', {class:{"mr-3": true}}, [
@@ -224,7 +271,10 @@ export default {
                                             : a[ci["userpromoactions.newprice"]],
                                         $utils.isEmpty(a[ci["userpromoactions.oldprice"]])
                                             ? null
-                                            : h('span', {class:{'sk-old': true}}, a[ci["userpromoactions.oldprice"]])
+                                            : h('span', {class:{'sk-old': true}}, a[ci["userpromoactions.oldprice"]]),
+                                        $utils.isEmpty(a[ci["userpromoactions.unitname"]])
+                                            ? null
+                                            : h('span', {class:{'sk-units': true}}, '(' + a[ci["userpromoactions.unitname"]] + ')')
                                     ]),
                                     $utils.isEmpty(a[ci["userpromoactions.promoproducer"]])
                                             ? null
@@ -232,12 +282,39 @@ export default {
                                 ]),
                                 (!!this.store.hasonline) 
                                         ? h('v-list-item-action', [
-                                            h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-right" />'}})
+                                            inCart 
+                                                ? h('div', {class:{'sk-in-cart':true}}, [
+                                                    h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-cart" />'}})
+                                                ])
+                                                : h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-right" />'}})
                                         ])
                                         : null
                     ]);
                 })
             ]));
+            
+            const n = this.$store.getters["basket/numof"],
+                  s = this.$store.getters["basket/total"];
+            if (n > 0) {
+                childs.push( h('v-bottom-sheet', {
+                    props: {"hide-overlay": true, value: true, persistent: true}
+                }, [
+                    h('v-card', {class: {"sk-basket": true}, attrs: {"data-num-of": n}, props:{flat:true,tile:true}}, [
+                        h('v-card-text', [
+                            h('v-badge',{props:{content: n, value: n, dark: true, color: "#ffa41b"}}, [
+                                h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-cart" />'}})
+                            ]),
+                            h('div', {class:{'sk-total':true}}, s + ' руб.')
+                        ]),
+                        h('v-card-actions', [
+                            h('v-btn', {
+                                props: {small:true, rounded: true, outlined: true, color: "#ffa41b"},
+                                on: {click: this.do_order}
+                            }, 'оформить')
+                        ])
+                    ])
+                ]));
+            }
         } else if (this.loading) {
             for (var i=0; i<3; i++){
                 childs.push(
@@ -261,7 +338,7 @@ export default {
 <style lang="scss" scoped>
     @import "@/assets/styles/index";
     .sk-actions{
-        padding-bottom: 5rem;
+        margin-bottom: 180px;
         & .v-card__title {
             & h3{
                 font-weight: 300;
@@ -308,12 +385,14 @@ export default {
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            & .sk-old {
+            & .sk-old, & .sk-units {
                 font-size: 0.85rem;
                 display: inline-block;
                 margin-left: 0.5rem;
-                text-decoration: line-through;
                 color: $gray-color;
+            }
+            & .sk-old{
+                text-decoration: line-through;
             }
         }
         & .sk-produ{
@@ -339,6 +418,49 @@ export default {
                 width: 24px;
                 height: 24px;
             }
+            & .sk-in-cart{
+                width: 32px;
+                height: 32px;
+                line-height: 38px;
+                text-align: center;
+                border-radius: 50%;
+                border: 2px solid #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+                background: $main-color;
+                & svg{
+                    width: 18px;
+                    height: 18px;
+                    margin: 0 auto;
+                    color: #fff;
+                }
+            }
+        }
+    }
+    .sk-basket{
+        padding-top: 1.5rem;
+        padding-bottom: 1rem;
+        background-color: #fafafa;
+        border-top: 2px solid $main-color;
+        border-radius: 0;
+        & .v-card__text{
+            padding: 0 !important;
+            display: flex;
+            justify-content: center;
+            & svg{
+                width: 28px;
+                height: 28px;
+                color: $main-color;
+            }
+            & .sk-total{
+                margin-left: 2rem;
+                font-size: 1.5rem;
+                font-weight: 300;
+                color: #000;
+            }
+        }
+        & .v-card__actions{
+            justify-content: flex-end;
+            padding-right: 1rem;
         }
     }
 </style>

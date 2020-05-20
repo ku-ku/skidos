@@ -11,7 +11,7 @@ import { VBtn,
          VContainer,
          VRow,
          VCol,
-         VFabTransition
+         VFabTransition,
        } from 'vuetify/lib';
 
 import SkFilials from '@/views/fils';
@@ -28,7 +28,8 @@ const ST_MODE = {
     'fils':  3,
     'find':  4,
     'share': 5,
-    'chat':  6
+    'chat':  6,
+    'loading': 999
 };
 
 export default {
@@ -61,10 +62,10 @@ export default {
   },
   data() {
     return {
+        sending: false,
         store: null,
         store_branding: null,
-        card: {},           /* empty for button's hide */
-        loading: false,
+        card: null,
         qr_bin_data: null,
         error: null,
         activeStore: null,
@@ -80,6 +81,7 @@ export default {
             if ( (this.store) && (this.store.data) && (this.store.data.length>0) ){
                 const data = this.store.data[0],
                       ci = this.store.columnIndexes;
+                o = $utils.sin2obj(ci, data);
                 const keys = Object.keys(ci);
                 o.title = data[ci["ssctenants.title"]];
                 o.brand = {
@@ -87,12 +89,6 @@ export default {
                     balcolor: data[ci["ssctenantsadds.balancecolor"]],
                     logo:   data[ci["ssctenantsadds.brandlogo"]]
                 };
-                var s, n;
-                keys.map((key)=>{
-                    n = key.lastIndexOf('.');
-                    s = (n < 0) ? key : key.substr(n + 1);
-                    o[s] = data[ci[key]];
-                });
                 o.id = data[ci["ssctenants.id"]];
             } else {
                 o.id = '00';
@@ -133,13 +129,15 @@ export default {
                 return this.card.data[0][ci["accounts.amount"]];
             }
             return null;
+        },
+        hasBasket(){
+            return this.$store.getters["basket/has"](this.iStore.id);
         }
   },
   methods: {
       refresh: async function(id){
         id = $utils.isEmpty(id) ? this.id : id;
-        this.mode = ST_MODE.def;
-        this.loading = true;
+        this.mode = ST_MODE.loading;
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
         var options = {
             type: 'core-read',
@@ -154,11 +152,12 @@ export default {
             this.$store.commit('active/setStore', this.iStore);
             var ci = resp.result.columnIndexes;
             await this.card_by(this.store.data[0][ci["ssctenants.id"]], 'store');
+            this.mode = (this.hasCard) ? ST_MODE.def : ST_MODE.qr;
         } catch(e){
             console.log('Err on store:', e);
             this.error = {error: e};
+            this.mode = ST_MODE.def;
         }
-        this.loading = false;
       },    //refresh
       card_by: async function(id, that){
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
@@ -205,7 +204,7 @@ export default {
                 {id: 'Blocked', type: 'boolean', value: false}
             ]
         };
-        this.loading = true;
+        this.sending = true;
         try{
             var resp = await $http.post(url, options);
             if (resp.error){
@@ -216,7 +215,7 @@ export default {
             app.msg({text:'Ошибка регистрации карты, попробуйте получить позднее.', type:'warning'});
             console.log('ERR on reg card:', e);
         }
-        this.loading = false;
+        this.sending = false;
       },     //take_card
       unuse_card: async function(){
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
@@ -229,7 +228,6 @@ export default {
                 {id: 'Blocked', type: 'boolean', value: true}
             ]
         };
-        this.loading = true;
         try{
             var resp = await $http.post(url, options);
             if (resp.error){
@@ -241,7 +239,6 @@ export default {
             app.msg({text: 'Ошибка удаления карты, попробуйте выполнить позднее.', type:'warning'});
             console.log('ERR on reg card:', e);
         }
-        this.loading = false;
       },
       show_info(){
           this.info = !this.info;
@@ -252,8 +249,12 @@ export default {
   },
   watch: {
         id: function(val){
-            console.log('set store #', val);
-            this.refresh(val);
+            this.mode = ST_MODE.none;
+            this.store = null;
+            this.card = null;
+            this.$nextTick(()=>{
+                this.refresh(val);
+            });
         },
         card: function(val){
             if (!val){
@@ -280,7 +281,7 @@ export default {
   render: function( h ){
         var childs = [],
             fab    = null;
-        if (!this.store){
+        if ((this.mode === ST_MODE.loading)||(!this.store)) {
             childs.push(
                 h('v-card',{class:{'store-loading':true},key:'store-loading'},[
                     h('v-progress-linear',{props:{indeterminate:true}})   //TODO: when card register
@@ -366,7 +367,9 @@ export default {
                                     h('svg',{attrs:{viewBox:'0 0 512 512'},domProps:{innerHTML:'<use xlink:href="#ico-search" />'}})
                                 ]),
                                 h('v-btn', {props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.qr);}}},[
-                                    h('svg', {attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-qrcode" />'}})
+                                    h('svg', {attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-qrcode" />'}}),
+                                    this.hasCard ? h('div', {class:'sk-has-card'}) : null
+                                    
                                 ]),
                                 h('v-btn',{props:{outlined: true}, on:{click:()=>{this.switchMode(ST_MODE.share);}}},[
                                     h('svg',{attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-share" />'}})
@@ -426,11 +429,7 @@ export default {
                         break;
                     case ST_MODE.fils:
                         conte.push( h('sk-filials', {
-                                        props: {parent:this.iStore},
-                                        on: {chat: (store) => {
-                                                this.activeStore = store;
-                                                this.mode = ST_MODE.chat;
-                                            }}
+                                        props: {parent:this.iStore}
                                     }) );
                         break;
                     case ST_MODE.find:
@@ -467,7 +466,7 @@ export default {
                             conte.push( h('div', {class: {'sk-takes': true}}, [
                                     h('v-btn', {
                                                     class: {'sk-take': true},
-                                                    props: {outlined: true, loading: this.loading},
+                                                    props: {outlined: true, loading: this.sending},
                                                     on:    {click: this.take_card}
                                                 }, 'Стать клиентом'),
                                     h('v-btn', {
@@ -647,6 +646,16 @@ export default {
                 width: 22px;
                 height: 22px;
                 color: $gray-color;
+            }
+            & .sk-has-card{
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                background-color: #11b719;
+                border-radius: 50%;
+                border: 1px solid #fff;
+                top: -10px;
+                right: -2px;
             }
         }
     }   /* .sk-store-nav */

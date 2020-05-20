@@ -3,6 +3,7 @@ import Vuex from 'vuex';
 import active from '@/store/modules/active';
 import profile from '@/store/modules/profile';
 import settings from '@/store/modules/settings';
+import basket from '@/store/modules/basket';
 
 Vue.use(Vuex);
 
@@ -20,7 +21,8 @@ const getters = {
 const modules = {
     active,
     profile,
-    settings
+    settings,
+    basket
 };
 
 export default new Vuex.Store({

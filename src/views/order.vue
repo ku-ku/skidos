@@ -9,7 +9,8 @@ import {
         VBtn,
         VSubheader,
         VTextField,
-        VAlert
+        VAlert,
+        VBadge
        } from 'vuetify/lib';
 const modes = {
     OM_ERROR:  -1,
@@ -17,7 +18,8 @@ const modes = {
     OM_LOADING: 1,
     OM_READY:   2,
     OM_ORDER:   3,
-    OM_SUCCESS: 4
+    OM_ADDED:   4,
+    OM_SUCCESS: 5
 };
 const times = {
     TM_AM: 0,
@@ -37,7 +39,8 @@ export default {
         VBtn,
         VSubheader,
         VTextField,
-        VAlert
+        VAlert,
+        VBadge
     },
     props: {
         order: {
@@ -55,7 +58,8 @@ export default {
             valid: true,
             n: 1,
             today: true,
-            time: times.TM_AM
+            time: times.TM_AM,
+            adding: false
         };
     },
     computed: {
@@ -68,9 +72,30 @@ export default {
         magaz(){
             return this.$store.state.active.store;
         },
-        totals(){
+        total(){
             var p = parseFloat(this.prod.newprice);
             return this.n * p;
+        },
+        at(){
+            var dt = new Date();
+            dt.setMilliseconds(0);
+            dt.setSeconds(0);
+            dt.setMinutes(0);
+            if (!this.today){
+                dt.setDate(dt.getDate() + 1);
+            }
+            switch(this.time){
+                case times.TM_AM:
+                    dt.setHours(12);
+                    break;
+                case times.TM_PM:
+                    dt.setHours(18);
+                    break;
+                case times.TM_EV:
+                    dt.setHours(21);
+                    break;
+            }
+            return dt;
         }
     },
     mounted(){
@@ -93,6 +118,26 @@ export default {
         },
         day(today){
             this.today = today;
+        },
+        in_cart(){
+            return this.$store.getters["basket/has"](this.prod.id);
+        },
+        to_basket(){
+            var p = Object.assign({}, this.prod);
+            p.store = {id: this.magaz.id};
+            p.num   = this.n;
+            p.total = this.total;
+            p.at    = this.at;
+            this.$store.dispatch('basket/add', p);
+            this.mode = modes.OM_ADDED;
+            this.adding = true;
+            setTimeout(()=>{this.adding = false;}, 600);
+        },
+        from_basket(){
+            this.$store.dispatch('basket/rm', {id:this.prod.id});
+            this.n = 1;
+            this.mode = modes.OM_ORDER;
+            this.$forceUpdate();
         },
         async do_order(){
             this.valid = !isNaN(parseFloat(this.n));
@@ -160,7 +205,9 @@ export default {
     },
     render(h){
         const prod = this.prod,
-              accent = 'red darken-4';
+              accent = 'red darken-4',
+              inCart = this.in_cart();
+      
         return h('v-card', {
             key: 'ord-' + prod.id,
             class: {'sk-order': true /*, 'fill-height': true*/},
@@ -219,7 +266,12 @@ export default {
                                  on: {click: ()=>{this.pm(true);}}
                     }, '+')
                 ]),
-                h('div', {class:{'sk-price': true}}, this.totals + ' руб.'),
+                h('div', {class:{'sk-price': true}}, [
+                    this.total + ' руб.',
+                    $utils.isEmpty(prod.unitname) 
+                        ? null
+                        : h('div', {class:{'sk-units': true}}, prod.unitname)
+                ]),
                 h('div', {class:{'sk-days': true}}, [
                     h('v-btn', {props: {
                                             outlined: true, rounded: true, 'small': true,
@@ -323,11 +375,25 @@ export default {
                                         outlined: true,
                                         color: 'red darken-4',
                                         width: '12rem',
-                                        loading: (this.state === modes.OM_ORDER)
+                                        loading: this.adding
                                     },
-                             on: {click: this.do_order},
-                             class: {'mt-5': true}
-                        }, 'заказать')
+                             on: {click: this.to_basket},   //do_order
+                             class: {'mt-5 sk-to-cart': true}
+                        }, [
+                            inCart
+                                ? h('div', {class:{'sk-in-cart': true}, style:{'background-color':'red darken-4'}}, [
+                                     h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-check" />'}})
+                                ])
+                                : null,
+                            inCart ? 'в корзине' : 'заказать'
+                        ]),
+                inCart
+                    ? h('v-btn', {
+                            props: {text:true,tile:true,width:'12rem'}, 
+                            on:    {click: this.from_basket},
+                            class: {'mt-3': true}
+                        }, 'убрать')
+                    : null
             ])
         ]);
     }
@@ -339,6 +405,7 @@ export default {
     .sk-order{
         color: $gray-color;
         padding: 1rem;
+        margin-bottom:  180px;
         height: 100%;
         & .sk-top-bar{
             padding: 1rem;
@@ -430,6 +497,10 @@ export default {
                 text-align: center;
                 margin: 0 auto 1rem auto;
                 color: $red-color;
+                line-height: 1.125;
+                & .sk-units{
+                    font-size: 1rem;
+                }
             }
             & .sk-days, & .sk-times{
                 margin-bottom: 1.5rem;
@@ -444,6 +515,23 @@ export default {
                     height: 18px;
                     margin-right: 0.25rem;
                 }
+            }
+        }
+        & .sk-in-cart{
+            width: 36px;
+            height: 36px;
+            line-height: 44px;
+            position: absolute;
+            left: -9px;
+            top: -10px;
+            border-radius: 500px;
+            border: 1px solid;
+            padding: 0;
+            text-align: center;
+            & svg{
+                width: 20px;
+                height: 20px;
+                margin: 0 auto;
             }
         }
         & .v-alert{
