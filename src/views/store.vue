@@ -240,9 +240,6 @@ export default {
             console.log('ERR on reg card:', e);
         }
       },
-      show_info(){
-          this.info = !this.info;
-      },
       switchMode(mode){
         this.mode = (this.mode===mode) ? ST_MODE.def : mode;
       }
@@ -280,7 +277,8 @@ export default {
   },
   render: function( h ){
         var childs = [],
-            fab    = null;
+            fab    = null,
+            showActions = true;
         if ((this.mode === ST_MODE.loading)||(!this.store)) {
             childs.push(
                 h('v-card',{class:{'store-loading':true},key:'store-loading'},[
@@ -309,7 +307,9 @@ export default {
                       bi = data[0][ci["ssctenantsadds.brandlogo"]],
                       tel= data[0][ci["ssctenantsadds.phone"]],
                       web= data[0][ci["ssctenantsadds.uri"]],
+                      web2=data[0][ci["ssctenantsadds.uri2"]],
                       short=data[0][ci["ssctenantsadds.shortloyalty"]];
+                      
                 var ly = data[0][ci["ssctenantsadds.loyalty"]];
                 if (!$utils.isEmpty(ly)){
                     ly = ly.replace(/;/g, '<br />');
@@ -329,208 +329,223 @@ export default {
                         ])
                     ])
                 );
-                if (!!bi){
+                if (!$utils.isEmpty(web2)) {    //
+                    showActions = false;
                     titleVNodes.push(
-                        h('v-img',{props: {src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + bi.ref, width:'100%', height:'auto'}})
+                        h('iframe', {attrs:{src:web2}})
                     );
-                } else {
-                    titleVNodes.push( h('h1', title) );
-                }
-                if (this.hasCard){
-                    titleVNodes.push( h('h3', {
-                                    class: {'sk-bonuces': true},
-                                    style: {'color': $utils.isEmpty(bc) ? '' : bc},
-                                    domProps: {
-                                        innerHTML: ( this.bonuces > 0 ) 
-                                                    ? 'накоплено <b>' + this.bonuces + '</b> бонусов'
-                                                    : '<b>0</b> бонусов'
-                                    }
-                                })
-                        );
-                }
-        
-                childs.push(
-                    h('v-card', {
-                        key:'store-brand-' + data[0][ci["ssctenants.id"]],
-                        class:{'sk-store-brand': true},
-                        props: {flat: true, tile: true}
+                    childs.push(
+                        h('v-card', {
+                            key:'store-brand-' + data[0][ci["ssctenants.id"]],
+                            class: {'sk-store-brand': true, 'sk-store-web2': true, 'fill-height': true},
+                            props: {flat: true, tile: true},
+                            ref: "webCard"
                     }, [
-                        h('v-card-title', {
-                            style: {'background-color': $utils.isEmpty(bg) ?  '#00897B' : bg}
-                        },  titleVNodes), /*v-card-title*/
-                        h('v-card-text', [
-                            h('div', {class:{'sk-store-nav': true, 'd-flex':true,'justify-space-around':true,'align-center':true,'flex-nowrap':true}}, [
-                                h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.fils);}}},[
-                                    h('svg',{attrs:{viewBox:'0 0 640 512'},domProps:{innerHTML:'<use xlink:href="#ico-store" />'}})
-                                ]),
-                                h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.find);}}},[
-                                    h('svg',{attrs:{viewBox:'0 0 512 512'},domProps:{innerHTML:'<use xlink:href="#ico-search" />'}})
-                                ]),
-                                h('v-btn', {props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.qr);}}},[
-                                    h('svg', {attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-qrcode" />'}}),
-                                    this.hasCard ? h('div', {class:'sk-has-card'}) : null
-                                    
-                                ]),
-                                h('v-btn',{props:{outlined: true}, on:{click:()=>{this.switchMode(ST_MODE.share);}}},[
-                                    h('svg',{attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-share" />'}})
-                                ]),
-                                h('v-btn',{props:{outlined: true}, on:{click:()=>{this.switchMode(ST_MODE.info);}}},[
-                                    h('svg',{attrs:{viewBox:'0 0 192 512'},domProps:{innerHTML:'<use xlink:href="#ico-info" />'}})
+                        h('v-card-text', {class: {'fill-height': true}}, titleVNodes)
+                    ]));
+                } else {
+                    if (!!bi){
+                        titleVNodes.push(
+                            h('v-img',{props: {src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + bi.ref, width:'100%', height:'auto'}})
+                        );
+                    } else {
+                        titleVNodes.push( h('h1', title) );
+                    }
+                    if (this.hasCard){
+                        titleVNodes.push( h('h3', {
+                                        class: {'sk-bonuces': true},
+                                        style: {'color': $utils.isEmpty(bc) ? '' : bc},
+                                        domProps: {
+                                            innerHTML: ( this.bonuces > 0 ) 
+                                                        ? 'накоплено <b>' + this.bonuces + '</b> бонусов'
+                                                        : '<b>0</b> бонусов'
+                                        }
+                                    })
+                            );
+                    }
+
+                    childs.push(
+                        h('v-card', {
+                            key:'store-brand-' + data[0][ci["ssctenants.id"]],
+                            class:{'sk-store-brand': true},
+                            props: {flat: true, tile: true}
+                        }, [
+                            h('v-card-title', {
+                                style: {'background-color': $utils.isEmpty(bg) ?  '#00897B' : bg}
+                            },  titleVNodes), /*v-card-title*/
+                            h('v-card-text', [
+                                h('div', {class:{'sk-store-nav': true, 'd-flex':true,'justify-space-around':true,'align-center':true,'flex-nowrap':true}}, [
+                                    h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.fils);}}},[
+                                        h('svg',{attrs:{viewBox:'0 0 640 512'},domProps:{innerHTML:'<use xlink:href="#ico-store" />'}})
+                                    ]),
+                                    h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.find);}}},[
+                                        h('svg',{attrs:{viewBox:'0 0 512 512'},domProps:{innerHTML:'<use xlink:href="#ico-search" />'}})
+                                    ]),
+                                    h('v-btn', {props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.qr);}}},[
+                                        h('svg', {attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-qrcode" />'}}),
+                                        this.hasCard ? h('div', {class:'sk-has-card'}) : null
+
+                                    ]),
+                                    h('v-btn',{props:{outlined: true}, on:{click:()=>{this.switchMode(ST_MODE.share);}}},[
+                                        h('svg',{attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-share" />'}})
+                                    ]),
+                                    h('v-btn',{props:{outlined: true}, on:{click:()=>{this.switchMode(ST_MODE.info);}}},[
+                                        h('svg',{attrs:{viewBox:'0 0 192 512'},domProps:{innerHTML:'<use xlink:href="#ico-info" />'}})
+                                    ])
                                 ])
                             ])
                         ])
-                    ])
-                );  //branding
-                var links = [];
-                if ( !$utils.isEmpty(tel) ){
-                    links.push( h('a', {attrs: {href:'tel:'+tel, target:'_blank'}, style:{color: (!!bg) ? bg : '' }}, [
-                                    h('svg',{domProps: {innerHTML:'<use xlink:href="#ico-phone" />'}, attrs: {viewBox:'0 0 512 512'}}),
-                                    tel
-                    ]));
-                }
-                if ( !$utils.isEmpty(web) ){
-                    links.push( h('a', {attrs: {href: web, target: '_blank'}, style:{color: (!!bg) ? bg : '' }}, [
-                                    (h('svg',{ domProps: {innerHTML:'<use xlink:href="#ico-planet" />'}, attrs: {viewBox:'0 0 496 512'}})),
-                                    web
-                    ]));
-                }
-                
-                var conte = [];
-                switch( this.mode ){
-                    case ST_MODE.info:
-                        if ( !$utils.isEmpty(ly) ){     /* =================== store & card additional info =================== */
-                            conte.push(h('h3', {class: {'sk-loyalty': true}, domProps: {innerHTML: ly}}));
-                        }
-                        if (this.hasCard){
-                            conte.push( h('h3', {class: {'sk-card-inf': true}},
-                                $utils.isEmpty(this.cardNum) 
-                                    ? 'дата регистрации: ' + this.cardDt
-                                    : 'карта № ' + this.cardNum  + ' оформлена ' + this.cardDt
-                            ));
-                        }
-                        if ( links.length > 0 ) {
-                            conte.push( h('div', {class:{'sk-links': true}}, [
-                                            'Вы можете связаться с нами:',
-                                            links
-                            ]) );
-                        }
-                        conte.push( h('v-btn', {props:{
-                            to: {name: 'orders'},
-                            outlined: true,
-                            color: 'primary'
-                        }, class: {'mt-3': true, 'sk-go-orders': true}}, [
-                            h('svg', {
-                                        domProps: {innerHTML:'<use xlink:href="#ico-bags" />'}, 
-                                        attrs: {viewBox:'0 0 576 512'},
-                                        style: {color: 'primary'}
-                                    }),
-                            'история заказов'
+                    );  //branding
+                    var links = [];
+                    if ( !$utils.isEmpty(tel) ){
+                        links.push( h('a', {attrs: {href:'tel:'+tel, target:'_blank'}, style:{color: (!!bg) ? bg : '' }}, [
+                                        h('svg',{domProps: {innerHTML:'<use xlink:href="#ico-phone" />'}, attrs: {viewBox:'0 0 512 512'}}),
+                                        tel
                         ]));
-                        break;
-                    case ST_MODE.fils:
-                        conte.push( h('sk-filials', {
-                                        props: {parent:this.iStore}
-                                    }) );
-                        break;
-                    case ST_MODE.find:
-                        conte.push( h(SkFind, {props:{parent:this.iStore}}) );
-                        break;
-                    case ST_MODE.share:
-                        conte.push( h(SkShare, {props:{parent:this.iStore}}) );
-                        break;
-                    case ST_MODE.qr:                        /* =================== QR & card  =================== */
-                        if ( this.hasCard ){
-                            if (!!this.qr_bin_data) {
-                                conte.push( h('div', {class:{'sk-qr-place': true}}, [
-                                        h('img', {
-                                                    attrs: {
-                                                                src: this.qr_bin_data,
-                                                                id: this.cardId
-                                                            },
-                                                    class: {'sk-qr': true},
-                                                    style: {'opacity': 0},
-                                                    on: {'load': this.qr_load_image}
-                                        }) /* TODO:,
-                                        h('div', {style:{'text-align':'right', 'margin': '-1rem 0 1.5rem'}}, [
-                                            h('v-btn', {
-                                                props: {'x-small': true, text: true},
-                                                on: {click: this.unuse_card}
-                                            }, 'отказаться')
-                                        ]) */
+                    }
+                    if ( !$utils.isEmpty(web) ){
+                        links.push( h('a', {attrs: {href: web, target: '_blank'}, style:{color: (!!bg) ? bg : '' }}, [
+                                        (h('svg',{ domProps: {innerHTML:'<use xlink:href="#ico-planet" />'}, attrs: {viewBox:'0 0 496 512'}})),
+                                        web
+                        ]));
+                    }
+
+                    var conte = [];
+                    switch( this.mode ){
+                        case ST_MODE.info:
+                            if ( !$utils.isEmpty(ly) ){     /* =================== store & card additional info =================== */
+                                conte.push(h('h3', {class: {'sk-loyalty': true}, domProps: {innerHTML: ly}}));
+                            }
+                            if (this.hasCard){
+                                conte.push( h('h3', {class: {'sk-card-inf': true}},
+                                    $utils.isEmpty(this.cardNum) 
+                                        ? 'дата регистрации: ' + this.cardDt
+                                        : 'карта № ' + this.cardNum  + ' оформлена ' + this.cardDt
+                                ));
+                            }
+                            if ( links.length > 0 ) {
+                                conte.push( h('div', {class:{'sk-links': true}}, [
+                                                'Вы можете связаться с нами:',
+                                                links
+                                ]) );
+                            }
+                            conte.push( h('v-btn', {props:{
+                                to: {name: 'orders'},
+                                outlined: true,
+                                color: 'primary'
+                            }, class: {'mt-3': true, 'sk-go-orders': true}}, [
+                                h('svg', {
+                                            domProps: {innerHTML:'<use xlink:href="#ico-bags" />'}, 
+                                            attrs: {viewBox:'0 0 576 512'},
+                                            style: {color: 'primary'}
+                                        }),
+                                'история заказов'
+                            ]));
+                            break;
+                        case ST_MODE.fils:
+                            conte.push( h('sk-filials', {
+                                            props: {parent:this.iStore}
+                                        }) );
+                            break;
+                        case ST_MODE.find:
+                            conte.push( h(SkFind, {props:{parent:this.iStore}}) );
+                            break;
+                        case ST_MODE.share:
+                            conte.push( h(SkShare, {props:{parent:this.iStore}}) );
+                            break;
+                        case ST_MODE.qr:                        /* =================== QR & card  =================== */
+                            if ( this.hasCard ){
+                                if (!!this.qr_bin_data) {
+                                    conte.push( h('div', {class:{'sk-qr-place': true}}, [
+                                            h('img', {
+                                                        attrs: {
+                                                                    src: this.qr_bin_data,
+                                                                    id: this.cardId
+                                                                },
+                                                        class: {'sk-qr': true},
+                                                        style: {'opacity': 0},
+                                                        on: {'load': this.qr_load_image}
+                                            }) /* TODO:,
+                                            h('div', {style:{'text-align':'right', 'margin': '-1rem 0 1.5rem'}}, [
+                                                h('v-btn', {
+                                                    props: {'x-small': true, text: true},
+                                                    on: {click: this.unuse_card}
+                                                }, 'отказаться')
+                                            ]) */
+                                    ]));
+                                }
+                            } else {
+                                if (!$utils.isEmpty(short)){
+                                    conte.push( h('h3', {class: {'sk-loyalty': true}, domProps: {innerHTML: short}}) );
+                                }
+                                conte.push( h('div', {class: {'sk-takes': true}}, [
+                                        h('v-btn', {
+                                                        class: {'sk-take': true},
+                                                        props: {outlined: true, loading: this.sending},
+                                                        on:    {click: this.take_card}
+                                                    }, 'Стать клиентом'),
+                                        h('v-btn', {
+                                                        class: {'sk-link': true},
+                                                        props: {outlined: true, disabled: true}
+                                                   },
+                                        'Привязать карту')
                                 ]));
                             }
-                        } else {
-                            if (!$utils.isEmpty(short)){
-                                conte.push( h('h3', {class: {'sk-loyalty': true}, domProps: {innerHTML: short}}) );
-                            }
-                            conte.push( h('div', {class: {'sk-takes': true}}, [
-                                    h('v-btn', {
-                                                    class: {'sk-take': true},
-                                                    props: {outlined: true, loading: this.sending},
-                                                    on:    {click: this.take_card}
-                                                }, 'Стать клиентом'),
-                                    h('v-btn', {
-                                                    class: {'sk-link': true},
-                                                    props: {outlined: true, disabled: true}
-                                               },
-                                    'Привязать карту')
+                            links.push( h('div', {
+                                style: {'text-align':'right', 'font-size': '0.7rem', width: '100%', 'margin-right':'0.5rem'}
+                            },[
+                                h('span',{domProps: {innerHTML:'*подробная информация в <b><i>i</i></b>'}})
                             ]));
+                            break;
+                        default:
+                            //none
+                        }   //switch( this.mode...
+
+                        if (
+                                (this.mode !== ST_MODE.chat)
+                             && (this.mode !== ST_MODE.fils)
+                            ){
+                            fab = h('v-fab-transition', [
+                                h('v-btn', {props: {
+                                                fab: true,
+                                                bottom: true,
+                                                right: true,
+                                                small: true,
+                                                dark: true,
+                                                color: bg,
+                                                to: {name:'chat'}
+                                            },
+                                            class: {'sk-btn-chat': true}
+                                        }, [
+                                    h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-chat" />'}, attrs: {viewBox:'0 0 512 512'}})
+                                ])
+                            ]);
                         }
-                        links.push( h('div', {
-                            style: {'text-align':'right', 'font-size': '0.7rem', width: '100%', 'margin-right':'0.5rem'}
-                        },[
-                            h('span',{domProps: {innerHTML:'*подробная информация в <b><i>i</i></b>'}})
-                        ]));
-                        break;
-                    default:
-                        //none
-                }   //switch( this.mode...
-                
-                if (
-                        (this.mode !== ST_MODE.chat)
-                     && (this.mode !== ST_MODE.fils)
-                    ){
-                    fab = h('v-fab-transition', [
-                        h('v-btn', {props: {
-                                        fab: true,
-                                        bottom: true,
-                                        right: true,
-                                        small: true,
-                                        dark: true,
-                                        color: bg,
-                                        to: {name:'chat'}
-                                    },
-                                    class: {'sk-btn-chat': true}
+                        if ( conte.length > 0 ){
+                            childs.push(
+                                h('v-card', {
+                                    key:'card-conte-' + data[0][ci["ssctenants.id"]],
+                                    class: {'sk-card-conte': true},
+                                    props: {flat: true, tile: true}
                                 }, [
-                            h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-chat" />'}, attrs: {viewBox:'0 0 512 512'}})
-                        ])
-                    ]);
-                }
-               
-                if ( conte.length > 0 ){
-                    childs.push(
-                        h('v-card', {
-                            key:'card-conte-' + data[0][ci["ssctenants.id"]],
-                            class: {'sk-card-conte': true},
-                            props: {flat: true, tile: true}
-                        }, [
-                            h('v-card-text', conte)
-                        ])
-                    );
-                }
-            }   //else NORMAL
-        }
-        if (this.hasStore){
-            childs.push( h('sk-actions', {
-                    props: {store: this.iStore},
-                    class: {'d-none': !((this.mode === ST_MODE.def) || (this.mode === ST_MODE.qr))},
-                    on: {actions: (n) => {
-                            if ( n < 1 ){
-                                this.$nextTick(()=>{this.mode = ST_MODE.qr;});
-                            }
-                    }}
-            }) );
-        }
+                                    h('v-card-text', conte)
+                                ])
+                            );
+                        }
+                    }   //else web2
+                }   //else NORMAL
+            }
+            if ((showActions)&&(this.hasStore)){
+                childs.push( h('sk-actions', {
+                        props: {store: this.iStore},
+                        class: {'d-none': !((this.mode === ST_MODE.def) || (this.mode === ST_MODE.qr))},
+                        on: {actions: (n) => {
+                                if ( n < 1 ){
+                                    this.$nextTick(()=>{this.mode = ST_MODE.qr;});
+                                }
+                        }}
+                }) );
+            }
         
         if (!!fab){
             childs.push(fab);
@@ -916,5 +931,25 @@ export default {
             height: 1rem;
             margin-right: 0.5rem;
         }
+    }
+    
+    
+    .sk-store-web2{
+        height: 100%;
+        padding: 0;
+        & .sk-top-bar{
+            & .v-btn[href="/profile"]{
+                display: none;
+            }
+        }
+        & .v-card__text{
+            padding: 0;
+            & iframe{
+                width: 100%;
+                height: 100%;
+                border: 0 none;
+            }
+        }
+        
     }
 </style>

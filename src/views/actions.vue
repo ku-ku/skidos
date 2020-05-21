@@ -18,7 +18,8 @@ import {
         VListItemAction,
         VSkeletonLoader,
         VTextField,
-        VBottomSheet
+        VBottomSheet,
+        VAlert
        } from 'vuetify/lib';
 import { Swiper, SwiperSlide, directive } from 'vue-awesome-swiper';
 import 'swiper/css/swiper.css';
@@ -55,7 +56,8 @@ export default {
         Swiper,
         SwiperSlide,
         VTextField,
-        VBottomSheet
+        VBottomSheet,
+        VAlert
     },
     data(){
         return {
@@ -128,16 +130,19 @@ export default {
             }
             const ci = this.skidos.columnIndexes;
             const idIdx = ci["userpromoactions.id"],
-                  nmIdx = ci["userpromoactions.promogoods"];
-            var n1, n2, in1, in2;
+                  nmIdx = ci["userpromoactions.promogoods"],
+                  knIdx = ci["userpromoactions.kindname"];
+            var n1, n2, k, in1, in2;
             var data = this.skidos.data.sort((sk1, sk2) => {
                 n1  = sk1[nmIdx];
                 n2  = sk2[nmIdx];
+                k  = ($utils.isEmpty(sk1[knIdx]) ? 'xxx' : sk1[knIdx]).localeCompare($utils.isEmpty(sk2[knIdx]) ? 'xxx' : sk2[knIdx]);
                 in1 = this.$store.getters["basket/has"](sk1[idIdx]);
                 in2 = this.$store.getters["basket/has"](sk2[idIdx]);
                 return ((!!in1)&&(!!in2)) 
                         ? 0 : (!!in1)&&(!in2) 
-                        ? -1 : (!in1)&&(!in2) ? n1.localeCompare(n2) : 1;
+                            ? -1 : (!in1)&&(!in2) 
+                                ? (k===0) ? n1.localeCompare(n2) : k : 1;
             });
             this.skidos.data = data;
         },
@@ -173,10 +178,19 @@ export default {
                                 params: {store: this.store.id, order: _a.id}
             });
         },
-        do_order(){
-            this.$store.dispatch("basket/save");
+        async do_order(){
+            console.log("basket/save");
+            try{
+                var res = await this.$store.dispatch("basket/save");
+                setTimeout(()=>{
+                    this.$store.dispatch('basket/clear');
+                }, 6000);
+            } catch(e){
+                setTimeout(()=>{
+                    this.$store.commit('basket/error', null);
+                }, 6000);
+            }
         }
-        
     },
     created(){
         this.load();
@@ -230,20 +244,28 @@ export default {
                         }, items
             ));
         } if (this.hasSkidos){
-            const ci = this.skidos.columnIndexes;
-            var data = this.skidos.data;
-            childs.push( h('v-list', {class:{'sk-skidos':true}}, [
+            const ci = this.skidos.columnIndexes,
+                  data = this.skidos.data;
+            var   kind = 'xxx';
+            childs.push( h('v-list', {class:{'sk-skidos':true}, props:{subheader: true}}, 
                 data.map((a) => {
                     const id = a[ci["userpromoactions.id"]],
                           img = a[ci["userpromoactions.promoimage"]];
                     const inCart = this.$store.getters["basket/has"](id);
-                    var dates = '';
+                    var res = [],
+                        dates = '';
                     if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
                         var d = new Date(a[ci["userpromoactions.enddt"]]);
                         dates = 'до ' + d.getDate() + ' ' + this.month(d.getMonth());
                     }
+                    if ((!inCart)&&(!$utils.isEmpty(a[ci["userpromoactions.kindname"]]))){
+                        if (kind!==a[ci["userpromoactions.kindname"]]){
+                            kind = a[ci["userpromoactions.kindname"]];
+                            res.push(h('v-subheader', {props:{inset:true}}, kind));
+                        }
+                    }
                     
-                    return h('v-list-item', {
+                    res.push(h('v-list-item', {
                                 key: 'sk-' + id,
                                 on: {click: ()=>{
                                         (!!this.store.hasonline) ? this.on_order(a) : void(0);
@@ -289,17 +311,34 @@ export default {
                                                 : h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-right" />'}})
                                         ])
                                         : null
-                    ]);
+                    ]));
+                    return res;
                 })
-            ]));
+            ));
             
             const n = this.$store.getters["basket/numof"],
-                  s = this.$store.getters["basket/total"];
-            if (n > 0) {
-                childs.push( h('v-bottom-sheet', {
-                    props: {"hide-overlay": true, value: true, persistent: true}
-                }, [
-                    h('v-card', {class: {"sk-basket": true}, attrs: {"data-num-of": n}, props:{flat:true,tile:true}}, [
+                  s = this.$store.getters["basket/total"],
+                  e = this.$store.state.basket.error,
+                  o = this.$store.state.basket.order;
+            var bs = null, m = 0;
+            if (!$utils.isEmpty(e)){
+                bs = h('v-card', {class: {"sk-basket": true, "sk-error": true}, props:{flat:true,tile:true}}, [
+                    h('v-card-text', [
+                        h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-warn" />'}}),
+                        'Произошла ошибка при оформлении заказа - попробуйте отправить еще раз или сообщите нам о проблеме.'
+                    ])
+                ]);
+            } else if (!$utils.isEmpty(o)){
+                bs = h('v-card', {class: {"sk-basket": true, "sk-success": true}, props:{flat:true,tile:true}}, [
+                    h('v-card-text', [
+                        h('svg', {attrs: {viewBox:"0 0 512 512"}, domProps:{innerHTML: '<use xlink:href="#ico-chk-circle" />'}}),
+                        'Ваш заказ № ',
+                        h('strong', o),
+                        ' успешно оформлен! Ожидайте дальнейших сообщений о его готовности.'
+                    ])
+                ]);
+            } else if (n > 0) {
+                bs = h('v-card', {class: {"sk-basket": true}, attrs: {"data-num-of": n}, props:{flat:true,tile:true}}, [
                         h('v-card-text', [
                             h('v-badge',{props:{content: n, value: n, dark: true, color: "#ffa41b"}}, [
                                 h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-cart" />'}})
@@ -312,8 +351,12 @@ export default {
                                 on: {click: this.do_order}
                             }, 'оформить')
                         ])
-                    ])
-                ]));
+                ]);
+            }
+            if (!!bs){
+                childs.push( h('v-bottom-sheet', {
+                    props: {"hide-overlay": true, value: true, persistent: true}
+                }, [ bs ]) );
             }
         } else if (this.loading) {
             for (var i=0; i<3; i++){
@@ -361,6 +404,11 @@ export default {
 
     .sk-skidos{
         margin-top: 2rem;
+        & .v-subheader{
+            font-weight: 600;
+            font-style: italic;
+            justify-content: flex-end;
+        }
         & .v-list-item{
             border-top: 1px solid #ccc;
         }
@@ -461,6 +509,26 @@ export default {
         & .v-card__actions{
             justify-content: flex-end;
             padding-right: 1rem;
+        }
+        &.sk-error{
+            & .v-card__text{
+                padding: 1rem !important;
+                display: block !important;
+                & svg{
+                    color: $red-color;
+                    margin-right: 0.5rem;
+                }
+            }
+        }
+        &.sk-success{
+            & .v-card__text{
+                padding: 1rem !important;
+                display: block !important;
+                & svg{
+                    color: #2196f3;
+                    margin-right: 0.5rem;
+                }
+            }
         }
     }
 </style>

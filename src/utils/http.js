@@ -158,6 +158,13 @@ function post(u, o) {
                     jsonrpc: '2.0'
                 });
             break;
+        case 'query':
+            config.data = JSON.stringify({
+                    method: 'ru.kih.sin.api2.NamedQueries.read',
+                    params: [options.query, options.params],
+                    jsonrpc: '2.0'
+                });
+            break;
         default:
             config = options;
             config.method = 'POST';

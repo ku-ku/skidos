@@ -1,12 +1,28 @@
 const state = () => ({
-    at: new Date(),  //for watch changes
-    basket: {prods:[]}
+    at:    new Date(),  //for watch changes
+    order: null,        //num-order
+    error: null,
+    basket: {
+        prods: []
+    }
 });
 
 const mutations = {
     fix(state, basket){
         state.at = new Date();
         state.basket = basket;
+        state.error = null;
+        state.order = null;
+    },
+    complete(state, n){
+        state.at     = new Date();
+        state.error  = null;
+        state.order  = n;
+        state.basket = {prods:[]};
+    },
+    error(state, e){
+        state.at    = new Date();
+        state.error = e;
     }
 };
 
@@ -56,9 +72,47 @@ const actions = {
     clear({commit}) {
         commit('fix',  {prods:[]});
     },
-    save({commit}){
+    save({ commit, state }){
         console.log('saving...');
-        commit('fix',  {prods:[]});
+        if ((!!state.basket)&&(!!state.basket.prods)&&(state.basket.prods.length>0)){
+            var b = {
+                "userid": app.$store.state.profile.user.id,
+                "goods" : []
+            };
+            state.basket.prods.map( (p)=>{
+                b.tenantid = p.store.id;
+                b.goods.push({
+                    "productid": p.id,
+                    "amount":    p.num,
+                    "opersum":   p.total,
+                    "delivarydate": $utils.formatDate(p.at, 'yyyy-MM-dd HH:mm:ss')
+                });
+            });
+              
+            const opts = {
+                type: 'query',
+                query: '793a6cc2-b8f8-42bf-9936-dc8e0f2401c1.regOrder',
+                params: {order: JSON.stringify(b)}
+            };
+            return new Promise( (resolve, reject)=>{
+                (async () => { 
+                    try {
+                        var res = await $http.post(opts);
+                        console.log(res);
+                        if (!!res.result){
+                            var order = res.result.data[0][0];
+                            commit('complete', order);
+                            resolve(order)
+                        } else {
+                            throw res.error || 'unknown error';
+                        }
+                    }catch(e){
+                        commit('error',  e);
+                        reject(e);
+                    }
+                })();
+            } );
+        }
     }   //save
 };
 
