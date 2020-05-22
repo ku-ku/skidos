@@ -22,6 +22,7 @@ import {
         VAlert
        } from 'vuetify/lib';
 import { Swiper, SwiperSlide, directive } from 'vue-awesome-swiper';
+import SkBasket from '@/views/basket';
 import 'swiper/css/swiper.css';
     
 export default {
@@ -56,8 +57,7 @@ export default {
         Swiper,
         SwiperSlide,
         VTextField,
-        VBottomSheet,
-        VAlert
+        SkBasket
     },
     data(){
         return {
@@ -177,19 +177,6 @@ export default {
                                 name: 'order',
                                 params: {store: this.store.id, order: _a.id}
             });
-        },
-        async do_order(){
-            console.log("basket/save");
-            try{
-                var res = await this.$store.dispatch("basket/save");
-                setTimeout(()=>{
-                    this.$store.dispatch('basket/clear');
-                }, 6000);
-            } catch(e){
-                setTimeout(()=>{
-                    this.$store.commit('basket/error', null);
-                }, 6000);
-            }
         }
     },
     created(){
@@ -315,49 +302,11 @@ export default {
                     return res;
                 })
             ));
-            
-            const n = this.$store.getters["basket/numof"],
-                  s = this.$store.getters["basket/total"],
-                  e = this.$store.state.basket.error,
-                  o = this.$store.state.basket.order;
-            var bs = null, m = 0;
-            if (!$utils.isEmpty(e)){
-                bs = h('v-card', {class: {"sk-basket": true, "sk-error": true}, props:{flat:true,tile:true}}, [
-                    h('v-card-text', [
-                        h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-warn" />'}}),
-                        'Произошла ошибка при оформлении заказа - попробуйте отправить еще раз или сообщите нам о проблеме.'
-                    ])
-                ]);
-            } else if (!$utils.isEmpty(o)){
-                bs = h('v-card', {class: {"sk-basket": true, "sk-success": true}, props:{flat:true,tile:true}}, [
-                    h('v-card-text', [
-                        h('svg', {attrs: {viewBox:"0 0 512 512"}, domProps:{innerHTML: '<use xlink:href="#ico-chk-circle" />'}}),
-                        'Ваш заказ № ',
-                        h('strong', o),
-                        ' успешно оформлен! Ожидайте дальнейших сообщений о его готовности.'
-                    ])
-                ]);
-            } else if (n > 0) {
-                bs = h('v-card', {class: {"sk-basket": true}, attrs: {"data-num-of": n}, props:{flat:true,tile:true}}, [
-                        h('v-card-text', [
-                            h('v-badge',{props:{content: n, value: n, dark: true, color: "#ffa41b"}}, [
-                                h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-cart" />'}})
-                            ]),
-                            h('div', {class:{'sk-total':true}}, s + ' руб.')
-                        ]),
-                        h('v-card-actions', [
-                            h('v-btn', {
-                                props: {small:true, rounded: true, outlined: true, color: "#ffa41b"},
-                                on: {click: this.do_order}
-                            }, 'оформить')
-                        ])
-                ]);
-            }
-            if (!!bs){
-                childs.push( h('v-bottom-sheet', {
-                    props: {"hide-overlay": true, value: true, persistent: true}
-                }, [ bs ]) );
-            }
+            childs.push( h('sk-basket', {
+                on: {'show-basket': ()=>{
+                        console.log('basket show!');
+                }}
+            }) );
         } else if (this.loading) {
             for (var i=0; i<3; i++){
                 childs.push(
