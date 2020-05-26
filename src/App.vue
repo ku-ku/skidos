@@ -30,6 +30,7 @@
 
 <script>
 import Splash from '@/views/splash';
+import PushController from '@/utils/push';
 
 export default {
     name: 'App',
@@ -51,6 +52,7 @@ export default {
     created: function(){
         window['app'] = this;
         window['app'].utils = $utils;
+                
         var self = this;
         var _go = function(name){
             setTimeout(()=>{
@@ -58,7 +60,6 @@ export default {
                 self.$router.replace({name: name});
             }, 2500);
         };
-
         this.$store.dispatch('profile/check')
             .then( ()=> {
                 _go('main');
@@ -66,6 +67,9 @@ export default {
             .catch( ()=> {
                 _go('signin');
             });
+    },
+    beforeDestroy(){
+        PushController.destroy();
     },
     computed: {
         showAppBar(){
@@ -105,6 +109,56 @@ export default {
             this.snackbarText = e.text;
             this.snackbar = true;
         },
+        onUser(user){
+            //setup ping-timer
+            if (!!this._hTimer){
+                clearInterval(this._hTimer);
+            }
+            this._hTimer = setInterval(()=>{
+                const opts = {
+                    type: 'auth'
+                };
+                const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc&user=ping&password='+(new Date()).getTime();
+                (async ()=>{
+                    try {
+                        var resp = await $http.post(url, opts);
+                        if (!!resp.error){
+                            throw resp.error;
+                        }
+                    }catch(e){
+                        this.pingFail();
+                    }
+                })();
+            }, 10*60*1000);
+            
+            //init websock
+            if(!!this.ws){
+                this.ws.close();
+            }
+            
+            try {
+                var sock = new WebSocket(process.env.VUE_APP_BACKEND_WS);
+                sock.onmessage = (e)=>{
+                    console.log(e.data);
+                };
+                sock.onopen = ()=>{
+                    this.ws = sock;
+                    var info = {
+                        uid: user.id
+                    };
+                    (async ()=>{
+                        try {
+                            info.regId = await PushController.init();
+                        }catch(e){
+                            console.log('No push initialized:', e);
+                        }
+                    })();
+                    sock.send(JSON.stringify(info));
+                };
+            }catch(e){
+                console.log('sock no opened:', e);
+            }
+        },  //onUser
         pingFail(){
             this.$router.replace({name: 'signin'});
         }

@@ -5,8 +5,7 @@ const user = $utils.lsRead('auth') || {
 };
 
 const state = {
-  user,
-  _hTimer: false
+  user
 };
 
 const mutations = {
@@ -14,13 +13,14 @@ const mutations = {
       state.user.isAuthenticated = payload.isAuthenticated;
   },
   setSubject(state, payload) {
-    console.log('Subject:', payload);  
     state.user.id = payload.id;
     state.user.tenantId = payload.tenantId;
     state.user.login = payload.name;
     state.user.name  = payload.title;
     state.user.isAuthenticated = true;
     state.user.password = $utils.utf8ToB64(payload.password);
+    
+    window["app"].onUser(state.user);
     
     var _user = Object.assign({}, state.user);
     _user.isAuthenticated = false;
@@ -30,23 +30,6 @@ const mutations = {
     if (!!state._hTimer){
         clearInterval(state._hTimer);
     }
-    
-    state._hTimer = setInterval(()=>{
-        const opts = {
-            type: 'auth'
-        };
-        const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc&user=ping&password='+(new Date()).getTime();
-        (async ()=>{
-            try {
-                var resp = await $http.post(url, opts);
-                if (!!resp.error){
-                    throw resp.error;
-                }
-            }catch(e){
-                window["app"].pingFail();
-            }
-        })();
-    }, 10*60*1000);
   },
   setAdds: function(state, adds){
       state.user.adds = adds;

@@ -134,7 +134,7 @@ export default {
             setTimeout(()=>{this.adding = false;}, 600);
         },
         from_basket(){
-            this.$store.dispatch('basket/rm', {id:this.prod.id});
+            this.$store.dispatch('basket/rm', {id: this.prod.id});
             this.n = 1;
             this.mode = modes.OM_ORDER;
             this.$forceUpdate();

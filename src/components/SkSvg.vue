@@ -4,11 +4,11 @@
         props: {
             height: {
                 type: [String, Number],
-                required: true
+                required: false
             },
             width: {
                 type: [String, Number],
-                required: true
+                required: false
             },
             /**
              * for xlink icon-id (see index.html, "#ico-info" - for exmpl)
@@ -31,8 +31,8 @@
             return h('svg', {
                                 attrs: {
                                             viewBox: this.vbx, 
-                                            width: this.width, 
-                                            height: this.height,
+                                            width: this.width || "18px", 
+                                            height: this.height || "18px",
                                             xmlns: "http://www.w3.org/2000/svg"
                                         }, 
                                 domProps: {innerHTML:'<use xlink:href="' + this.xref + '" />'}

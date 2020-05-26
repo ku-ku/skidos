@@ -59,7 +59,14 @@ export default {
                         this.$store.commit('basket/error', null);
                     }, 6000);
                 }
-            }   //do_order
+            },   //do_order
+            show(e){
+                var from_basket = ("order"===this.$router.currentRoute.name);
+                this.$emit('show-basket', from_basket);
+                if (from_basket){
+                    this.$router.go(-1);
+                }
+            }
         },
         render(h){
             var card = null;
@@ -88,18 +95,16 @@ export default {
                             h('div', {class:{'sk-total':true}}, this.total + ' руб.')
                         ]),
                         h('v-card-actions', [
-                            h('v-btn-toggle', [
-                                h('v-btn', {
-                                    props: {small:true, dark: true, color: "orange lighten-1"},
-                                    on: {click: this.do_order}
-                                }, 'оформить'),
-                                h('v-btn', {
-                                    props: {small:true, dark: true, color: "orange lighten-1"},
-                                    on: {click: ()=>{this.$emit('show-basket');}}
-                                }, [
-                                        h('sk-svg', {props:{xref:'#ico-eye', width:18, height: 18}})
-                                    ])
-                            ])
+                            h('v-btn', {
+                                props: {small:true, dark: true, color: "orange lighten-1"},
+                                on: {click: this.do_order}
+                            }, 'оформить'),
+                            h('v-btn', {
+                                props: {small:true, dark: true, color: "orange lighten-1"},
+                                on: {click: this.show}
+                            }, [
+                                    h('sk-svg', {props:{xref:'#ico-eye', width:18, height: 18}})
+                                ])
                         ])
                 ]);
             }

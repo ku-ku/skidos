@@ -24,6 +24,7 @@ import {
 import { Swiper, SwiperSlide, directive } from 'vue-awesome-swiper';
 import SkBasket from '@/views/basket';
 import 'swiper/css/swiper.css';
+import SkSvg from '@/components/SkSvg';
     
 export default {
     name: 'SkActions',
@@ -57,13 +58,15 @@ export default {
         Swiper,
         SwiperSlide,
         VTextField,
-        SkBasket
+        SkBasket,
+        SkSvg
     },
     data(){
         return {
             loading: false,
             acts: null,
-            skidos: null
+            skidos: null,
+            basket: false
         };
     },
     computed: {
@@ -177,6 +180,17 @@ export default {
                                 name: 'order',
                                 params: {store: this.store.id, order: _a.id}
             });
+        },
+        from_basket(e, id){
+            e.preventDefault();
+            e.stopPropagation();
+            this.$store.dispatch('basket/rm', {id: id});
+            var n = this.$store.getters["basket/numof"];
+            if (n < 1){
+                this.basket = false;
+            }
+            
+            return false;
         }
     },
     created(){
@@ -193,7 +207,7 @@ export default {
             this.$nextTick(()=>{
                 var n = this.$store.getters["basket/numof"];
                 if ( n > 0 ){
-                    $(".v-bottom-sheet").css({display:'unset'});
+                    $(".v-bottom-sheet").css({display: ''});
                 }
             });
         }
@@ -233,12 +247,15 @@ export default {
         } if (this.hasSkidos){
             const ci = this.skidos.columnIndexes,
                   data = this.skidos.data;
-            var   kind = 'xxx';
-            childs.push( h('v-list', {class:{'sk-skidos':true}, props:{subheader: true}}, 
+            var   kind = 'xxx', numOf = 0;
+            childs.push( h('v-list', {class:{'sk-skidos':true}, props:{subheader: true}},
                 data.map((a) => {
                     const id = a[ci["userpromoactions.id"]],
                           img = a[ci["userpromoactions.promoimage"]];
                     const inCart = this.$store.getters["basket/has"](id);
+                    if ((this.basket)&&(!inCart)){
+                        return null;
+                    }
                     var res = [],
                         dates = '';
                     if (!$utils.isEmpty(a[ci["userpromoactions.enddt"]])){
@@ -287,24 +304,39 @@ export default {
                                     ]),
                                     $utils.isEmpty(a[ci["userpromoactions.promoproducer"]])
                                             ? null
-                                            : h('div', {class: {'sk-produ': true}}, a[ci["userpromoactions.promoproducer"]])
+                                            : h('div', {class: {'sk-produ': true}}, a[ci["userpromoactions.promoproducer"]]),
+                                    inCart 
+                                        ? h('div', {class: {'sk-from-basket': true}}, [
+                                            h('v-btn', {
+                                                        props: {outlined: true, color: 'default', small: true, rounded: true},
+                                                        on: {
+                                                            click: ()=>{this.from_basket(event, id);}
+                                                        }
+                                                    }, [
+                                                        h('sk-svg', {props:{xref: "#close", width: 12, height: 12}}),
+                                                        'убрать'
+                                                    ])
+                                            ])
+                                        : null
                                 ]),
                                 (!!this.store.hasonline) 
-                                        ? h('v-list-item-action', [
-                                            inCart 
-                                                ? h('div', {class:{'sk-in-cart':true}}, [
-                                                    h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-cart" />'}})
+                                        ? h('v-list-item-action',  
+                                            [inCart ? 
+                                                h('div', {class:{'sk-in-cart':true}}, [
+                                                    h('sk-svg', {props:{xref: "#ico-cart"}})
                                                 ])
-                                                : h('svg', {attrs: {viewBox:"0 0 192 512"}, domProps:{innerHTML: '<use xlink:href="#ico-right" />'}})
-                                        ])
+                                            : h('sk-svg', {props:{xref: "#ico-right"}})
+                                            ])
                                         : null
                     ]));
+                    numOf++;
                     return res;
                 })
             ));
             childs.push( h('sk-basket', {
-                on: {'show-basket': ()=>{
-                        console.log('basket show!');
+                on: {'show-basket': (b)=>{
+                    console.log(b);
+                    this.basket = ((typeof b === 'boolean') && (!!b)) ? true : !this.basket;
                 }}
             }) );
         } else if (this.loading) {
@@ -396,16 +428,14 @@ export default {
             font-size: 0.75rem;
             color: $gray-color;
         }
-        & .sk-order-now{
-            font-size: 0.75rem;
-            color: $gray-color;
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            & .v-input {
-                margin: 0 0.5rem;
-                & input{
-                    text-align: right !important;
+        & .sk-from-basket{
+            text-align: center;
+            & .v-btn{
+                border-color: $gray-color;
+                color: $gray-color;
+                text-transform: lowercase !important;
+                & .v-btn__content{
+                    color: $gray-color;
                 }
             }
         }
@@ -429,53 +459,6 @@ export default {
                     height: 18px;
                     margin: 0 auto;
                     color: #fff;
-                }
-            }
-        }
-    }
-    .sk-basket{
-        padding-top: 1.5rem;
-        padding-bottom: 1rem;
-        background-color: #fafafa;
-        border-top: 2px solid $main-color;
-        border-radius: 0;
-        & .v-card__text{
-            padding: 0 !important;
-            display: flex;
-            justify-content: center;
-            & svg{
-                width: 28px;
-                height: 28px;
-                color: $main-color;
-            }
-            & .sk-total{
-                margin-left: 2rem;
-                font-size: 1.5rem;
-                font-weight: 300;
-                color: #000;
-            }
-        }
-        & .v-card__actions{
-            justify-content: flex-end;
-            padding-right: 1rem;
-        }
-        &.sk-error{
-            & .v-card__text{
-                padding: 1rem !important;
-                display: block !important;
-                & svg{
-                    color: $red-color;
-                    margin-right: 0.5rem;
-                }
-            }
-        }
-        &.sk-success{
-            & .v-card__text{
-                padding: 1rem !important;
-                display: block !important;
-                & svg{
-                    color: #2196f3;
-                    margin-right: 0.5rem;
                 }
             }
         }

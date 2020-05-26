@@ -2,31 +2,11 @@ import Store from '@/store';
 
 var PushController;
 
-function onRegistration(data) {
-  const {registrationId} = data;
-
-  Store.commit('settings/setPush', {
-    fcmId: registrationId,
-    value: true
-  });
-}
-
-/**
- * Handler on notification
- * @param {Object} data
- */
 function onNotification(data) {
   // @todo
   console.log('PUSH.onNotification', data);
 }
 
-/**
- * Handler on error
- * @param {Object} err
- */
-function onError(err) {
-  // @todo
-}
 
 function onUnregisterSuccess() {
   // @todo
@@ -42,24 +22,36 @@ function onUnregisterError(data) {
 }
 
 function init() {
-  if (typeof window.PushNotification !== 'undefined') {
-    const options = {
-      android: {
-          senderID: process.env.VUE_APP_SENDER_ID
-      },
-      ios: {
-        alert: 'true',
-        badge: 'true',
-        sound: 'true'
-      }
+    const _p = (resolve, reject) => {
+        if (typeof window.PushNotification === 'undefined') {
+            reject({error:'No push`s available'});
+        } else {
+            const opts = {
+                android: {
+                    senderID: process.env.VUE_APP_SENDER_ID
+                },
+                ios: {
+                  alert: 'true',
+                  badge: 'true',
+                  sound: 'true'
+                }
+            };
+            PushController = window.PushNotification.init(opts);
+            PushController.on('notification', onNotification);
+            PushController.on('error', (err)=>{
+                reject(err);
+            });
+            PushController.on('registration', (data)=>{
+                const {registrationId} = data;
+                Store.commit('settings/setPush', {
+                  fcmId: registrationId,
+                  value: true
+                });
+                resolve(registrationId);
+            });
+        }
     };
-
-    PushController = window.PushNotification.init(options);
-
-    PushController.on('registration', onRegistration);
-    PushController.on('notification', onNotification);
-    PushController.on('error', onError);
-  }
+    return new Promise(_p);
 }
 
 function destroy() {
@@ -70,12 +62,5 @@ function destroy() {
 
 export default {
   init,
-  destroy,
-  set enable(bool) {
-    if (bool) {
-      this.init();
-    } else {
-      this.destroy();
-    }
-  }
+  destroy
 };
