@@ -19,7 +19,9 @@ import {
         VSkeletonLoader,
         VTextField,
         VBottomSheet,
-        VAlert
+        VAlert,
+        VChipGroup,
+        VChip
        } from 'vuetify/lib';
 import { Swiper, SwiperSlide, directive } from 'vue-awesome-swiper';
 import SkBasket from '@/views/basket';
@@ -58,6 +60,8 @@ export default {
         Swiper,
         SwiperSlide,
         VTextField,
+        VChipGroup,
+        VChip,
         SkBasket,
         SkSvg
     },
@@ -66,7 +70,8 @@ export default {
             loading: false,
             acts: null,
             skidos: null,
-            basket: false
+            cats: [],
+            basket: false   /* show/hide basket pane */
         };
     },
     computed: {
@@ -134,9 +139,28 @@ export default {
             const ci = this.skidos.columnIndexes;
             const idIdx = ci["userpromoactions.id"],
                   nmIdx = ci["userpromoactions.promogoods"],
+                  knId  = ci["userpromoactions.kindid"],
                   knIdx = ci["userpromoactions.kindname"];
-            var n1, n2, k, in1, in2;
-            var data = this.skidos.data.sort((sk1, sk2) => {
+            var n1, n2, k, in1, in2, data;
+            if (this.cats.length < 1){
+                var _cats = [];
+                data = this.skidos.data;
+                data.map( (sk1)=>{
+                    if (!$utils.isEmpty(sk1[knId])){
+                        n1 = _cats.filter((sk2)=>{
+                            return ( sk2.id === sk1[knId]);
+                        });
+                        if (n1.length < 1){
+                            _cats.push({id: sk1[knId], name: sk1[knIdx]});
+                        }
+                    }
+                });
+                this.cats = _cats.sort((c1, c2)=>{
+                    return c1.name.localeCompare(c2.name);
+                });
+            }
+          
+            data = this.skidos.data.sort((sk1, sk2) => {
                 n1  = sk1[nmIdx];
                 n2  = sk2[nmIdx];
                 k  = ($utils.isEmpty(sk1[knIdx]) ? 'xxx' : sk1[knIdx]).localeCompare($utils.isEmpty(sk2[knIdx]) ? 'xxx' : sk2[knIdx]);
@@ -191,6 +215,12 @@ export default {
             }
             
             return false;
+        },
+        go_cat(id){
+            var h = $(this.$el).find('.v-subheader[data-cat-id="' + id + '"]');
+            $([document.documentElement, document.body]).animate({
+                scrollTop: h.offset().top
+            }, 800);
         }
     },
     created(){
@@ -248,6 +278,22 @@ export default {
             const ci = this.skidos.columnIndexes,
                   data = this.skidos.data;
             var   kind = 'xxx', numOf = 0;
+            if ((this.cats)&&(this.cats.length>1)){
+                childs.push( h('v-chip-group', {
+                    class: {'sk-cats': true}, 
+                    props: {'show-arrows': false, 'prev-icon': 'fas fa-chevron-left', 'next-icon': 'fas fa-chevron-right'} //TODO:
+                }, [
+                        this.cats.map( (c)=>{
+                            return h('v-chip', {
+                                key: 'chip-' + c.id,
+                                attrs: {'data-cat-id': c.id},
+                                props: {color: 'orange', 'outlined': true},
+                                on: {click: ()=>{this.go_cat(c.id);}}
+                            }, c.name);
+                        } )
+                ]));
+            }
+            
             childs.push( h('v-list', {class:{'sk-skidos':true}, props:{subheader: true}},
                 data.map((a) => {
                     const id = a[ci["userpromoactions.id"]],
@@ -265,7 +311,10 @@ export default {
                     if ((!inCart)&&(!$utils.isEmpty(a[ci["userpromoactions.kindname"]]))){
                         if (kind!==a[ci["userpromoactions.kindname"]]){
                             kind = a[ci["userpromoactions.kindname"]];
-                            res.push(h('v-subheader', {props:{inset:true}}, kind));
+                            res.push(h('v-subheader', {
+                                props: {inset: true},
+                                attrs: {'data-cat-id': a[ci["userpromoactions.kindid"]]}
+                            }, kind));
                         }
                     }
                     
@@ -462,5 +511,9 @@ export default {
                 }
             }
         }
+    }
+    .sk-cats{
+        margin-top: 1rem;
+        padding: 0 1rem;
     }
 </style>

@@ -20,6 +20,14 @@ import {
 } from 'vuetify/lib';
 import color from 'color';
 
+function num2str(n, text_forms) {  
+    n = Math.abs(n) % 100; var n1 = n % 10;
+    if (n > 10 && n < 20) { return text_forms[2]; }
+    if (n1 > 1 && n1 < 5) { return text_forms[1]; }
+    if (n1 === 1) { return text_forms[0]; }
+    return text_forms[2];
+}
+
 export default {
   name: 'ViewMain',
   data() {
@@ -172,15 +180,9 @@ export default {
                             h('img', {attrs: {src: require('@/assets/imgs/my-logo.png'), viewBox:"0 0 512 512"}, class:'sk-logo'})
                         ]),
                         h('v-card-text',[
-                            (this.hasCards) 
-                                ? 'у Вас ' + data.length + ' карт'
-                                : 'у Вас еще нет зарегистрированных карт',
-                            (this.hasCards) 
-                                ? h('div',{class:{'sk-bonuces':true}}, [
-                                    (this.allBonuces > 0) 
-                                    ? 'накоплено всего ' + this.allBonuces + ' бонусов'
-                                    : 'нет накопленных бонусов'])
-                                : h('div', {class:{'sk-no-cards': true}}, 'Вы можете оформить в любом магазине')
+                            (this.hasCards)
+                                ? 'у Вас ' + data.length + num2str(data.length, [' подписка', ' подписки', ' подписок'])
+                                : 'у Вас еще нет подписок'
                         ])
                     ])
         );
@@ -193,7 +195,7 @@ export default {
                         class: {'sk-card-list': true, 'sk-my-cards': true}
                     },[
                         h('v-card-title', [
-                            h('h3','Мои карты'),
+                            h('h3','Мои подписки'),
                             h('svg',{ domProps: {innerHTML:'<use xlink:href="#ico-star" />'}, attrs: {viewBox:'0 0 576 512'}})
                         ]),
                         h('v-card-text', [

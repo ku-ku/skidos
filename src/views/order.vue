@@ -9,6 +9,8 @@ import {
         VBtn,
         VSubheader,
         VTextField,
+        VTextarea,
+        VSwitch,
         VAlert,
         VBadge
        } from 'vuetify/lib';
@@ -39,6 +41,8 @@ export default {
         VBtn,
         VSubheader,
         VTextField,
+        VTextarea,
+        VSwitch,
         VAlert,
         VBadge
     },
@@ -57,9 +61,11 @@ export default {
             state: modes.OM_NONE,
             valid: true,
             n: 1,
+            note: null,
             today: true,
             time: times.TM_AM,
-            adding: false
+            adding: false,
+            self: false
         };
     },
     computed: {
@@ -99,6 +105,14 @@ export default {
         }
     },
     mounted(){
+        var d = new Date();
+        if (d.getHours()<12){
+            this.time = times.TM_AM;
+        } else if (d.getHours()<18){
+            this.time = times.TM_AM;
+        } else {
+            this.time = times.TM_EV;
+        }
         this.$nextTick(()=>{
             var i = $(this.$el).find('.sk-choice input');
             i.css({'text-align': 'center', 'max-height': '3rem'});
@@ -128,6 +142,8 @@ export default {
             p.num   = this.n;
             p.total = this.total;
             p.at    = this.at;
+            p.note  = this.note;
+            p.self  = (!!this.self) ? 1 : 0;
             this.$store.dispatch('basket/add', p);
             this.mode = modes.OM_ADDED;
             this.adding = true;
@@ -139,7 +155,7 @@ export default {
             this.mode = modes.OM_ORDER;
             this.$forceUpdate();
         },
-        async do_order(){
+        async do_order(){  //TODO: for one-click
             this.valid = !isNaN(parseFloat(this.n));
             if (!this.valid){
                 return;
@@ -231,10 +247,10 @@ export default {
                         'max-height': 240,
                         contain: true,
                         src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref
-                }})
+                }}),
+                h('h1', {class: {'sk-name': true}}, prod.promogoods)
             ]),
             h('v-card-subtitle', [
-                h('h1', {class: {'sk-name': true}}, prod.promogoods),
                 h('h2', {class: {'sk-prod': true}}, prod.promoproducer)
             ]),
             h('v-card-actions', [
@@ -316,6 +332,22 @@ export default {
                                 on: {click: ()=>{this.time = times.TM_EV;}}
                                 }, '18:00 - 21:00')
                 ]),
+                h('v-switch', {
+                    props: {'input-value': this.self, inset: true, label:'самовывоз'}, 
+                    style: {"align-self":"flex-start"},
+                    on: {click: (e)=>{
+                            this.self = !this.self;
+                }}}),
+                h('v-textarea', {props: {
+                    "value": this.note,
+                    "full-width": true,
+                    "rows": 2,
+                    "messages": 'комментарий к заказу'
+                }, class:{'sk-comments':true},
+                on: {input: (e)=>{
+                        this.note = e;
+                    }
+                }}),
                 h('div', {class:{'sk-addr':true}}, [
                     h('svg', {attrs: {viewBox:"0 0 384 512"}, domProps:{innerHTML: '<use xlink:href="#ico-map-marker" />'}}), 
                     'Адрес доставки: ', 
@@ -340,7 +372,7 @@ export default {
                         h('svg', {attrs: {viewBox:"0 0 512 512"}, domProps:{innerHTML: '<use xlink:href="#ico-chk-circle" />'}}),
                         'ВАШ ЗАКАЗ ОФОРМЛЕН, ',
                         h('div', {class:{'small':true, 'my-3': true}}, 'ожидайте сообщение о его готовности'),
-                        h('div', {class:{'text-center':true, }}, [
+                        h('div', {class:{'text-center':true}}, [
                             h('v-btn', {
                                 props: {
                                             dense: true,
@@ -419,29 +451,37 @@ export default {
             align-items: center;
             & .v-btn{
                 border-radius: 50%;
-                background: rgba(0,0,0, 0.18);
+                background: rgba(0,0,0,0.33);
                 width: 32px;
                 height: 32px;
                 line-height: 32px;
                 text-align: center;
                 color: #fff;
                 margin-right: 1rem;
+                border: 1px solid rgba(255,255,255,0.5);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.33);
                 & .v-btn__content{
                     display: inline;
                 }
                 & svg{
                     width: 18px;
                     height: 18px;
-                    opacity: 0.75;
+                    opacity: 0.9;
                 }
             }
             & h3{
-                font-weight: 400;
-                font-size: 1.5rem;
                 white-space: nowrap;
                 overflow: hidden; 
                 text-overflow: ellipsis;
+                font-size: 1.125rem;
+                font-weight: 400;
+                color: #fff;
+                text-shadow: 0 0 2px rgba(0,0,0,0.75);
+                padding: 0.25rem 0.5rem;
             }
+        }
+        & .v-card__subtitle{
+            margin-top: 1rem !important;
         }
         & .sk-logo{
             border: #fff;
@@ -455,12 +495,30 @@ export default {
             }
         }
         & .v-card__title{
-            padding-top: 48px;
-        }
-        & .sk-name {
-            color: #000;
-            font-size: 1.125rem;
-            font-weight: 400;
+            padding: 0 !important;
+            position: relative;
+            &  .sk-name {
+                left: 0;
+                bottom: 0;
+                z-index: 4;
+                background: rgba(0,0,0,0.18);
+                position: absolute;
+                width: 100%;
+                color: #fff;
+                text-shadow: 0 0 4px rgba(0,0,0,0.75);
+                white-space: nowrap;
+                overflow: hidden; 
+                text-overflow: ellipsis;
+                font-size: 1.125rem;
+                font-weight: 400;
+                padding: 0.5rem;
+            }
+            & h3{
+                
+            }
+            & .sk-name{
+                
+            }
         }
         & .sk-prod{
             font-size: 0.85rem;
@@ -509,7 +567,11 @@ export default {
                 flex-direction: row;
                 justify-content: space-around;
             }
+            & .sk-comments{
+                width: 100%;
+            }
             & .sk-addr{
+                margin-top: 1rem;
                 & svg{
                     width: 18px;
                     height: 18px;

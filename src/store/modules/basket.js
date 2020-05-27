@@ -44,6 +44,8 @@ const actions = {
                 found = true;
                 prod.num = payload.num;
                 prod.total = payload.total;
+                prod.self  = payload.self;
+                prod.note  = payload.note;
             }
         });
         if (!found){
@@ -85,6 +87,8 @@ const actions = {
                     "productid": p.id,
                     "amount":    p.num,
                     "opersum":   p.total,
+                    "note":      p.note,
+                    "self":      p.self,
                     "delivarydate": $utils.formatDate(p.at, 'yyyy-MM-dd HH:mm:ss')
                 });
             });
