@@ -309,7 +309,7 @@ export default {
                       web= data[0][ci["ssctenantsadds.uri"]],
                       web2=data[0][ci["ssctenantsadds.uri2"]],
                       short=data[0][ci["ssctenantsadds.shortloyalty"]];
-                      
+              
                 var ly = data[0][ci["ssctenantsadds.loyalty"]];
                 if (!$utils.isEmpty(ly)){
                     ly = ly.replace(/;/g, '<br />');
@@ -346,12 +346,17 @@ export default {
                 } else {
                     if (!!bi){
                         titleVNodes.push(
-                            h('v-img',{props: {src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + bi.ref, width:'100%', height:'auto'}})
+                            h('v-img', {
+                                props: {
+                                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + bi.ref, width:'100%', height:'auto', 
+                                            eager: true
+                                       }
+                            })
                         );
                     } else {
                         titleVNodes.push( h('h1', title) );
                     }
-                    if (this.hasCard){
+                    if ((this.hasCard)&&(!!data[0][ci["ssctenantsadds.hasbonus"]])){
                         titleVNodes.push( h('h3', {
                                         class: {'sk-bonuces': true},
                                         style: {'color': $utils.isEmpty(bc) ? '' : bc},

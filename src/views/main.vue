@@ -34,7 +34,8 @@ export default {
     return {
         cards: null,
         loading: false,
-        stores: null
+        stores: null,
+        branding: null
     };
   },
   components: {
@@ -115,6 +116,25 @@ export default {
             if (res.result){
                 this.stores = Object.freeze(res.result);
             }
+            
+            var brands = [],
+                ci     = this.cards.columnIndexes["ssctenantsadds.brandlogo"];
+            this.cards.data.map((c)=>{
+                if (!$utils.isEmpty(c[ci])){
+                    brands.push(c[ci]);
+                }
+            });
+            ci = this.stores.columnIndexes["ssctenantsadds.brandlogo"];
+            this.stores.data.map((c)=>{
+                if (!$utils.isEmpty(c[ci])){
+                    brands.push(c[ci]);
+                }
+            });
+            if (brands.length>0){
+                var randomIndex = Math.floor(Math.random() * brands.length);
+                this.branding = brands[randomIndex];
+            }
+            
             this.loading = false;
         } catch(err) {
             this.loading = false;
@@ -164,10 +184,18 @@ export default {
         /**
          * Title
          */
+        var my_branding = (!!this.branding);
+        if (my_branding){
+            childs.push(h('div', {
+                class: {'sk-my-brand': true},
+                style: {'background-image':'url("' + process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.branding.ref + '")'}
+            }));
+        }
         childs.push(
                     h('v-card',{
                         class: {'sk-card-user': true},
-                        props: {flat: true}
+                        props: {flat: true},
+                        style: {'background-color': my_branding ? 'transparent' : ''}
                     }, [
                         h('v-card-title', {class:{'d-flex':true}}, [
                             h('div', {class: {'sk-name': true}}, [
@@ -282,13 +310,24 @@ export default {
         width: 38px;
         height: 38px;
     }
+    .sk-my-brand{
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 280px;
+        filter: blur(6px);
+        -webkit-filter: blur(6px);
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;        
+    }
     .sk-card-user{
         background-color: $main-color;
         padding-bottom: 3rem;
         margin-bottom: -2.5rem;
         & .v-card__title{
             color: #fff;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.18);
+            text-shadow: 1px 2px 3px rgba(0,0,0,0.666);
             justify-content: space-between;
             align-items: flex-start;
         }
@@ -296,7 +335,8 @@ export default {
             text-align: center;
             font-size: 1.5rem;
             color: #fff;
-            line-height: 1.115;            
+            line-height: 1.115;
+            text-shadow: 1px 2px 3px rgba(0,0,0,0.666);
             & .sk-bonuces{
                 font-size: 1.75rem;
             }
@@ -306,9 +346,10 @@ export default {
         }
         & .sk-go-profile{
             & .v-btn{
-                font-size: 2.5rem;
+                font-size: 2rem;
                 font-weight: 300;
                 padding-left: 0;
+                text-shadow: 1px 2px 3px rgba(0,0,0,0.666);
             }
         }
     }

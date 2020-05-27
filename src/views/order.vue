@@ -14,6 +14,8 @@ import {
         VAlert,
         VBadge
        } from 'vuetify/lib';
+import SkSvg from '@/components/SkSvg';
+
 const modes = {
     OM_ERROR:  -1,
     OM_NONE:    0,
@@ -44,7 +46,8 @@ export default {
         VTextarea,
         VSwitch,
         VAlert,
-        VBadge
+        VBadge,
+        SkSvg
     },
     props: {
         order: {
@@ -105,6 +108,7 @@ export default {
         }
     },
     mounted(){
+        this.self = !(!!this.magaz.hasdelivery);
         var d = new Date();
         if (d.getHours()<12){
             this.time = times.TM_AM;
@@ -117,6 +121,7 @@ export default {
             var i = $(this.$el).find('.sk-choice input');
             i.css({'text-align': 'center', 'max-height': '3rem'});
             this.state = modes.OM_READY;
+            $([document.documentElement, document.body]).animate({scrollTop: 0}, 100);
         });
     },
     methods: {
@@ -222,7 +227,8 @@ export default {
     render(h){
         const prod = this.prod,
               accent = 'red darken-4',
-              inCart = this.in_cart();
+              inCart = this.in_cart(),
+              hasDeliv = this.magaz.hasdelivery;
       
         return h('v-card', {
             key: 'ord-' + prod.id,
@@ -246,6 +252,7 @@ export default {
                 h('v-img', {props: {
                         'max-height': 240,
                         contain: true,
+                        eager: true,
                         src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref
                 }}),
                 h('h1', {class: {'sk-name': true}}, prod.promogoods)
@@ -332,32 +339,37 @@ export default {
                                 on: {click: ()=>{this.time = times.TM_EV;}}
                                 }, '18:00 - 21:00')
                 ]),
-                h('v-switch', {
-                    props: {'input-value': this.self, inset: true, label:'самовывоз'}, 
-                    style: {"align-self":"flex-start"},
-                    on: {click: (e)=>{
-                            this.self = !this.self;
-                }}}),
                 h('v-textarea', {props: {
                     "value": this.note,
                     "full-width": true,
-                    "rows": 2,
+                    "rows": 1,
                     "messages": 'комментарий к заказу'
                 }, class:{'sk-comments':true},
                 on: {input: (e)=>{
                         this.note = e;
                     }
                 }}),
-                h('div', {class:{'sk-addr':true}}, [
-                    h('svg', {attrs: {viewBox:"0 0 384 512"}, domProps:{innerHTML: '<use xlink:href="#ico-map-marker" />'}}), 
-                    'Адрес доставки: ', 
-                    ((this.user.adds)&&!$utils.isEmpty(this.user.adds.addrstring))
-                        ? this.user.adds.addrstring
-                        : h('span', [
-                                        'Вы можете указать в',
-                                        h('v-btn', {props:{text: true, small: true, to:{name:'profile'}}}, 'настройках профиля')
-                            ])
-                ]),
+                h('v-switch', {
+                    props: {'input-value': this.self, inset: true, label:'заберу самостоятельно', disabled: !hasDeliv}, 
+                    style: {"align-self":"flex-start"},
+                    on: {click: (e)=>{
+                            this.self = !this.self;
+                }}}),
+                h('div', {class:{'sk-addr':true}}, 
+                        hasDeliv ? [
+                            h('sk-svg', {props: {xref:"#ico-map-marker"}}), 
+                            'Адрес доставки: ', 
+                            ((this.user.adds)&&!$utils.isEmpty(this.user.adds.addrstring))
+                                ? this.user.adds.addrstring
+                                : h('span', [
+                                                'Вы можете указать в',
+                                                h('v-btn', {props:{text: true, small: true, to:{name:'profile'}}}, 'настройках профиля')
+                                    ])
+                        ] : [
+                            h('sk-svg', {props: {xref:"#ico-map-marker"}}), 
+                            'магазин не осуществляет доставку'
+                        ]
+                ),      //.sk-addr
                 (this.state === modes.OM_SUCCESS) 
                     ? h('v-alert', {props: {
                                         width: '100%',
@@ -513,12 +525,6 @@ export default {
                 font-weight: 400;
                 padding: 0.5rem;
             }
-            & h3{
-                
-            }
-            & .sk-name{
-                
-            }
         }
         & .sk-prod{
             font-size: 0.85rem;
@@ -571,11 +577,12 @@ export default {
                 width: 100%;
             }
             & .sk-addr{
-                margin-top: 1rem;
+                margin-bottom: 1rem;
                 & svg{
-                    width: 18px;
-                    height: 18px;
+                    width: 16px;
+                    height: 16px;
                     margin-right: 0.25rem;
+                    vertical-align: middle;
                 }
             }
         }
