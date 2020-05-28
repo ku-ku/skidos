@@ -23,10 +23,9 @@ function onUnregisterError(data) {
 
 function init() {
     const _p = (resolve, reject) => {
-        app.msg({text:'Init push`s #' + process.env.VUE_APP_SENDER_ID});
-        
+        app.msg({text:'Init push`s #' + process.env.VUE_APP_SENDER_ID, color:'default'});
         if (typeof window.PushNotification === 'undefined') {
-            app.msg({text:'No push`s available'});
+            app.msg({text:'No push`s available', color:'warning'});
             reject({error:'No push`s available'});
         } else {
             const opts = {
@@ -45,7 +44,7 @@ function init() {
             PushController = window.PushNotification.init(opts);
             PushController.on('notification', onNotification);
             PushController.on('error', (err)=>{
-                app.msg({text:'Pushes reg err: ' + err});
+                app.msg({text:'Pushes reg err: ' + err, color:'warning'});
                 reject(err);
             });
             PushController.on('registration', (data)=>{
