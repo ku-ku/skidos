@@ -18,16 +18,6 @@
                             <svg slot="prepend" viewBox="0 0 496 512"><use xlink:href="#ico-morda" /></svg>
                         </v-text-field>
                         <v-text-field
-                            label="логин"
-                            name="l"
-                            type="text"
-                            v-model="login"
-                            required
-                            autofocus
-                        >
-                            <svg slot="prepend" viewBox="0 0 496 512"><use xlink:href="#ico-morda" /></svg>
-                        </v-text-field>
-                        <v-text-field
                             label="Пароль"
                             name="p1"
                             type="password"
@@ -110,7 +100,6 @@ export default {
     return {
         valid: false,
         title: '',
-        login: '',
         pwd: stub_pwd,
         pwd2: stub_pwd,
         tel: '',
@@ -165,7 +154,6 @@ export default {
 "sscusersadds.phone": 13
 sscusersadds.addrstring                    
  */                
-                this.login = data[ci["sscusers.name"]];
                 this.title = $utils.isEmpty(data[ci["sscusers.title"]]) ? this.login : data[ci["sscusers.title"]];
                 this.pwd = stub_pwd;
                 this.pwd2= stub_pwd;
@@ -174,9 +162,6 @@ sscusersadds.addrstring
                 this.addr= data[ci["sscusersadds.addrstring"]];
                 this.error='';
                 this.agree=false;
-                if ($utils.isEmpty(this.login)){
-                    this.login = this.title;
-                }
             } else {
                 throw 'Данные профиля недоступны';
             }
@@ -191,7 +176,6 @@ sscusersadds.addrstring
         this.alert = 'warning';
         e.preventDefault();
         if ( $utils.isEmpty(this.title) || 
-             $utils.isEmpty(this.login) || 
              $utils.isEmpty(this.pwd)   ||
              $utils.isEmpty(this.tel)   ||
              $utils.isEmpty(this.eml)
@@ -216,7 +200,7 @@ sscusersadds.addrstring
             data: JSON.stringify({client: 
                 {   
                     "id":         this.userId,
-                    "name":       this.login,
+                    "name":       this.eml,
                     "title":      this.title,
                     "password":  (this.pwd === stub_pwd) ? null : this.pwd,
                     "email":      this.eml,

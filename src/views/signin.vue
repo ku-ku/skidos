@@ -15,10 +15,10 @@
                 <v-card class="elevation-2">
                     <v-card-text>
                         <v-text-field
-                            label="Логин"
-                            name="u"
+                            label="Ваш e-mail"
+                            name="eml"
                             type="text"
-                            v-model="login"
+                            v-model="eml"
                             required
                         >
                             <svg slot="prepend" viewBox="0 0 496 512"><use xlink:href="#ico-morda" /></svg>
@@ -47,10 +47,10 @@
                 <v-card class="elevation-4">
                     <v-card-text>
                         <v-text-field
-                            label="Логин"
+                            label="Имя"
                             name="u"
                             type="text"
-                            v-model="login"
+                            v-model="title"
                             required
                             autofocus
                         >
@@ -185,7 +185,7 @@ export default {
     return {
         mode: modes.AM_NONE,
         valid: false,
-        login: '',
+        title: '',
         pwd: '',
         pwd2: '',
         tel: '',
@@ -216,10 +216,12 @@ export default {
             var inp = null;
             switch(val){
                 case modes.AM_AUTH:
-                    this.title = 'Авторизация';
+//                    this.title = 'Авторизация';
+                    inp = 'input[name="eml"]';
                     break;
                 case modes.AM_REGISTER:
-                    this.title = 'Регистрация';
+//                    this.title = 'Регистрация';
+                    inp = 'input[name="u"]';
                     break;
                 case modes.AM_FORGOT:
                     inp = 'input[name="eml"]';
@@ -269,18 +271,17 @@ export default {
       },
       on_auth: function(e){
         e.preventDefault();
-        const {login, pwd} = this;
-        console.log('on_auth: ', login, pwd);
-        if ($utils.isEmpty(login) || $utils.isEmpty(pwd)) {
+        const {eml, pwd} = this;
+        if ($utils.isEmpty(eml) || $utils.isEmpty(pwd)) {
             this.valid = false;
-            this.error = 'Для входа необходимо ввести Ваши логин и пароль';
-            $('input[name="u"]').trigger('focus');
+            this.error = 'Для входа необходимо ввести Ваши e-mail и пароль';
+            $('input[name="eml"]').trigger('focus');
             return false;
         }
 
         (async () => {
             try {
-                var res = await this.$store.dispatch('profile/login', {user: { login: login, password: pwd }});
+                var res = await this.$store.dispatch('profile/login', {user: { login: eml, password: pwd }});
                 console.log(res);
                 this.$router.replace({name: 'main'});
             } catch(e) {
@@ -294,7 +295,7 @@ export default {
       on_register: async function(e){
         e.preventDefault();
         this.error = '';
-        if ( $utils.isEmpty(this.login) || 
+        if ( $utils.isEmpty(this.title) || 
              $utils.isEmpty(this.pwd)   ||
              $utils.isEmpty(this.tel)   ||
              $utils.isEmpty(this.eml)
@@ -324,8 +325,8 @@ export default {
             contentType:'application/json;charset=utf-8',
             data: JSON.stringify({client: 
                 {   
-                    "name": this.login,
-                    "title": this.login,
+                    "name": this.eml,
+                    "title": this.title,
                     "password": this.pwd,
                     "email": this.eml,
                     "phone":this.tel
@@ -336,12 +337,16 @@ export default {
         try {
             var res = await $.ajax(url, options);
             if (!$utils.isEmpty(res.id)&&("null"!==res.id)){
-                self.$store.dispatch('profile/login', {user: { login: self.login, password: self.pwd }}).then(()=>{
+                self.$store.dispatch('profile/login', {user: { login: self.eml, password: self.pwd }}).then(()=>{
                     self.$router.replace({name:'main'});
                 });
             } else {
-                if ((!!res.success)&&(res.success==="user exists")){
+                if (   ("1"==res.res)
+                    || ("2"==res.res)
+                   ) {
                     throw {message:'пользователь уже существует'};
+                } else if ("3"==res.res){
+                    throw {message:'пользователь с таким телефоном уже существует'};
                 } else {
                     throw (res.error) ? res.error : res.res;
                 }
