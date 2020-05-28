@@ -4,6 +4,7 @@ import active from '@/store/modules/active';
 import profile from '@/store/modules/profile';
 import settings from '@/store/modules/settings';
 import basket from '@/store/modules/basket';
+import geo from '@/store/modules/geo';
 
 Vue.use(Vuex);
 
@@ -22,7 +23,8 @@ const modules = {
     active,
     profile,
     settings,
-    basket
+    basket,
+    geo
 };
 
 export default new Vuex.Store({

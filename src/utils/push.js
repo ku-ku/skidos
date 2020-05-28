@@ -23,22 +23,29 @@ function onUnregisterError(data) {
 
 function init() {
     const _p = (resolve, reject) => {
+        app.msg({text:'Init push`s #' + process.env.VUE_APP_SENDER_ID});
+        
         if (typeof window.PushNotification === 'undefined') {
+            app.msg({text:'No push`s available'});
             reject({error:'No push`s available'});
         } else {
             const opts = {
                 android: {
-                    senderID: process.env.VUE_APP_SENDER_ID
+                    senderID: process.env.VUE_APP_SENDER_ID,
+                    forceShow: 'true'
                 },
                 ios: {
-                  alert: 'true',
-                  badge: 'true',
-                  sound: 'true'
+                    senderID: process.env.VUE_APP_SENDER_ID,
+                    gcmSandbox: 'false',
+                    alert: 'true',
+                    badge: 'true',
+                    sound: 'true'
                 }
             };
             PushController = window.PushNotification.init(opts);
             PushController.on('notification', onNotification);
             PushController.on('error', (err)=>{
+                app.msg({text:'Pushes reg err: ' + err});
                 reject(err);
             });
             PushController.on('registration', (data)=>{
@@ -47,6 +54,7 @@ function init() {
                   fcmId: registrationId,
                   value: true
                 });
+                app.msg({text:'Push`s registered:' + registrationId});
                 resolve(registrationId);
             });
         }
