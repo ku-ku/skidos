@@ -149,10 +149,8 @@ export default {
                     (async ()=>{
                         try {
                             info.regId = await PushController.init();
-                            app.msg({text:'PUSH #' + info.regId, color:'success', timeout:100000});
                             sock.send(JSON.stringify(info));
                         }catch(e){
-                            app.msg({text:'PUSH ERR' + e.message, color:'error', timeout:100000});
                             console.log('No push initialized:', e);
                         }
                     })();
