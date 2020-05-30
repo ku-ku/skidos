@@ -74,17 +74,10 @@ botmsgs.regdt	6
 botmsgs.repldate8
 botmsgs.replmsg	7
  */    
-    export default{
+import {eventBus} from '@/main';
+
+export default{
         name: 'SkChat',
-/*        
-        props: {
-            store: {
-               type: Object,
-               required: true
-            }
-        },
-* 
-*/
         data(){
             return {
                s: '',
@@ -97,6 +90,7 @@ botmsgs.replmsg	7
             $(window).resize(()=>{
                 this.adjust();
             });
+            eventBus.$on('chat', ()=>{this.load(null);});  //TODO: by id
         },
         mounted(){
             this.load();
@@ -281,7 +275,7 @@ $def-mgs-color: #5676ee;
         overflow: auto;
         height: 100%;
         & .v-list{
-            padding:0 0 2rem 0;
+            padding:0 1rem 2rem 1rem;
             border-radius: 0;
             & .v-list-item{
                 padding: 0;

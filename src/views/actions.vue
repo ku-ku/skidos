@@ -287,7 +287,7 @@ export default {
                             return h('v-chip', {
                                 key: 'chip-' + c.id,
                                 attrs: {'data-cat-id': c.id},
-                                props: {color: 'orange', 'outlined': true},
+                                props: {color: this.store.brandcolor || 'orange', 'outlined': true},
                                 on: {click: ()=>{this.go_cat(c.id);}}
                             }, c.name);
                         } )

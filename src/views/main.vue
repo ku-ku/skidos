@@ -104,6 +104,7 @@ export default {
             };
         this.loading = true;
         try {
+            /* My-cards */
             var res = await $http.post(url, options);
             if (!!res.error){
                 throw res.error;
@@ -117,20 +118,17 @@ export default {
                 this.stores = Object.freeze(res.result);
             }
             
-            var brands = [],
-                ci     = this.cards.columnIndexes["ssctenantsadds.brandlogo"];
-            this.cards.data.map((c)=>{
-                if (!$utils.isEmpty(c[ci])){
-                    brands.push(c[ci]);
-                }
-            });
-            ci = this.stores.columnIndexes["ssctenantsadds.brandlogo"];
-            this.stores.data.map((c)=>{
-                if (!$utils.isEmpty(c[ci])){
-                    brands.push(c[ci]);
-                }
-            });
-            if (brands.length>0){
+            var brands = [];
+            var _fill = function(i, data){
+                data.map((c)=>{
+                    if (!$utils.isEmpty(c[i])){
+                        brands.push(c[i]);
+                    }
+                });
+            }
+            _fill(this.cards.columnIndexes["ssctenantsadds.brandlogo"], this.cards.data);
+            _fill(this.stores.columnIndexes["ssctenantsadds.brandlogo"], this.stores.data);
+            if (brands.length > 0){
                 var randomIndex = Math.floor(Math.random() * brands.length);
                 this.branding = brands[randomIndex];
             }

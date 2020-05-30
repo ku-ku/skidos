@@ -102,16 +102,16 @@ export default {
             return now.getTime() >= dt1.getTime() && now.getTime() <= dt2.getTime();
         },
         dist: function(ll) {
-            if ( (!this.coords) || (!ll.latitude) || (!ll.longitude) ){
+            if ( (!this.coords) || (!ll.lat) || (!ll.lon) ){
                 return -1;
             }
             //радиус Земли
             const R = 6372795;
             //перевод коордитат в радианы
-            var lat1 = this.coords.latitude * Math.PI / 180,
-                lat2 = ll.latitude * Math.PI / 180,
-                long1 = this.coords.longitude * Math.PI / 180,
-                long2 = ll.longitude * Math.PI / 180;
+            var lat1 = this.coords.lat * Math.PI / 180,
+                lat2 = ll.lat * Math.PI / 180,
+                long1 = this.coords.lon * Math.PI / 180,
+                long2 = ll.lon * Math.PI / 180;
                 //вычисление косинусов и синусов широт и разницы долгот
             var cl1 = Math.cos(lat1);
             var cl2 = Math.cos(lat2);
@@ -137,8 +137,8 @@ ssctenantsadds.lon
 */
                 this.fills.data.map((f)=>{
                     var ll = {
-                        latitude:  f[ci["ssctenantsadds.lat"]],
-                        longitude: f[ci["ssctenantsadds.lon"]]
+                        lat:  f[ci["ssctenantsadds.lat"]],
+                        lon: f[ci["ssctenantsadds.lon"]]
                     };
                     f[distIndex] = this.dist(ll);
                 });
@@ -155,16 +155,14 @@ ssctenantsadds.lon
         }   //sortByDist
     },
     created() {
-        if(!!navigator.geolocation){
-            navigator.geolocation.getCurrentPosition((pos)=>{
-                this.coords = pos.coords;
-                this.sortByDist();
-            }, (e)=>{
-                console.log('NAVI ERR:', e);
-            }, {
-            }, {timeout:5000, enableHighAccuracy:true});
-        }
         this.refresh(false);
+        this.$store.dispatch('geo/current').then((ll)=>{
+            this.coords = ll;
+            this.sortByDist();
+        },(err)=>{
+            console.log(err);
+            app.msg({text:'Мы не можем определить Ваше местонахождение, возможно стоит включить службы геолокации.', color: 'warning'});
+        });
     },
     computed: {
         hasFils(){

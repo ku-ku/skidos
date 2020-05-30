@@ -12,9 +12,12 @@ import {
         VTextarea,
         VSwitch,
         VAlert,
-        VBadge
+        VBadge,
+        VBottomSheet
        } from 'vuetify/lib';
 import SkSvg from '@/components/SkSvg';
+import SkMap from '@/components/map';
+import geo from '@/utils/geo';
 
 const modes = {
     OM_ERROR:  -1,
@@ -47,7 +50,9 @@ export default {
         VSwitch,
         VAlert,
         VBadge,
-        SkSvg
+        VBottomSheet,
+        SkSvg,
+        SkMap
     },
     props: {
         order: {
@@ -68,7 +73,8 @@ export default {
             today: true,
             time: times.TM_AM,
             adding: false,
-            self: false
+            self: false,
+            showMap: false
         };
     },
     computed: {
@@ -105,6 +111,29 @@ export default {
                     break;
             }
             return dt;
+        },
+        distance(){
+            var ll = null;
+            if ((!!this.magaz.lat)&&(!!this.magaz.lat)){
+                ll = {
+                    lat: this.magaz.lat,
+                    lon: this.magaz.lon
+                };
+            } else try {
+                (async ()=>{
+                    ll = await geo.lookup(this.magaz.location);
+                })();
+            } catch(e){
+                console.log(e);
+            }
+            var res = this.$store.getters["geo/distance"](ll);
+            if (res < 0){
+                return '';
+            } else if (res < 1000){
+                return res + ' м.';
+            } else {
+                return Math.floor(res/1000) + ' км.';
+            }
         }
     },
     mounted(){
@@ -222,11 +251,16 @@ export default {
                 console.log('ERR order:', e);
                 app.msg({'text':'Заказ не оформлен - попробуйте еще раз',color:'warning'});
             }
+        },
+        gomap(){
+            this.showMap = (new Date()).getTime();
         }
     },
+    
     render(h){
         const prod = this.prod,
               accent = 'red darken-4',
+              gray   = 'grey darken-1',
               inCart = this.in_cart(),
               hasDeliv = this.magaz.hasdelivery;
       
@@ -250,7 +284,7 @@ export default {
                     h('h3', prod.mainorgname)
                 ]),
                 h('v-img', {props: {
-                        'max-height': 240,
+                        'max-height': 280,
                         contain: true,
                         eager: true,
                         src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref
@@ -265,7 +299,7 @@ export default {
                     h('v-btn',  {props: {
                                             'x-small': true,
                                             rounded: true,
-                                            color:'grey darken-1',
+                                            color: gray,
                                             outlined: true
                                         },
                                  on: {click: ()=>{this.pm(false);}}
@@ -283,7 +317,7 @@ export default {
                     h('v-btn',  {props: {
                                             'x-small': true,
                                             rounded: true,
-                                            color:'grey darken-1',
+                                            color: gray,
                                             outlined: true
                                         },
                                  on: {click: ()=>{this.pm(true);}}
@@ -343,32 +377,47 @@ export default {
                     "value": this.note,
                     "full-width": true,
                     "rows": 1,
+                    "auto-grow": true,
                     "messages": 'комментарий к заказу'
                 }, class:{'sk-comments':true},
                 on: {input: (e)=>{
                         this.note = e;
                     }
                 }}),
-                h('v-switch', {
-                    props: {'input-value': this.self, inset: true, label:'заберу самостоятельно', disabled: !hasDeliv}, 
-                    style: {"align-self":"flex-start"},
-                    on: {click: (e)=>{
-                            this.self = !this.self;
-                }}}),
+                hasDeliv 
+                    ? h('v-switch', {
+                        props: {'input-value': this.self, inset: true, label:'заберу самостоятельно', disabled: !hasDeliv}, 
+                        style: {"align-self":"flex-start", display: (hasDeliv) ? '' : 'none'},
+                        on: {click: (e)=>{
+                                this.self = !this.self;
+                    }}})
+                    : h('div',{class:{'mt-3':true, 'mb-3':true}}, 'магазин не осуществляет доставку'),
                 h('div', {class:{'sk-addr':true}}, 
-                        hasDeliv ? [
-                            h('sk-svg', {props: {xref:"#ico-map-marker"}}), 
-                            'Адрес доставки: ', 
-                            ((this.user.adds)&&!$utils.isEmpty(this.user.adds.addrstring))
-                                ? this.user.adds.addrstring
-                                : h('span', [
-                                                'Вы можете указать в',
-                                                h('v-btn', {props:{text: true, small: true, to:{name:'profile'}}}, 'настройках профиля')
-                                    ])
-                        ] : [
-                            h('sk-svg', {props: {xref:"#ico-map-marker"}}), 
-                            'магазин не осуществляет доставку'
-                        ]
+                        (this.self || !hasDeliv)
+                            ? [h('div', {class:{'sk-self': true}}, [
+                                (!!this.magaz.location) ? geo.a2s(this.magaz.location) : '',
+                                h('v-btn', {
+                                        props: {small: true, outlined: true, rounded: true, color: gray}, 
+                                        on:    {click: this.gomap},
+                                        style: {'align-self': 'center'}
+                                    }, [
+                                            h('sk-svg', {props: {xref:"#ico-planet"}}), 
+                                            'на карте - ' + this.distance
+                                       ]
+                                )
+                            ])]
+                        : hasDeliv 
+                            ? [
+                                h('sk-svg', {props: {xref:"#ico-map-marker"}}), 
+                                'Адрес доставки: ', 
+                                ((this.user.adds)&&!$utils.isEmpty(this.user.adds.addrstring))
+                                    ? this.user.adds.addrstring
+                                    : h('span', [
+                                                    'Вы можете указать в',
+                                                    h('v-btn', {props:{text: true, small: true, to:{name:'profile'}}}, 'настройках профиля')
+                                       ])
+                            ] 
+                            : null
                 ),      //.sk-addr
                 (this.state === modes.OM_SUCCESS) 
                     ? h('v-alert', {props: {
@@ -438,9 +487,18 @@ export default {
                             class: {'mt-3': true}
                         }, 'убрать')
                     : null
+            ]),
+            h('v-bottom-sheet',{props: {
+                    value: this.showMap,
+                    'hide-overlay': true
+            }}, [
+                h('sk-map', {props: {center: {
+                    lat: this.magaz.lat,
+                    lon: this.magaz.lon
+                }}})
             ])
         ]);
-    }
+    }   //render
 };
 </script>
 <style lang="scss" scoped>
@@ -448,7 +506,7 @@ export default {
     
     .sk-order{
         color: $gray-color;
-        padding: 1rem;
+        padding: 0;
         margin-bottom:  180px;
         height: 100%;
         & .sk-top-bar{
@@ -494,6 +552,7 @@ export default {
         }
         & .v-card__subtitle{
             margin-top: 1rem !important;
+            padding: 1rem;
         }
         & .sk-logo{
             border: #fff;
@@ -532,6 +591,7 @@ export default {
         }
         & .v-card__actions{
             flex-direction: column;
+            padding: 1rem;
             & .sk-choice{
                 display: flex;
                 align-items: baseline;
@@ -583,6 +643,17 @@ export default {
                     height: 16px;
                     margin-right: 0.25rem;
                     vertical-align: middle;
+                }
+                & .sk-self{
+                    display: flex;
+                    flex-direction: column;
+                    font-size: 0.8rem;
+                    text-align: center;
+                    justify-content: center;
+                    & .v-btn{
+                        margin-top: 1rem;
+                        width: 12rem;
+                    }
                 }
             }
         }

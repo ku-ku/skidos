@@ -31,6 +31,7 @@
 <script>
 import Splash from '@/views/splash';
 import PushController from '@/utils/push';
+import {eventBus} from './main';
 
 export default {
     name: 'App',
@@ -67,9 +68,13 @@ export default {
             .catch( ()=> {
                 _go('signin');
             });
+        this.$store.dispatch('geo/current');
     },
     beforeDestroy(){
         PushController.destroy();
+        if(!!this.ws){
+            this.ws.close();
+        }
     },
     computed: {
         showAppBar(){
@@ -110,6 +115,7 @@ export default {
             this.snackbar = true;
         },
         onUser(user){
+            const PING_TM = 10*60*1000;
             //setup ping-timer
             if (!!this._hTimer){
                 clearInterval(this._hTimer);
@@ -129,25 +135,52 @@ export default {
                         this.pingFail();
                     }
                 })();
-            }, 10*60*1000);
+            }, PING_TM);
             
             //init websock
             if(!!this.ws){
                 this.ws.close();
             }
             
+            if (!!this._hwsTimer){
+                clearInterval(this._hwsTimer);
+            }
             try {
                 var sock = new WebSocket(process.env.VUE_APP_BACKEND_WS);
                 sock.onmessage = (e)=>{
-                    console.log(e.data);
+                    console.log('MSG:', e.data);
+                    
+                    try {
+                        var msg = /^\{+/.test(e.data) ? JSON.parse(e.data) : null;
+                        if ((!!msg) && !$utils.isEmpty(msg.type)){
+                            switch(msg.type) {
+                                case 'chat':
+                                    eventBus.$emit('chat', msg.text);
+                                    break;
+                            }
+                        }
+                    } catch(e) {
+                        console.log('MSG err:', e);
+                    }
+                    
                 };
                 sock.onopen = ()=>{
                     this.ws = sock;
+                    this._hwsTimer = setInterval(()=>{
+                        try {
+                            sock.send('ping');  //TODO: reconnect
+                        }catch(e){
+                            console.log('WS ping error:', e);
+                        }
+                    }, PING_TM);
+                    
                     var info = {
                         uid: user.id
                     };
+                    
                     (async ()=>{
                         try {
+                            sock.send(JSON.stringify(info));
                             info.regId = await PushController.init();
                             sock.send(JSON.stringify(info));
                         }catch(e){

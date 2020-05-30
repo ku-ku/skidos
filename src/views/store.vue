@@ -488,12 +488,7 @@ export default {
                                                         class: {'sk-take': true},
                                                         props: {outlined: true, loading: this.sending},
                                                         on:    {click: this.take_card}
-                                                    }, 'Стать клиентом'),
-                                        h('v-btn', {
-                                                        class: {'sk-link': true},
-                                                        props: {outlined: true, disabled: true}
-                                                   },
-                                        'Привязать карту')
+                                                    }, 'Стать клиентом')
                                 ]));
                             }
                             links.push( h('div', {
