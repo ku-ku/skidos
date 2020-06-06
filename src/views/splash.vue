@@ -37,9 +37,9 @@ export default {
         }
     },
     methods: {
-        hide(){
+        hide(force){
             $('.sk-splash').fadeOut(600, ()=>{
-                this.$emit('hide');
+                this.$emit('hide', force);
             });
         }
     },
@@ -58,7 +58,7 @@ export default {
                                     }, 
                                     class:{'sk-logo':true},
                                     on: {click:()=>{
-                                            this.hide();
+                                            this.hide(true);
                                     }}
                                 })
                 ])

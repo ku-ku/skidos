@@ -110,8 +110,8 @@ export default {
             }
             if (!!card){
                 return h('v-bottom-sheet', {
-                    props: {"hide-overlay": true, value: true, persistent: true},
-                    class: {"sk-basket-pane": true}
+                    key: 'sk-bottom-basket',
+                    props: {"hide-overlay": true, value: true, persistent: true}
                 }, [ card ]);
             } else {
                 return null;

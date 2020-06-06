@@ -1,13 +1,15 @@
 function a2s(a){
     var _a = [];
-    if (!!a.city){
-        _a.push(a.city.name);
-    }
-    if (!!a.street){
-        _a.push(a.street.name);
-    }
-    if (!!a.number){
-        _a.push(a.number);
+    if (!!a){
+        if (!!a.city){
+            _a.push(a.city.name);
+        }
+        if (!!a.street){
+            _a.push(a.street.name);
+        }
+        if (!!a.number){
+            _a.push(a.number);
+        }
     }
     return _a.join(', ');
 }

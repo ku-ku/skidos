@@ -10,7 +10,7 @@
             <router-view />
         </keep-alive>
     </v-content>
-    <splash v-if="splash" ref="splash" on:hide="splash=false" />
+    <splash v-if="splash" ref="splash" on:hide="hideSplash($event)" />
     <v-snackbar v-model="snackbar"
                 :bottom="true"
                 :color="snackbarColor"
@@ -104,6 +104,10 @@ export default {
         }
     },
     methods: {
+        hideSplash(e){
+            console.log(e);
+            this.splash = false;
+        },
         msg: function(e){
             if ($utils.isEmpty(e.text)){
                 this.snackbar = false;
@@ -145,52 +149,55 @@ export default {
             if (!!this._hwsTimer){
                 clearInterval(this._hwsTimer);
             }
-            try {
-                var sock = new WebSocket(process.env.VUE_APP_BACKEND_WS);
-                sock.onmessage = (e)=>{
-                    console.log('MSG:', e.data);
-                    
+            var _check_sock = function(){
+                var sock = app.ws;
+                if (!!sock){
                     try {
-                        var msg = /^\{+/.test(e.data) ? JSON.parse(e.data) : null;
-                        if ((!!msg) && !$utils.isEmpty(msg.type)){
-                            switch(msg.type) {
-                                case 'chat':
-                                    eventBus.$emit('chat', msg.text);
-                                    break;
-                            }
+                        if (sock.readyState !== sock.OPEN){
+                            sock.close();
+                            throw 'sock closed';
                         }
+                        sock.send('ping');  //TODO: reconnect
                     } catch(e) {
-                        console.log('MSG err:', e);
+                        sock = null;
+                        console.log('WS ping error:', e);
                     }
-                    
-                };
-                sock.onopen = ()=>{
-                    this.ws = sock;
-                    this._hwsTimer = setInterval(()=>{
+                }
+                if (!sock){
+                    sock = new WebSocket(process.env.VUE_APP_BACKEND_WS);
+                    sock.onmessage = (e)=>{
+                        console.log('MSG:', e.data);
                         try {
-                            sock.send('ping');  //TODO: reconnect
-                        }catch(e){
-                            console.log('WS ping error:', e);
+                            var msg = /^\{+/.test(e.data) ? JSON.parse(e.data) : null;
+                            if ((!!msg) && !$utils.isEmpty(msg.type)){
+                                switch(msg.type) {
+                                    case 'chat':
+                                        eventBus.$emit('chat', msg.text);
+                                        break;
+                                }
+                            }
+                        } catch(e) {
+                            console.log('MSG err:', e);
                         }
-                    }, PING_TM);
-                    
-                    var info = {
-                        uid: user.id
+                    };  //sock.onmessage
+                    sock.onopen = ()=>{
+                        app.ws = sock;
+                        (async ()=>{
+                            var info = {uid: user.id};
+                            try {
+                                sock.send(JSON.stringify(info));
+                                info.regId = await PushController.init();
+                                sock.send(JSON.stringify(info));
+                            }catch(e){
+                                console.log('No push initialized:', e);
+                            }
+                        })();
                     };
-                    
-                    (async ()=>{
-                        try {
-                            sock.send(JSON.stringify(info));
-                            info.regId = await PushController.init();
-                            sock.send(JSON.stringify(info));
-                        }catch(e){
-                            console.log('No push initialized:', e);
-                        }
-                    })();
-                };
-            }catch(e){
-                console.log('sock no opened:', e);
-            }
+                }
+            };  //_get_sock
+            this._hwsTimer = setInterval(()=>{_check_sock();}, PING_TM);
+            _check_sock();
+            
         },  //onUser
         pingFail(){
             this.$router.replace({name: 'signin'});

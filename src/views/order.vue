@@ -15,7 +15,9 @@ import {
         VBadge,
         VBottomSheet
        } from 'vuetify/lib';
+import touch from 'vuetify/lib/directives/touch';
 import SkSvg from '@/components/SkSvg';
+import SkBottom from '@/components/SkBottom';
 import SkMap from '@/components/map';
 import geo from '@/utils/geo';
 
@@ -51,9 +53,11 @@ export default {
         VAlert,
         VBadge,
         VBottomSheet,
+        SkBottom,
         SkSvg,
         SkMap
     },
+    directives: {touch},
     props: {
         order: {
             type: String,
@@ -74,7 +78,7 @@ export default {
             time: times.TM_AM,
             adding: false,
             self: false,
-            showMap: false
+            showMap: false,
         };
     },
     computed: {
@@ -113,27 +117,46 @@ export default {
             return dt;
         },
         distance(){
-            var ll = null;
-            if ((!!this.magaz.lat)&&(!!this.magaz.lat)){
-                ll = {
-                    lat: this.magaz.lat,
-                    lon: this.magaz.lon
-                };
-            } else try {
-                (async ()=>{
-                    ll = await geo.lookup(this.magaz.location);
-                })();
-            } catch(e){
-                console.log(e);
-            }
-            var res = this.$store.getters["geo/distance"](ll);
-            if (res < 0){
-                return '';
-            } else if (res < 1000){
-                return res + ' м.';
+            var dist = 0;
+            if (!!this.fill){
+                dist = this.fill.distance;
             } else {
-                return Math.floor(res/1000) + ' км.';
+                var ll = null;
+                if ((!!this.magaz.lat)&&(!!this.magaz.lat)){
+                    ll = {
+                        lat: this.magaz.lat,
+                        lon: this.magaz.lon
+                    };
+                } else try {
+                    (async ()=>{
+                        ll = await geo.lookup(this.magaz.location);
+                    })();
+                } catch(e){
+                    console.log(e);
+                }
+                dist = this.$store.getters["geo/distance"](ll);
             }
+            if (dist < 0){
+                return '';
+            } else if (dist < 1000){
+                return Math.floor(dist) + ' м.';
+            } else {
+                return Math.floor(dist/1000) + ' км.';
+            }
+        },
+        fill: {
+            get(){
+                return this.$store.state.active.fill;
+            },
+            set(fill){
+                this.$store.commit('active/setStoreFill', fill);
+                this.$forceUpdate();
+            }
+        },
+        addr(){
+            return (!!this.fill) 
+                    ? this.fill.address 
+                    : geo.a2s(this.magaz.location) || '';
         }
     },
     mounted(){
@@ -216,7 +239,12 @@ export default {
                     dt.setHours(21);
                     break;
             }
-      
+            
+            const tenantId = (!!this.fill) 
+                            ? this.fill.id
+                            : $utils.isEmpty(this.prod.orgid) 
+                                ? this.prod.mainorgid 
+                                : this.prod.orgid;
             const opts = {
                 type: 'core-create',
                 query: 'sin2:/v:17474bad-e636-4f67-9258-7d153d6a40ad',
@@ -224,7 +252,7 @@ export default {
                     {id: 'id', type:'id', value: id_to_ord},
                     {id: 'regDt', type: 'dateTime', value: new Date()},
                     {id: 'deliveryDate', type: 'dateTime', value: dt},
-                    {id: 'tenantID', type:'id', value: $utils.isEmpty(this.prod.orgid) ? this.prod.mainorgid : this.prod.orgid}, 
+                    {id: 'tenantID', type:'id', value: tenantId}, 
                     {id: 'productID', type:'id', value: this.prod.id},
                     {id: 'userID', type:'id', value: this.$store.state.profile.user.id},
                     {id: 'Amount', type:'float', value: parseFloat(this.n)},
@@ -254,6 +282,16 @@ export default {
         },
         gomap(){
             this.showMap = (new Date()).getTime();
+            const self = this;
+            if (this.$store.getters["active/hasActiveStoreFills"]){
+                this.$store.dispatch("active/getFills").then((fills)=>{
+                    self.$refs.storeMap.addPoints(fills);
+                });
+            } else {
+                this.$nextTick(()=>{
+                    self.$refs.storeMap.toCenter(this.magaz);
+                });
+            }
         }
     },
     
@@ -263,6 +301,7 @@ export default {
               gray   = 'grey darken-1',
               inCart = this.in_cart(),
               hasDeliv = this.magaz.hasdelivery;
+        const isService = !(!!prod.isproduct);
       
         return h('v-card', {
             key: 'ord-' + prod.id,
@@ -295,40 +334,43 @@ export default {
                 h('h2', {class: {'sk-prod': true}}, prod.promoproducer)
             ]),
             h('v-card-actions', [
-                h('div', {class:{'sk-choice':true}}, [
-                    h('v-btn',  {props: {
-                                            'x-small': true,
-                                            rounded: true,
-                                            color: gray,
-                                            outlined: true
-                                        },
-                                 on: {click: ()=>{this.pm(false);}}
-                    }, '-'),
-                    h('v-text-field', {props: {
-                        value: this.n,
-                        color: 'default',
-                        error: !this.valid,
-                        'hide-details': true,
-                        'single-line': true
-                    }, style:{
-                        'font-size': '2rem',
-                        'height': '2.5rem'
-                    }}),
-                    h('v-btn',  {props: {
-                                            'x-small': true,
-                                            rounded: true,
-                                            color: gray,
-                                            outlined: true
-                                        },
-                                 on: {click: ()=>{this.pm(true);}}
-                    }, '+')
-                ]),
+                isService 
+                    ? null
+                    : h('div', {class:{'sk-choice':true}}, [
+                        h('v-btn',  {props: {
+                                                'x-small': true,
+                                                rounded: true,
+                                                color: gray,
+                                                outlined: true
+                                            },
+                                     on: {click: ()=>{this.pm(false);}}
+                        }, '-'),
+                        h('v-text-field', {props: {
+                            value: this.n,
+                            color: 'default',
+                            error: !this.valid,
+                            'hide-details': true,
+                            'single-line': true
+                        }, style: {
+                            'font-size': '2rem',
+                            'height': '2.5rem'
+                        }}),
+                        h('v-btn',  {props: {
+                                                'x-small': true,
+                                                rounded: true,
+                                                color: gray,
+                                                outlined: true
+                                            },
+                                     on: {click: ()=>{this.pm(true);}}
+                        }, '+')
+                    ]), //sk-choice
                 h('div', {class:{'sk-price': true}}, [
                     this.total + ' руб.',
                     $utils.isEmpty(prod.unitname) 
                         ? null
                         : h('div', {class:{'sk-units': true}}, prod.unitname)
                 ]),
+                $utils.isEmpty(prod.promodesc) ? null : h('div', {class:{'sk-descr': true}}, prod.promodesc),
                 h('div', {class:{'sk-days': true}}, [
                     h('v-btn', {props: {
                                             outlined: true, rounded: true, 'small': true,
@@ -343,7 +385,7 @@ export default {
                                        },
                                 on: {click: ()=>{this.day(false);}}
                                 }, 'завтра')
-                ]),
+                ]), //.sk-days
                 h('div', {class:{'sk-times': true}}, [
                     h('v-btn', {props: {
                                             outlined: true, rounded: true, 'x-small': true,
@@ -372,30 +414,30 @@ export default {
                                 class: {'active': this.today},
                                 on: {click: ()=>{this.time = times.TM_EV;}}
                                 }, '18:00 - 21:00')
-                ]),
+                ]), //.sk-times
                 h('v-textarea', {props: {
                     "value": this.note,
                     "full-width": true,
                     "rows": 1,
                     "auto-grow": true,
                     "messages": 'комментарий к заказу'
-                }, class:{'sk-comments':true},
-                on: {input: (e)=>{
-                        this.note = e;
-                    }
+                    }, class:{'sk-comments':true},
+                    on: {input: (e)=>{this.note = e;}
                 }}),
-                hasDeliv 
-                    ? h('v-switch', {
-                        props: {'input-value': this.self, inset: true, label:'заберу самостоятельно', disabled: !hasDeliv}, 
-                        style: {"align-self":"flex-start", display: (hasDeliv) ? '' : 'none'},
-                        on: {click: (e)=>{
-                                this.self = !this.self;
-                    }}})
-                    : h('div',{class:{'mt-3':true, 'mb-3':true}}, 'магазин не осуществляет доставку'),
+                isService 
+                    ? null
+                    : hasDeliv 
+                        ? h('v-switch', {
+                            props: {'input-value': this.self, inset: true, label:'заберу самостоятельно', disabled: !hasDeliv}, 
+                            style: {"align-self":"flex-start", display: (hasDeliv) ? '' : 'none'},
+                            on: {click: (e)=>{
+                                    this.self = !this.self;
+                        }}})
+                        : h('div',{class:{'mt-3':true, 'mb-3':true}}, 'магазин не осуществляет доставку'),
                 h('div', {class:{'sk-addr':true}}, 
-                        (this.self || !hasDeliv)
+                        (this.self || !hasDeliv || isService)
                             ? [h('div', {class:{'sk-self': true}}, [
-                                (!!this.magaz.location) ? geo.a2s(this.magaz.location) : '',
+                                this.addr,
                                 h('v-btn', {
                                         props: {small: true, outlined: true, rounded: true, color: gray}, 
                                         on:    {click: this.gomap},
@@ -482,21 +524,31 @@ export default {
                         ]),
                 inCart
                     ? h('v-btn', {
-                            props: {text:true,tile:true,width:'12rem'}, 
+                            props: {text:true, tile:true, width:'12rem'}, 
                             on:    {click: this.from_basket},
                             class: {'mt-3': true}
                         }, 'убрать')
                     : null
             ]),
-            h('v-bottom-sheet',{props: {
-                    value: this.showMap,
-                    'hide-overlay': true
-            }}, [
-                h('sk-map', {props: {center: {
-                    lat: this.magaz.lat,
-                    lon: this.magaz.lon
-                }}})
-            ])
+            inCart 
+                ? null
+                : h('sk-bottom',  {
+                        key: 'sk-bottom-map-' + this.prod.orgid,
+                        props: {show: this.showMap}}, [
+                        h('sk-map', {
+                                    props: {
+                                        center: this.magaz
+                                    },
+                                    ref: 'storeMap',
+                                    on: {'click': (_fill)=>{
+                                            if (typeof _fill === "string"){
+                                                _fill = JSON.parse(_fill);
+                                            }
+                                            this.fill = _fill;
+                                            this.showMap = false;
+                                        }}
+                                })
+                ])
         ]);
     }   //render
 };
@@ -589,6 +641,12 @@ export default {
             font-size: 0.85rem;
             font-weight: 400;
         }
+        & .sk-descr{
+            font-size: 0.85rem;
+            color: $gray-color;
+            margin-bottom: 1rem;
+            line-height: 1.115;
+        }
         & .v-card__actions{
             flex-direction: column;
             padding: 1rem;
@@ -638,6 +696,7 @@ export default {
             }
             & .sk-addr{
                 margin-bottom: 1rem;
+                margin-top: 1rem;
                 & svg{
                     width: 16px;
                     height: 16px;

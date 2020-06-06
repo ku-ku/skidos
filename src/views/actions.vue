@@ -357,14 +357,13 @@ export default {
                                     inCart 
                                         ? h('div', {class: {'sk-from-basket': true}}, [
                                             h('v-btn', {
-                                                        props: {outlined: true, color: 'default', small: true, rounded: true},
+                                                        props: {outlined: true, color: 'default', 'x-small': true, rounded: true},
                                                         on: {
                                                             click: ()=>{this.from_basket(event, id);}
                                                         }
-                                                    }, [
-                                                        h('sk-svg', {props:{xref: "#close", width: 12, height: 12}}),
-                                                        'убрать'
-                                                    ])
+                                                    }, 
+                                                        'убрать из корзины'
+                                                    )
                                             ])
                                         : null
                                 ]),
@@ -447,15 +446,17 @@ export default {
             margin: 0 16px 0 0 !important;
             align-self: center !important;
             justify-content: space-around;
-        }
-        & .v-image{
-            width: 48px;
-            height: auto;
-        }
-        & .sk-dates{
-            font-size: 0.6rem;
-            color: $red-color;
-            margin-top: 0.5rem;
+            width: 72px;
+            & .v-image{
+                width: 72px;
+                height: auto;
+            }
+            & .sk-dates{
+                font-size: 0.6rem;
+                color: $red-color;
+                margin-top: 0.15rem;
+                text-align: center;
+            }
         }
         & .sk-price{
             font-size: 1.25rem;
@@ -479,6 +480,7 @@ export default {
         }
         & .sk-from-basket{
             text-align: center;
+            margin-top: 0.5rem;
             & .v-btn{
                 border-color: $gray-color;
                 color: $gray-color;

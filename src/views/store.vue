@@ -12,6 +12,7 @@ import { VBtn,
          VRow,
          VCol,
          VFabTransition,
+         VBadge
        } from 'vuetify/lib';
 
 import SkFilials from '@/views/fils';
@@ -19,6 +20,10 @@ import SkFind from '@/views/find';
 import SkShare from '@/views/share'; 
 import SkActions from '@/views/actions'; 
 import SkChat from '@/views/chat'; 
+import SkSvg from '@/components/SkSvg';
+import SkBottom from '@/components/SkBottom';
+import SkMap from '@/components/map';
+import geo from '@/utils/geo';
 
 const ST_MODE = {
     'none': -1,
@@ -54,22 +59,28 @@ export default {
         VRow,
         VCol,
         VFabTransition,
-        SkFilials,
         SkFind,
         SkShare,
+        VBadge,
+        SkFilials,
         SkActions,
-        SkChat
+        SkChat,
+        SkSvg,
+        SkBottom,
+        SkMap
   },
   data() {
     return {
         sending: false,
         store: null,
+        fills: null,    //array of fill`s [{id, name, coords, address, distance,...}]
+        fill:  null,    //user choose from fills
         store_branding: null,
         card: null,
         qr_bin_data: null,
         error: null,
-        activeStore: null,
-        mode: ST_MODE.def
+        mode: ST_MODE.def,
+        map: false
     };
   },
   created(){
@@ -82,13 +93,13 @@ export default {
                 const data = this.store.data[0],
                       ci = this.store.columnIndexes;
                 o = $utils.sin2obj(ci, data);
-                const keys = Object.keys(ci);
                 o.title = data[ci["ssctenants.title"]];
                 o.brand = {
                     color: data[ci["ssctenantsadds.brandcolor"]],
                     balcolor: data[ci["ssctenantsadds.balancecolor"]],
                     logo:   data[ci["ssctenantsadds.brandlogo"]]
                 };
+                o.address = geo.a2s(data[ci["ssctenantsadds.location"]]);
                 o.id = data[ci["ssctenants.id"]];
             } else {
                 o.id = '00';
@@ -132,6 +143,14 @@ export default {
         },
         hasBasket(){
             return this.$store.getters["basket/has"](this.iStore.id);
+        },
+        hasFills(){
+            if (this.hasStore){
+                const ci = this.store.columnIndexes;
+                const n  = this.store.data[0][ci["ssctenantsadds.pointscount"]];
+                return ((!!n) && (Number(n) > 0));
+            }
+            return false;
         }
   },
   methods: {
@@ -212,7 +231,7 @@ export default {
             }
             this.card_by(id_to_take, 'id');
         } catch(e){
-            app.msg({text:'Ошибка регистрации карты, попробуйте получить позднее.', type:'warning'});
+            app.msg({text:'Ошибка регистрации, попробуйте получить позднее.', type:'warning'});
             console.log('ERR on reg card:', e);
         }
         this.sending = false;
@@ -242,16 +261,31 @@ export default {
       },
       switchMode(mode){
         this.mode = (this.mode===mode) ? ST_MODE.def : mode;
-      }
+      },
+      on_map(){
+            this.map = (new Date()).getTime();
+            const self = this;
+            if (this.hasFills){
+                this.$store.dispatch("active/getFills").then((fills)=>{
+                    self.$refs.storeMap.addPoints(fills);
+                });
+            } else {
+                this.$nextTick(()=>{
+                    self.$refs.storeMap.toCenter(this.iStore);
+                });
+            }
+            this.$forceUpdate();
+      } //on_map
   },
+  
   watch: {
         id: function(val){
-            this.mode = ST_MODE.none;
+            this.mode  = ST_MODE.none;
             this.store = null;
-            this.card = null;
-            this.$nextTick(()=>{
-                this.refresh(val);
-            });
+            this.card  = null;
+            this.fills = null;
+            this.fill  = null;
+            this.$nextTick(()=>{this.refresh(val);});
         },
         card: function(val){
             if (!val){
@@ -309,7 +343,6 @@ export default {
                       web= data[0][ci["ssctenantsadds.uri"]],
                       web2=data[0][ci["ssctenantsadds.uri2"]],
                       short=data[0][ci["ssctenantsadds.shortloyalty"]];
-              
                 var ly = data[0][ci["ssctenantsadds.loyalty"]];
                 if (!$utils.isEmpty(ly)){
                     ly = ly.replace(/;/g, '<br />');
@@ -380,8 +413,16 @@ export default {
                             },  titleVNodes), /*v-card-title*/
                             h('v-card-text', [
                                 h('div', {class:{'sk-store-nav': true, 'd-flex':true,'justify-space-around':true,'align-center':true,'flex-nowrap':true}}, [
-                                    h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.fils);}}},[
-                                        h('svg',{attrs:{viewBox:'0 0 640 512'},domProps:{innerHTML:'<use xlink:href="#ico-store" />'}})
+                                    h('v-badge', {
+                                        props:{
+                                                overlap: true, 
+                                                color: $utils.isEmpty(data[0][ci["ssctenantsadds.pointscount"]]) ? 'transparent' : bg||'default', 
+                                                content: data[0][ci["ssctenantsadds.pointscount"]]
+                                            }
+                                    }, [
+                                        h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.fils);}}},[
+                                            h('svg',{attrs:{viewBox:'0 0 640 512'},domProps:{innerHTML:'<use xlink:href="#ico-store" />'}})
+                                        ])
                                     ]),
                                     h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.find);}}},[
                                         h('svg',{attrs:{viewBox:'0 0 512 512'},domProps:{innerHTML:'<use xlink:href="#ico-search" />'}})
@@ -401,23 +442,36 @@ export default {
                             ])
                         ])
                     );  //branding
-                    var links = [];
-                    if ( !$utils.isEmpty(tel) ){
-                        links.push( h('a', {attrs: {href:'tel:'+tel, target:'_blank'}, style:{color: (!!bg) ? bg : '' }}, [
-                                        h('svg',{domProps: {innerHTML:'<use xlink:href="#ico-phone" />'}, attrs: {viewBox:'0 0 512 512'}}),
-                                        tel
-                        ]));
-                    }
-                    if ( !$utils.isEmpty(web) ){
-                        links.push( h('a', {attrs: {href: web, target: '_blank'}, style:{color: (!!bg) ? bg : '' }}, [
-                                        (h('svg',{ domProps: {innerHTML:'<use xlink:href="#ico-planet" />'}, attrs: {viewBox:'0 0 496 512'}})),
-                                        web
-                        ]));
-                    }
-
                     var conte = [];
+                    conte.push( h('div', {class: {'sk-location': true}}, [
+                        h('a', {
+                                class: {'sk-addr': true}, style:{color: (!!bg) ? bg : '' },
+                                on: {click: this.on_map}
+                            }, [
+                                h('sk-svg',{props: {xref:'#ico-map-marker', width: 16, height: 16}}),
+                                (!!this.fill) 
+                                    ? this.fill.address
+                                    : (!!data[0][ci["ssctenantsadds.location"]]) 
+                                        ? geo.a2s(data[0][ci["ssctenantsadds.location"]]) 
+                                        : 'на карте'
+                        ])
+                    ]));    //location
                     switch( this.mode ){
                         case ST_MODE.info:
+                            var links = [];
+                            if ( !$utils.isEmpty(tel) ){
+                                links.push( h('a', {attrs: {href:'tel:'+tel, target:'_blank'}, style:{color: (!!bg) ? bg : '' }}, [
+                                                h('svg',{domProps: {innerHTML:'<use xlink:href="#ico-phone" />'}, attrs: {viewBox:'0 0 512 512'}}),
+                                                tel
+                                ]));
+                            }
+                            if ( !$utils.isEmpty(web) ){
+                                links.push( h('a', {attrs: {href: web, target: '_blank'}, style:{color: (!!bg) ? bg : '' }}, [
+                                                (h('svg',{ domProps: {innerHTML:'<use xlink:href="#ico-planet" />'}, attrs: {viewBox:'0 0 496 512'}})),
+                                                web
+                                ]));
+                            }
+                            
                             if ( !$utils.isEmpty(ly) ){     /* =================== store & card additional info =================== */
                                 conte.push(h('h3', {class: {'sk-loyalty': true}, domProps: {innerHTML: ly}}));
                             }
@@ -491,11 +545,6 @@ export default {
                                                     }, 'Стать клиентом')
                                 ]));
                             }
-                            links.push( h('div', {
-                                style: {'text-align':'right', 'font-size': '0.7rem', width: '100%', 'margin-right':'0.5rem'}
-                            },[
-                                h('span',{domProps: {innerHTML:'*подробная информация в <b><i>i</i></b>'}})
-                            ]));
                             break;
                         default:
                             //none
@@ -550,6 +599,28 @@ export default {
         if (!!fab){
             childs.push(fab);
             setTimeout(()=>{window.scrollTo(0, 1);}, 500);
+        }
+        if (this.$store.getters["basket/numof"] < 1){
+            childs.push(
+                h('sk-bottom',  {
+                        key: 'sk-bottom-map-' + this.id,
+                        props: {show: this.map}}, [
+                            h('sk-map', {
+                                    props: {
+                                        center: this.iStore
+                                    },
+                                    ref: 'storeMap',
+                                    on: {'click': (_fill)=>{
+                                            if (typeof _fill === "string"){
+                                                _fill = JSON.parse(_fill);
+                                            }
+                                            this.$store.commit('active/setStoreFill', _fill);
+                                            this.fill = _fill;
+                                            this.map = false;
+                                        }}
+                                })
+                ])
+            );
         }
         
         return h('main', {class: {
@@ -918,6 +989,7 @@ export default {
         padding: 0.5rem;
         top: 85%;
         right: 2rem;
+        z-index: 5;
         & svg{
             color: #fff;
             width: 18px;
@@ -933,6 +1005,27 @@ export default {
         }
     }
     
+    .sk-location{
+        & a{
+            text-decoration: none;
+            margin-top: 0.5rem;
+            display: block;
+            color: $gray-color;
+            text-align: right;
+            & svg{
+                vertical-align: middle;
+                margin-right: 0.5rem;
+            }
+        }
+        & a.sk-addr{
+            white-space: normal;
+            display: block;
+            text-align: center;
+            & svg{
+                margin-right: 0.5rem;
+            }
+        }
+    }
     
     .sk-store-web2{
         height: 100%;
@@ -950,6 +1043,5 @@ export default {
                 border: 0 none;
             }
         }
-        
     }
 </style>

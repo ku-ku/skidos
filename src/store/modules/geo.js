@@ -8,12 +8,14 @@ const state = {
         lat: 45.035470, //Krd-center (city-sq)
         lon: 38.975313
     },
-    addr: null
+    addr: null,
+    last: new Date()
 };
 
 const mutations = {
     setPos(state, payload = {}) {
         state.ll = payload;
+        state.last = new Date();
         state.addr = null;
     },
     setAddr(state, payload = {}) {
@@ -31,13 +33,14 @@ const actions = {
         var ll = {};
         
         const p = (resolve, reject) => {
+/*TODO: city pos
             const _by_ip = function(){
                 $.getJSON(API_URL + 'check?access_key=' + API_KEY, (data)=>{
                     console.log('by ip:', data);
                     ll = {
                         lat: data.latitude,
                         lon: data.longitude
-                    }
+                    };
                     store.commit('setPos', ll);
                     store.dispatch('addr');
                     resolve(ll);
@@ -46,9 +49,9 @@ const actions = {
                     reject(err);
                 });
             };
-            
+*/            
             if(!!navigator.geolocation){
-                var hTm = setTimeout(_by_ip, 5050);
+                var hTm = setTimeout(()=>{reject({message:'no gps avail'});}, 5050);
                 navigator.geolocation.getCurrentPosition(
                     function(pos){
                         console.log('by geolocation:', pos.coords);
@@ -64,12 +67,14 @@ const actions = {
                     function(err){
                         console.log('ERR by geolocation:', err);
                         clearTimeout(hTm);
-                        _by_ip();
+                        reject(err);
+                        //_by_ip();
                     },
-                    {timeout: 5000, enableHighAccuracy: false}
+                    {maximumAge: 180000, timeout: 5000, enableHighAccuracy: true}
                 );
             } else {
-                _by_ip();
+//                _by_ip();
+                reject({message:'no gps avail'});
             }
         };
         

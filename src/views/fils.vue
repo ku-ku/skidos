@@ -286,6 +286,7 @@ ssctenantsadds.lon
     $no-open: #F44336;
     $blue-color: #01579B;
     .sk-filials{
+        margin-top: 1rem;
         & .v-list-item{
             border: 1px solid lighten($gray-color, 20%);
             border-radius: 6px;
