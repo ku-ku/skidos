@@ -194,8 +194,14 @@ export default {
             return this.$store.getters["basket/has"](this.prod.id);
         },
         to_basket(){
+            const tenantId = (!!this.fill) 
+                                ? this.fill.id
+                                : $utils.isEmpty(this.prod.orgid) 
+                                    ? this.prod.mainorgid 
+                                    : this.prod.orgid;
             var p = Object.assign({}, this.prod);
-            p.store = {id: this.magaz.id};
+            
+            p.store = {id: tenantId};
             p.num   = this.n;
             p.total = this.total;
             p.at    = this.at;
@@ -211,74 +217,6 @@ export default {
             this.n = 1;
             this.mode = modes.OM_ORDER;
             this.$forceUpdate();
-        },
-        async do_order(){  //TODO: for one-click
-            this.valid = !isNaN(parseFloat(this.n));
-            if (!this.valid){
-                return;
-            }
-            this.state = modes.OM_ORDER;
-            
-            const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
-                  id_to_ord = $utils.uuidv4();
-            var dt = new Date();
-            dt.setMilliseconds(0);
-            dt.setSeconds(0);
-            dt.setMinutes(0);
-            if (!this.today){
-                dt.setDate(dt.getDate() + 1);
-            }
-            switch(this.time){
-                case times.TM_AM:
-                    dt.setHours(12);
-                    break;
-                case times.TM_PM:
-                    dt.setHours(18);
-                    break;
-                case times.TM_EV:
-                    dt.setHours(21);
-                    break;
-            }
-            
-            const tenantId = (!!this.fill) 
-                            ? this.fill.id
-                            : $utils.isEmpty(this.prod.orgid) 
-                                ? this.prod.mainorgid 
-                                : this.prod.orgid;
-            const opts = {
-                type: 'core-create',
-                query: 'sin2:/v:17474bad-e636-4f67-9258-7d153d6a40ad',
-                params: [
-                    {id: 'id', type:'id', value: id_to_ord},
-                    {id: 'regDt', type: 'dateTime', value: new Date()},
-                    {id: 'deliveryDate', type: 'dateTime', value: dt},
-                    {id: 'tenantID', type:'id', value: tenantId}, 
-                    {id: 'productID', type:'id', value: this.prod.id},
-                    {id: 'userID', type:'id', value: this.$store.state.profile.user.id},
-                    {id: 'Amount', type:'float', value: parseFloat(this.n)},
-                    {id: 'operSum', type:'float', value: this.totals}
-                ]
-            };
-            
-            try{
-                var res = await $http.post(url, opts);
-                console.log(res);
-                if (!!res.error){
-                    throw res.error;
-                }
-                this.state = modes.OM_SUCCESS;
-                this.$nextTick(() => {
-                    this.$vuetify.goTo(this.$refs.alert, {
-                        duration: 300,
-                        offset: 0,
-                        easing: 'easeInOutCubic'
-                    });
-                });
-            }catch(e){
-                this.state = modes.OM_READY;
-                console.log('ERR order:', e);
-                app.msg({'text':'Заказ не оформлен - попробуйте еще раз',color:'warning'});
-            }
         },
         gomap(){
             this.showMap = (new Date()).getTime();
