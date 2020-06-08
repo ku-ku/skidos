@@ -9,7 +9,68 @@
     pointImage.src = require('@/assets/imgs/map-marker.png');
     const pointImageBlue = new Image();
     pointImageBlue.src = require('@/assets/imgs/map-marker-blue.png');
-    var map = null;
+    
+    var map;    //global
+    
+    class pulsingDot {
+        static get size(){
+            return 200;
+        }
+        constructor(map){
+            this.map = map;
+            this.width = pulsingDot.size;
+            this.height= pulsingDot.size;
+            this.data = new Uint8Array(this.width * this.height * 4);
+        }
+        onAdd() {
+            var canvas = document.createElement('canvas');
+            canvas.width = this.width;
+            canvas.height = this.height;
+            this.context = canvas.getContext('2d');
+        }
+        render() {
+            var duration = 1500;
+            var t = (performance.now() % duration) / duration;
+
+            var radius = (pulsingDot.size / 2) * 0.3;
+            var outerRadius = (pulsingDot.size / 2) * 0.7 * t + radius;
+            var context = this.context;
+
+            // draw outer circle
+            context.clearRect(0, 0, this.width, this.height);
+            context.beginPath();
+            context.arc(
+                    this.width / 2,
+                    this.height / 2,
+                    outerRadius,
+                    0,
+                    Math.PI * 2
+            );
+            context.fillStyle = 'rgba(240, 120, 120,' + (1 - t) + ')';
+            context.fill();
+
+            // draw inner circle
+            context.beginPath();
+            context.arc(
+                    this.width / 2,
+                    this.height / 2,
+                    radius,
+                    0,
+                    Math.PI * 2
+            );
+            context.fillStyle = 'rgba(240, 120, 120, 1)';
+            context.strokeStyle = 'white';
+            context.lineWidth = 2 + 4 * (1 - t);
+            context.fill();
+            context.stroke();
+
+            // update this image's data with data from the canvas
+            this.data = context.getImageData(0, 0, this.width, this.height).data;
+            // continuously repaint the map, resulting in the smooth animation of the dot
+            this.map.triggerRepaint();
+            return true;
+        }   //render
+    }      //pulsingDot
     
     export default {
         name: 'SkMap',
@@ -20,7 +81,8 @@
             }
         },
         data(){
-            return {};
+            return {
+            };
         },
         created(){
             eventBus.$on('resize', ()=>{
@@ -59,7 +121,8 @@
                                                     properties: {
                                                         n: 0,
                                                         id: o.id,
-                                                        shop: o
+                                                        shop: o,
+                                                        current: o.current
                                                     }
                                                 }]
                         });
@@ -86,44 +149,78 @@
                     console.log('MAP LOADED!', map);
                     var nav = new mapboxgl.NavigationControl({showCompass:false,showZoom:true,visualizePitch:false});
                     map.addControl(nav, 'top-right');
-                    map.addImage('store-point', pointImage);
-                    map.addImage('store-point-blue', pointImageBlue);
-                    map.addSource('points', {
-                            'type': 'geojson',
-                            'data': {
-                                'type': 'FeatureCollection',
-                                'features': []
-                    }});    //map.addSource('point'...
-                    map.addLayer({
-                            'id': 'center',
-                            'type': 'symbol',
-                            'source': 'points',
-                            'layout': {
-                                'icon-image': 'store-point',
-                                'icon-size': 0.15,
-                                'icon-anchor': 'bottom',
-                                'icon-allow-overlap': true
-                            },
-                            'filter': ['==', ['number', ['get', 'n']], 0]
-                    });
-                    map.addLayer({
-                            'id': 'others',
-                            'type': 'symbol',
-                            'source': 'points',
-                            'layout': {
-                                'icon-image': 'store-point-blue',
-                                'icon-size': 0.15,
-                                'icon-anchor': 'bottom',
-                                'icon-allow-overlap': true
-                            },
-                            'filter': ['>', ['number', ['get', 'n']], 0]
-                    });
-                    map.on('click', 'center', function(e) {
-                        self.$emit('click', e.features[0].properties.shop);
-                    });
-                    map.on('click', 'others', function(e) {
-                        self.$emit('click', e.features[0].properties.shop);
-                    });
+                    if (!map.hasImage('store-point')){
+                        map.addImage('store-point', pointImage);
+                    }
+                    if (!map.hasImage('store-point-blue')){
+                        map.addImage('store-point-blue', pointImageBlue);
+                    }
+                    if (!map.hasImage('pulsing')){
+                        var pd = new pulsingDot(map);
+                        map.addImage('pulsing', pd, { pixelRatio: 2 });
+                    }
+                    if (!map.getSource('points')){
+                        map.addSource('points', {
+                                'type': 'geojson',
+                                'data': {
+                                    'type': 'FeatureCollection',
+                                    'features': []
+                        }});    //map.addSource('point'...
+                    }
+                    if (!map.getLayer('pulsing')){
+                        map.addLayer({
+                                'id': 'pulsing',
+                                'type': 'symbol',
+                                'source': 'points',
+                                'layout': {
+                                    'icon-image': 'pulsing',
+                                    'icon-anchor': 'top',
+                                    'icon-allow-overlap': true,
+                                    'icon-offset': [0, -54]
+                                },
+                                'filter': ['==', ['boolean', ['get', 'current']], true]
+                        });
+                    }
+                    
+                    if (!map.getLayer('center')){
+                        map.addLayer({
+                                'id': 'center',
+                                'type': 'symbol',
+                                'source': 'points',
+                                'layout': {
+                                    'icon-image': 'store-point',
+                                    'icon-size': 0.15,
+                                    'icon-anchor': 'bottom',
+                                    'icon-allow-overlap': true
+                                },
+                                'filter': ['==', ['number', ['get', 'n']], 0]
+                        });
+                    }
+                    if (!map.getLayer('others')){
+                        map.addLayer({
+                                'id': 'others',
+                                'type': 'symbol',
+                                'source': 'points',
+                                'layout': {
+                                    'icon-image': 'store-point-blue',
+                                    'icon-size': 0.15,
+                                    'icon-anchor': 'bottom',
+                                    'icon-allow-overlap': true
+                                },
+                                'filter': ['>', ['number', ['get', 'n']], 0]
+                        });
+                    }
+                    const _go_shop = function(e){
+                        const f = e.features[0];
+                        var all = map.queryRenderedFeatures({ layers: ['center', 'others'] });
+                        all.map((_f)=>{
+                            _f.properties['current'] = false;
+                        });
+                        f.properties['current'] = true;
+                        self.$emit('click', f.properties.shop);
+                    };
+                    map.on('click', 'center', _go_shop);
+                    map.on('click', 'others', _go_shop);
                     if (!!this.center){
                         self.toCenter(this.center);
                     }
@@ -133,6 +230,7 @@
                 if (!((!!points)&&(points.length>0))){
                     return;
                 }
+                const self = this;
                 var n = 0,
                     _set_points = function(){
                         var features = [],
@@ -148,7 +246,8 @@
                                             properties: {
                                                 n: i,
                                                 id: p.id,
-                                                shop: p
+                                                shop: p,
+                                                current: p.current
                                             },
                                             geometry: {
                                                  type: 'Point',

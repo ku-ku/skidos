@@ -27,9 +27,13 @@ const mutations = {
 const actions = {
     getFills(store){
         const dist = app.$store.getters["geo/distance"];
+        const current = store.state.fill;
         const p = (resolve, reject) => {
             if (    (!!store.state.store)
                  && (!!store.state.fills) ){
+                store.state.fills.map((fill, i)=>{
+                    fill.current = (!!current) ? (current.id===fill.id) : (i===0);
+                });
                 resolve(store.state.fills);
             }
             const opts = {
@@ -49,11 +53,11 @@ const actions = {
                         var _fil = $utils.sin2obj(ci, fil);
                             _fil.distance = dist(_fil);
                             _fil.address  = geo.a2s(_fil.location);
-                            fills.push(Object.freeze(_fil));
+                            fills.push(_fil);
                     });
                     store.commit('setStoreFills', 
                                  fills.sort((_f1, _f2)=>{
-                                        return (_f1.distance - _f2.distance)
+                                        return (_f1.distance - _f2.distance);
                                  }));
                     resolve(store.state.fills);
                 } catch(e) {
