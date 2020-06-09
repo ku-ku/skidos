@@ -2,6 +2,7 @@ const state = () => ({
     at:    new Date(),  //for watch changes
     order: null,        //num-order
     error: null,
+    confirmClear: false,
     basket: {
         prods: []
     }
@@ -11,8 +12,10 @@ const mutations = {
     fix(state, basket){
         state.at = new Date();
         state.basket = basket;
+        //resetting
         state.error = null;
         state.order = null;
+        state.confirmClear = false;
     },
     complete(state, n){
         state.at     = new Date();
@@ -23,6 +26,13 @@ const mutations = {
     error(state, e){
         state.at    = new Date();
         state.error = e;
+    },
+    confirm(state, mode){
+        if (mode==='clear'){
+            state.confirmClear = true;
+        } else {    //TODO: for others
+            
+        }
     }
 };
 

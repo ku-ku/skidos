@@ -83,9 +83,6 @@ export default {
         map: false
     };
   },
-  created(){
-        this.refresh();
-  },
   computed: {
         iStore(){
             var o = {};
@@ -142,7 +139,7 @@ export default {
             return null;
         },
         hasBasket(){
-            return this.$store.getters["basket/has"](this.iStore.id);
+            return this.$store.getters["basket/has"](this.id);
         },
         hasFills(){
             if (this.hasStore){
@@ -152,6 +149,20 @@ export default {
             }
             return false;
         }
+  },
+  created(){
+        this.refresh();
+  },
+  beforeRouteLeave(to, from, next){
+        console.log('beforeRouteLeave-2', this.hasBasket);
+        if ('main'===to.name){
+            if (!!this.hasBasket){
+                this.$store.commit('basket/confirm', 'clear');
+                next(false);
+                return;
+            }
+        }
+        next();
   },
   methods: {
       refresh: async function(id){
@@ -285,7 +296,10 @@ export default {
             this.card  = null;
             this.fills = null;
             this.fill  = null;
-            this.$nextTick(()=>{this.refresh(val);});
+            this.$store.dispatch('basket/clear');
+            this.$nextTick(()=>{
+                this.refresh(val);
+            });
         },
         card: function(val){
             if (!val){

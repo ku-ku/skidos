@@ -263,7 +263,7 @@ export default {
             });
            
             childs.push( h('swiper', {
-                            class: {swiper: true, 'swiper-container': true},
+                            class: {swiper: true, 'swiper-container': true, 'd-none': this.basket},
                             ref: 'swiper',
                             props: {'auto-update': true,
                                     'auto-destroy': true,
@@ -280,7 +280,7 @@ export default {
             var   kind = 'xxx', numOf = 0;
             if ((this.cats)&&(this.cats.length>1)){
                 childs.push( h('v-chip-group', {
-                    class: {'sk-cats': true}, 
+                    class: {'sk-cats': true, 'd-none': this.basket}, 
                     props: {'show-arrows': false, 'prev-icon': 'fas fa-chevron-left', 'next-icon': 'fas fa-chevron-right'} //TODO:
                 }, [
                         this.cats.map( (c)=>{

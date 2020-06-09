@@ -14,9 +14,6 @@ import SkSvg from '@/components/SkSvg';
 
 export default {
         name: 'SkBasket',
-        props: {
-            
-        },
         components:{
             VCard,
             VCardText,
@@ -44,6 +41,9 @@ export default {
             },
             order(){
                 return this.$store.state.basket.order;
+            },
+            confirmClear(){
+                return this.$store.state.basket.confirmClear;
             }
         },
         methods: {
@@ -66,6 +66,9 @@ export default {
                 if (from_basket){
                     this.$router.go(-1);
                 }
+            },
+            clear(){
+                this.$store.dispatch('basket/clear');
             }
         },
         render(h){
@@ -92,20 +95,30 @@ export default {
                             h('v-badge',{props:{content: this.numof, value: this.numof, dark: true, color: "#ffa41b"}}, [
                                 h('sk-svg', {props:{xref:'#ico-cart', width:28, height: 28}})
                             ]),
-                            h('div', {class:{'sk-total':true}}, this.total + ' руб.')
+                            h('div', {class:{'sk-total':true}}, this.total + ' руб.'),
+                            this.confirmClear
+                                ? h('div', {class: {'sk-confirm': true}}, 'корзина не пуста!')
+                                : null
                         ]),
                         h('v-card-actions', [
-                            h('v-btn', {
-                                props: {small:true, dark: true, color: "orange lighten-1"},
-                                on: {click: this.do_order}
-                            }, 'оформить'),
-                            h('v-btn', {
-                                props: {small:true, dark: true, color: "orange lighten-1"},
-                                on: {click: this.show}
-                            }, [
-                                    h('sk-svg', {props:{xref:'#ico-eye', width:18, height: 18}})
-                                ])
-                        ])
+                                    h('v-btn', {
+                                        props: {small:true, dark: true, color: "orange lighten-1"},
+                                        on: {click: this.do_order}
+                                    }, 'оформить'),
+                                    this.confirmClear 
+                                        ? h('v-btn', {
+                                            props: {small:true, dark: true, color: "orange lighten-1"},
+                                            on: {click: this.clear}
+                                            }, 'очистить')
+                                        : null,
+                                    h('v-btn', {
+                                        props: {small:true, dark: true, color: "orange lighten-1"},
+                                        on: {click: this.show}
+                                        }, [
+                                            h('sk-svg', {props:{xref:'#ico-eye', width:18, height: 18}})
+                                    ])
+                                ]
+                        )
                 ]);
             }
             if (!!card){
@@ -129,8 +142,8 @@ export default {
         border-radius: 0;
         & .v-card__text{
             padding: 0 !important;
-            display: flex;
-            justify-content: center;
+            display: block;
+            text-align: center;
             & svg{
                 width: 28px;
                 height: 28px;
@@ -141,6 +154,12 @@ export default {
                 font-size: 1.5rem;
                 font-weight: 300;
                 color: #000;
+            }
+            & .sk-confirm{
+                font-size: 1.25rem;
+                font-weight: 400;
+                color: $main-color;
+                margin: 1rem 0;
             }
         }
         & .v-card__actions{
