@@ -33,7 +33,6 @@ function lookup(a){
             return _params.toString();
         };
         
-        
         $.getJSON('https://nominatim.openstreetmap.org/search' + params(true), {timeout:5000})
             .then((data)=>{resolve(data);})
             .catch(()=>{

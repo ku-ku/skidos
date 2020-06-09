@@ -160,7 +160,7 @@ export default {
                         sock.send('ping');  //TODO: reconnect
                     } catch(e) {
                         sock = null;
-                        console.log('WS ping error:', e);
+                        console.log('WS ping error at:', new Date(), e);
                     }
                 }
                 if (!sock){

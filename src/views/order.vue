@@ -15,7 +15,6 @@ import {
         VBadge,
         VBottomSheet
        } from 'vuetify/lib';
-import touch from 'vuetify/lib/directives/touch';
 import SkSvg from '@/components/SkSvg';
 import SkBottom from '@/components/SkBottom';
 import SkMap from '@/components/map';
@@ -57,7 +56,6 @@ export default {
         SkSvg,
         SkMap
     },
-    directives: {touch},
     props: {
         order: {
             type: String,
@@ -78,12 +76,16 @@ export default {
             time: times.TM_AM,
             adding: false,
             self: false,
-            showMap: false,
+            showMap: false
         };
     },
     computed: {
         user(){
             return this.$store.state.profile.user;
+        },
+        hasUserAddr(){
+            const u = this.user;
+            return ((!!u.adds) && !$utils.isEmpty(u.adds.addrstring));
         },
         prod(){ /*Product*/
             return this.$store.state.active.action;
@@ -160,7 +162,8 @@ export default {
         }
     },
     mounted(){
-        this.self = !(!!this.magaz.hasdelivery);
+        this.self = !(!!this.magaz.hasdelivery) 
+                    || this.$store.getters['basket/self'](this.magaz.id);
         var d = new Date();
         if (d.getHours()<12){
             this.time = times.TM_AM;
@@ -175,6 +178,16 @@ export default {
             this.state = modes.OM_READY;
             $([document.documentElement, document.body]).animate({scrollTop: 0}, 100);
         });
+        console.log('order (mnt)' + this);
+        
+    },
+    activated(){
+        console.log('order (active)' + this);
+    },
+    watch: {
+        prod(val){
+            console.log('order (prod)' + val);
+        }
     },
     methods: {
         back(){
@@ -221,15 +234,16 @@ export default {
         gomap(){
             this.showMap = (new Date()).getTime();
             const self = this;
-            if (this.$store.getters["active/hasActiveStoreFills"]){
-                this.$store.dispatch("active/getFills").then((fills)=>{
-                    self.$refs.storeMap.addPoints(fills);
-                });
-            } else {
-                this.$nextTick(()=>{
-                    self.$refs.storeMap.toCenter(this.magaz);
-                });
-            }
+            this.$nextTick(()=>{
+                if (self.$store.getters["active/hasActiveStoreFills"]){
+                    self.$store.dispatch("active/getFills").then((fills)=>{
+                        self.$refs.storeMap.addPoints(fills);
+                    });
+                } else {
+                    //self.$refs.storeMap.toCenter(self.magaz);
+                    self.$refs.storeMap.addPoints([self.magaz]);
+                }
+            });
         }
     },
     
@@ -390,7 +404,7 @@ export default {
                             ? [
                                 h('sk-svg', {props: {xref:"#ico-map-marker"}}), 
                                 'Адрес доставки: ', 
-                                ((this.user.adds)&&!$utils.isEmpty(this.user.adds.addrstring))
+                                (!!this.hasUserAddr)
                                     ? this.user.adds.addrstring
                                     : h('span', [
                                                     'Вы можете указать в',
@@ -473,7 +487,8 @@ export default {
                 : h('sk-bottom',  {
                         key: 'sk-bottom-map-' + this.prod.orgid,
                         props: {show: this.showMap}}, [
-                        h('sk-map', {
+                        !!this.showMap
+                            ? h('sk-map', {
                                     props: {
                                         center: this.magaz
                                     },
@@ -486,6 +501,7 @@ export default {
                                             this.showMap = false;
                                         }}
                                 })
+                            : null
                 ])
         ]);
     }   //render

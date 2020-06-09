@@ -220,6 +220,7 @@ sscusersadds.addrstring
                 } else {
                     throw (res.error) ? res.error : {message: 'неопознанная ошибка'};
                 }
+                this.$store.dispatch('profile/readAdds');
             } catch(e){
                 console.log(e);
                 this.loading = false;

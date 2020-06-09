@@ -140,7 +140,7 @@
                     style: 'mapbox://styles/thelix/ckathyj992krv1ins0b3ucdrm',
                     center: coords,
                     zoom: 14,
-                    maxZoom: 16,
+                    maxZoom: 18,
                     pitchWithRotate: false,
                     antialias: true
                 });
@@ -271,7 +271,7 @@
                         });
                         if (features.length > 0){
                             map.setCenter(features[0].geometry.coordinates);
-                            if (bounds){
+                            if ((bounds)&&(features.length > 2)){
                                 map.fitBounds(bounds, {padding: 50});
                             }
                         }

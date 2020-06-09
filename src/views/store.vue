@@ -265,15 +265,15 @@ export default {
       on_map(){
             this.map = (new Date()).getTime();
             const self = this;
-            if (this.hasFills){
-                this.$store.dispatch("active/getFills").then((fills)=>{
-                    self.$refs.storeMap.addPoints(fills);
-                });
-            } else {
-                this.$nextTick(()=>{
-                    self.$refs.storeMap.toCenter(this.iStore);
-                });
-            }
+            this.$nextTick(()=>{
+                if (self.hasFills){
+                    self.$store.dispatch("active/getFills").then((fills)=>{
+                        self.$refs.storeMap.addPoints(fills);
+                    });
+                } else {
+                    self.$refs.storeMap.addPoints([self.iStore]);
+                }
+            });
             this.$forceUpdate();
       } //on_map
   },
@@ -605,7 +605,8 @@ export default {
                 h('sk-bottom',  {
                         key: 'sk-bottom-map-' + this.id,
                         props: {show: this.map}}, [
-                            h('sk-map', {
+                            !!this.map 
+                                ? h('sk-map', {
                                     props: {
                                         center: this.iStore
                                     },
@@ -619,6 +620,7 @@ export default {
                                             this.map = false;
                                         }}
                                 })
+                                : null
                 ])
             );
         }

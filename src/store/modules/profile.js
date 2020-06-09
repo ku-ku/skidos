@@ -87,24 +87,32 @@ const actions = {
         };
         return new Promise(promise);
   },    //login
-  async readAdds(store){
+  readAdds(store){
         const opts = {
               type: 'core-read',
               query: 'sin2:/v:b841fde1-394a-4ab1-8ca7-48446f58c27e?id=' 
                       + store.state.user.id + '&fields=sscusersadds.addrstring,sscusersadds.email,sscusersadds.phone'
-        }, 
-        url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
-        try {
-            var res = await $http.post(url, opts);
-            if ((!!res.result)
-                && (res.result.data.length>0)){
-                store.commit('setAdds', $utils.sin2obj(res.result.columnIndexes, res.result.data[0]));
-            } else {
-                throw 'No user adds #' + store.state.user.id;
-            }
-        }catch(e){
-            console.log('ERR on user', e);
-        }
+        },
+        p = (resolve, reject)=>{
+            (async ()=>{
+                try {
+                    var res = await $http.post(opts);
+                    if ((!!res.result)
+                        && (res.result.data.length>0)){
+                        var adds = $utils.sin2obj(res.result.columnIndexes, res.result.data[0]);
+                        store.commit('setAdds', adds);
+                        resolve(adds);
+                    } else {
+                        throw 'No user adds #' + store.state.user.id;
+                    }
+                }catch(e){
+                    console.log('ERR on user', e);
+                    reject(e);
+                }
+            })();
+        };
+        
+        return new Promise(p);
   },    //readAdds
   check: function(store) {
     var pwd = '';

@@ -1,7 +1,6 @@
 <template>
     <v-bottom-sheet 
         hide-overlay 
-        eager
         v-model="sheet">
         <div class="sk-bottom">
             <div class="sk-touch"

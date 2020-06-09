@@ -156,6 +156,16 @@ const getters = {
                 : [];
         };
     },
+    self(state){
+        return (storeId) => {
+            var prods = ((!!state.basket)&&(!!state.basket.prods)) 
+                            ? state.basket.prods.filter((p)=>{
+                                return (p.store.id===storeId)&&(!!p.self);
+                              })
+                            : [];
+            return prods.length > 0;
+        };
+    },
     at(state){
         return state.at;
     }
