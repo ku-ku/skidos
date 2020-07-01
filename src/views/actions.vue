@@ -155,8 +155,9 @@ export default {
                         }
                     }
                 });
+                console.log('Categories:',_cats);
                 this.cats = _cats.sort((c1, c2)=>{
-                    return c1.name.localeCompare(c2.name);
+                    return (c1.name||'xxx').localeCompare(c2.name||'xxx');
                 });
             }
           
@@ -192,17 +193,11 @@ export default {
         },
         on_order(a){
             const ci = this.skidos.columnIndexes;
-            const keys = Object.keys(ci);
-            var s, n, _a = {};
-            keys.map((key)=>{
-                n = key.lastIndexOf('.');
-                s = (n < 0) ? key : key.substr(n + 1);
-                _a[s] = a[ci[key]];
-            });
-            this.$store.commit('active/setAction', _a);
+            a = $utils.sin2obj(ci, a);
+            this.$store.commit('active/setAction', a);
             this.$router.push({
                                 name: 'order',
-                                params: {store: this.store.id, order: _a.id}
+                                params: {store: this.store.id, order: a.id}
             });
         },
         from_basket(e, id){
@@ -218,9 +213,11 @@ export default {
         },
         go_cat(id){
             var h = $(this.$el).find('.v-subheader[data-cat-id="' + id + '"]');
-            $([document.documentElement, document.body]).animate({
-                scrollTop: h.offset().top
-            }, 800);
+            if (h.length > 0){
+                $([document.documentElement, document.body]).animate({
+                    scrollTop: h.offset().top
+                }, 800);
+            }
         }
     },
     created(){
@@ -255,9 +252,14 @@ export default {
                         key: 'a-' + a[ci["userpromotions.id"]],
                         style: {width: 'auto'}
                     }, [
-                        h('img',{
-                                    attrs: {src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto'}
-                        })
+                        h('v-btn', {
+                                props: {text: true},
+                                on: {click: ()=>{void(0);}} //TODO:
+                            }, [
+                                h('img',{
+                                    attrs: {src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref}
+                                })
+                        ])
                     ]) );
                 }
             });
@@ -383,7 +385,6 @@ export default {
             ));
             childs.push( h('sk-basket', {
                 on: {'show-basket': (b)=>{
-                    console.log(b);
                     this.basket = ((typeof b === 'boolean') && (!!b)) ? true : !this.basket;
                 }}
             }) );
@@ -422,6 +423,12 @@ export default {
         padding: 0 1rem;
         & .swiper-slide {
             width: auto;
+            & .v-btn{
+                height: 156px;
+                &:not(.v-btn--round).v-size--default{
+                    padding: 0;
+                }
+            }
             & img{
                 border-radius: 6px;
                 box-shadow: 2px 2px 6px rgba(0,0,0,0.18);

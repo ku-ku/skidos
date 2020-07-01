@@ -6,7 +6,7 @@
       >
     </v-app-bar>
     <v-content>
-        <keep-alive include="ViewMain,ViewStore">
+        <keep-alive include="ViewMain,ViewStore,ViewProds">
             <router-view />
         </keep-alive>
     </v-content>

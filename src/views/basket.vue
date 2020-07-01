@@ -44,6 +44,13 @@ export default {
             },
             confirmClear(){
                 return this.$store.state.basket.confirmClear;
+            },
+            brandColor(){
+                const def = 'orange lighten-1',
+                      store = this.$store.state.active.store;
+                return (!!store) 
+                            ? $utils.isEmpty(store.brandcolor) ? def : store.brandcolor
+                            : def;
             }
         },
         methods: {
@@ -61,11 +68,7 @@ export default {
                 }
             },   //do_order
             show(e){
-                var from_basket = ("order"===this.$router.currentRoute.name);
-                this.$emit('show-basket', from_basket);
-                if (from_basket){
-                    this.$router.go(-1);
-                }
+                this.$router.push({name: 'basket'});
             },
             clear(){
                 this.$store.dispatch('basket/clear');
@@ -81,7 +84,11 @@ export default {
                             ])
                 ]);
             } else if (!$utils.isEmpty(this.order)){
-                card = h('v-card', {class: {"sk-basket": true, "sk-success": true}, props:{flat:true,tile:true}}, [
+                card = h('v-card', {
+                                        class: {"sk-basket": true, "sk-success": true},
+                                        props: {flat:true, tile: true},
+                                        style: {"border-top": "2px solid " + this.brandColor}
+                                    }, [
                             h('v-card-text', [
                                 h('sk-svg', {props:{xref:'#ico-chk-circle', width:28, height: 28}}),
                                 'Ваш заказ № ',
@@ -90,10 +97,17 @@ export default {
                             ])
                 ]);
             } else if (this.numof > 0) {
-                card = h('v-card', {class: {"sk-basket": true}, props:{flat:true,tile:true}}, [
+                card = h('v-card', {
+                                        class: {"sk-basket": true}, 
+                                        props: {flat: true, tile: true},
+                                        style: {"border-top": "2px solid " + this.brandColor}
+                                   }, [
                         h('v-card-text', [
-                            h('v-badge',{props:{content: this.numof, value: this.numof, dark: true, color: "#ffa41b"}}, [
-                                h('sk-svg', {props:{xref:'#ico-cart', width:28, height: 28}})
+                            h('v-badge',{props:{content: this.numof, value: this.numof, dark: true, color: this.brandColor}}, [
+                                h('sk-svg', {
+                                                props:{xref:'#ico-cart', width:28, height: 28},
+                                                style: {"color": this.brandColor}
+                                            })
                             ]),
                             h('div', {class:{'sk-total':true}}, this.total + ' руб.'),
                             this.confirmClear
@@ -102,21 +116,23 @@ export default {
                         ]),
                         h('v-card-actions', [
                                     h('v-btn', {
-                                        props: {small:true, dark: true, color: "orange lighten-1"},
+                                        props: {small:true, dark: true, color: this.brandColor, width: "10rem"},
                                         on: {click: this.do_order}
                                     }, 'оформить'),
                                     this.confirmClear 
                                         ? h('v-btn', {
-                                            props: {small:true, dark: true, color: "orange lighten-1"},
+                                            props: {small:true, dark: true, color: this.brandColor},
                                             on: {click: this.clear}
                                             }, 'очистить')
                                         : null,
-                                    h('v-btn', {
-                                        props: {small:true, dark: true, color: "orange lighten-1"},
-                                        on: {click: this.show}
-                                        }, [
-                                            h('sk-svg', {props:{xref:'#ico-eye', width:18, height: 18}})
-                                    ])
+                                    ("basket" == this.$route.name) 
+                                        ? null
+                                        : h('v-btn', {
+                                            props: {small:true, dark: true, color: this.brandColor},
+                                            on: {click: this.show}
+                                            }, [
+                                                h('sk-svg', {props:{xref:'#ico-eye', width:18, height: 18}})
+                                        ])
                                 ]
                         )
                 ]);
@@ -138,7 +154,6 @@ export default {
         padding-top: 1.5rem;
         padding-bottom: 1rem;
         background-color: #fafafa;
-        border-top: 2px solid $main-color;
         border-radius: 0;
         & .v-card__text{
             padding: 0 !important;
@@ -147,7 +162,6 @@ export default {
             & svg{
                 width: 28px;
                 height: 28px;
-                color: $main-color;
             }
             & .sk-total{
                 margin-left: 2rem;

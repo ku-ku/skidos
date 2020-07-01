@@ -16,7 +16,6 @@ import { VBtn,
        } from 'vuetify/lib';
 
 import SkFilials from '@/views/fils';
-import SkFind from '@/views/find'; 
 import SkShare from '@/views/share'; 
 import SkActions from '@/views/actions'; 
 import SkChat from '@/views/chat'; 
@@ -59,7 +58,6 @@ export default {
         VRow,
         VCol,
         VFabTransition,
-        SkFind,
         SkShare,
         VBadge,
         SkFilials,
@@ -349,7 +347,8 @@ export default {
                         ])
                 );
             } else {    //NORMAL
-                const title = data[0][ci["ssctenants.title"]],
+                const id = data[0][ci["ssctenants.id"]],
+                      title = data[0][ci["ssctenants.title"]],
                       bg = data[0][ci["ssctenantsadds.brandcolor"]],
                       bc = data[0][ci["ssctenantsadds.balancecolor"]],
                       bi = data[0][ci["ssctenantsadds.brandlogo"]],
@@ -438,8 +437,13 @@ export default {
                                             h('svg',{attrs:{viewBox:'0 0 640 512'},domProps:{innerHTML:'<use xlink:href="#ico-store" />'}})
                                         ])
                                     ]),
-                                    h('v-btn',{props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.find);}}},[
-                                        h('svg',{attrs:{viewBox:'0 0 512 512'},domProps:{innerHTML:'<use xlink:href="#ico-search" />'}})
+                                    h('v-btn',{ props: {
+                                                        outlined: true,
+                                                        to: {name: 'prods', params: { store: id}}
+                                                }, 
+                                                //on: {click:()=>{this.switchMode(ST_MODE.find);}}
+                                              },[
+                                        h('sk-svg',{props:{xref:"#ico-search"}})
                                     ]),
                                     h('v-btn', {props:{outlined: true}, on: {click:()=>{this.switchMode(ST_MODE.qr);}}},[
                                         h('svg', {attrs:{viewBox:'0 0 448 512'},domProps:{innerHTML:'<use xlink:href="#ico-qrcode" />'}}),
@@ -457,19 +461,23 @@ export default {
                         ])
                     );  //branding
                     var conte = [];
-                    conte.push( h('div', {class: {'sk-location': true}}, [
-                        h('a', {
-                                class: {'sk-addr': true}, style:{color: (!!bg) ? bg : '' },
-                                on: {click: this.on_map}
-                            }, [
-                                h('sk-svg',{props: {xref:'#ico-map-marker', width: 16, height: 16}}),
-                                (!!this.fill) 
-                                    ? this.fill.address
-                                    : (!!data[0][ci["ssctenantsadds.location"]]) 
-                                        ? geo.a2s(data[0][ci["ssctenantsadds.location"]]) 
-                                        : 'на карте'
-                        ])
-                    ]));    //location
+                    
+                    //location ----------------------------------------------------------
+                    if (this.mode !== ST_MODE.find){
+                        conte.push( h('div', {class: {'sk-location': true}}, [
+                            h('a', {
+                                    class: {'sk-addr': true}, style:{color: (!!bg) ? bg : '' },
+                                    on: {click: this.on_map}
+                                }, [
+                                    h('sk-svg',{props: {xref:'#ico-map-marker', width: 16, height: 16}}),
+                                    (!!this.fill) 
+                                        ? this.fill.address
+                                        : (!!data[0][ci["ssctenantsadds.location"]]) 
+                                            ? geo.a2s(data[0][ci["ssctenantsadds.location"]]) 
+                                            : 'на карте'
+                            ])
+                        ]));    
+                    }   //end: location
                     switch( this.mode ){
                         case ST_MODE.info:
                             var links = [];
@@ -520,9 +528,6 @@ export default {
                                             props: {parent:this.iStore}
                                         }) );
                             break;
-                        case ST_MODE.find:
-                            conte.push( h(SkFind, {props:{parent:this.iStore}}) );
-                            break;
                         case ST_MODE.share:
                             conte.push( h(SkShare, {props:{parent:this.iStore}}) );
                             break;
@@ -567,6 +572,7 @@ export default {
                         if (
                                 (this.mode !== ST_MODE.chat)
                              && (this.mode !== ST_MODE.fils)
+                             && (this.mode !== ST_MODE.find)
                             ){
                             fab = h('v-fab-transition', [
                                 h('v-btn', {props: {

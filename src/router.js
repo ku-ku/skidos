@@ -9,6 +9,8 @@ import ViewProfile from '@/views/profile';
 import ViewOrder   from '@/views/order';
 import ViewOrders  from '@/views/orders';
 import ViewChat    from '@/views/chat';
+import ViewProds   from '@/views/prods';
+import ViewBasket  from '@/views/basketView';
 import store from '@/store';
 
 /**
@@ -102,6 +104,28 @@ const router = new Router({
         path: '/orders',
         name: 'orders',
         component: ViewOrders,
+        meta: {
+            showAppBar: false,
+            showNavi: false
+        },
+        beforeEnter: isAuth
+      },
+      {
+        path: '/store/:store/prods',
+        name: 'prods',
+        component: ViewProds,
+        props: true,
+        meta: {
+            showAppBar: false,
+            showNavi: false
+        },
+        beforeEnter: isAuth
+      },
+      {
+        path: '/basket',
+        name: 'basket',
+        component: ViewBasket,
+        props: true,
         meta: {
             showAppBar: false,
             showNavi: false

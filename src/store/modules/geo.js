@@ -5,6 +5,7 @@ const API_KEY = '739747a9f6f716d960608c3ee375b337';
 
 const state = {
     ll: {
+        fine: false,    //by geo-ip, true-by GPS
         lat: 45.035470, //Krd-center (city-sq)
         lon: 38.975313
     },
@@ -33,11 +34,11 @@ const actions = {
         var ll = {};
         
         const p = (resolve, reject) => {
-/*TODO: city pos
             const _by_ip = function(){
                 $.getJSON(API_URL + 'check?access_key=' + API_KEY, (data)=>{
                     console.log('by ip:', data);
                     ll = {
+                        fine: false,
                         lat: data.latitude,
                         lon: data.longitude
                     };
@@ -49,13 +50,13 @@ const actions = {
                     reject(err);
                 });
             };
-*/            
             if(!!navigator.geolocation){
                 var hTm = setTimeout(()=>{reject({message:'no gps avail'});}, 5050);
                 navigator.geolocation.getCurrentPosition(
                     function(pos){
                         console.log('by geolocation:', pos.coords);
                         ll = {
+                            fine: true,
                             lat: pos.coords.latitude,
                             lon: pos.coords.longitude
                         };
@@ -67,14 +68,13 @@ const actions = {
                     function(err){
                         console.log('ERR by geolocation:', err);
                         clearTimeout(hTm);
-                        reject(err);
-                        //_by_ip();
+                        _by_ip();
                     },
                     {maximumAge: 180000, timeout: 5000, enableHighAccuracy: true}
                 );
             } else {
-//                _by_ip();
-                reject({message:'no gps avail'});
+                _by_ip();
+                //reject({message:'no gps avail'});
             }
         };
         

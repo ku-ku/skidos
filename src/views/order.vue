@@ -210,7 +210,7 @@ export default {
             const tenantId = (!!this.fill) 
                                 ? this.fill.id
                                 : $utils.isEmpty(this.prod.orgid) 
-                                    ? this.prod.mainorgid 
+                                    ? this.prod.tenantid 
                                     : this.prod.orgid;
             var p = Object.assign({}, this.prod);
             
@@ -253,7 +253,9 @@ export default {
               gray   = 'grey darken-1',
               inCart = this.in_cart(),
               hasDeliv = this.magaz.hasdelivery;
-        const isService = !(!!prod.isproduct);
+      
+        const isService = !(!!prod.isproduct),
+              color = this.magaz.brandcolor || accent;
       
         return h('v-card', {
             key: 'ord-' + prod.id,
@@ -274,12 +276,15 @@ export default {
                     ]),
                     h('h3', prod.mainorgname)
                 ]),
-                h('v-img', {props: {
-                        'max-height': 280,
-                        contain: true,
-                        eager: true,
-                        src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref
-                }}),
+                (!!prod.promoimage)
+                    ? h('v-img', {props: {
+                            'max-height': 280,
+                            contain: true,
+                            eager: true,
+                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref
+                    }})
+                    : h('sk-svg', {props:{xref:"#ico-box-full", width: 128, height: 128}, style:{color:color,margin: "1rem auto"}})
+                ,
                 h('h1', {class: {'sk-name': true}}, prod.promogoods)
             ]),
             h('v-card-subtitle', [
