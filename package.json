@@ -26,7 +26,8 @@
   "dependencies": {
     "color": "^3.1.2",
     "core-js": "^3.6.4",
-    "jquery": "^3.4.1",
+    "ellipsed": "^1.5.0",
+    "jquery": "^3.5.1",
     "mapbox-gl": "^1.10.1",
     "moment": "^2.24.0",
     "swiper": "^5.3.7",
@@ -37,6 +38,7 @@
     "vuex": "^3.1.2"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.13.1",
     "@vue/cli-plugin-babel": "^4.2.0",
     "@vue/cli-plugin-eslint": "^4.2.0",
     "@vue/cli-service": "^4.2.0",

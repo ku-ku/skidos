@@ -5,6 +5,7 @@ import {
          VList, 
          VSubheader,
          VListItem,
+         VListGroup,
          VListItemGroup,
          VListItemIcon,
          VListItemContent,
@@ -24,7 +25,9 @@ import {
          VSpacer,
          VSheet,
          VForm,
-         VSkeletonLoader
+         VSkeletonLoader,
+         VTooltip,
+         VTreeview
     } from 'vuetify/lib';
 import SkSvg from '@/components/SkSvg';
     
@@ -36,7 +39,7 @@ const FIND_MODE = {
     'q':       3,
     'loading': 999
 };
-    
+
 export default {
     name: 'ViewProds',
     components: {
@@ -45,6 +48,7 @@ export default {
         VList, 
         VSubheader,
         VListItem,
+        VListGroup,
         VListItemGroup,
         VListItemIcon,
         VListItemContent,
@@ -65,6 +69,8 @@ export default {
         VSheet,
         VForm,
         VSkeletonLoader,
+        VTooltip,
+        VTreeview,
         SkSvg
     },
     data(){
@@ -85,6 +91,9 @@ export default {
         },
         tenant(){
             return (!!this.parent) ? this.parent.id : '00';
+        },
+        hasKinds(){
+            return (!!this.kinds)&&(this.kinds.length > 0);
         }
     },
     created(){
@@ -102,6 +111,7 @@ export default {
     methods: {
         async refresh(){
             try {
+                /* totals */
                 const opts = {
                     type: "query",
                     query: "37afe6aa-4d4b-4f27-a34c-173e746cd7d7.searchData",
@@ -116,6 +126,9 @@ export default {
                 if (!!resp.error){
                     throw resp.error;
                 }
+                /* Categories */
+                this.getcats(null);
+                /* ABC */
                 var abc = [];
                 resp.result.data.map((a)=>{
                     if (!this.totals){
@@ -125,8 +138,6 @@ export default {
                     abc.push({a: a[2], n: a[3], active: false});
                 });
                 this.abc = abc;
-                this.getcats(null);
-                this.showParams = (new Date()).getTime();
                 this.mode = FIND_MODE.default;
             }catch(e){
                 console.log('ERR: load abc:', e);
@@ -153,6 +164,9 @@ export default {
                 resp.result.data.map((a)=>{
                     data.push({id: a[4], name: a[6], price: a[11], img: a[5]});
                 });
+                if (!this.totals){
+                    this.totals = {n: 0};
+                }
                 this.totals.n = data.length;
                 this.data = data;
                 app.msg({
@@ -168,14 +182,14 @@ export default {
         getcats(parent){
             const opts = {
                 type: "core-read",
-                query: 'sin2:/v:e81bbfce-0211-4dd3-81fa-4377955db00a?fields=promoKinds.id,promoKinds.kindname,promoKinds.parentid'
+                query: 'sin2:/v:e81bbfce-0211-4dd3-81fa-4377955db00a?filter='
             };
             if (!!parent){
-                opts.query +='&filter=eq(field(".parentId"),param("' + parent.id + '", "id"))';
+                opts.query +='eq(field(".parentId"),param("' + parent.id + '", "id"))';
             } else {
-                opts.query +='&filter=and(eq(field(".tenantId"),param("' + this.tenant + '", "id")),isnull(field(".parentId"))))';
+                opts.query +='and(eq(field(".tenantId"),param("' + this.tenant + '", "id")),isnull(field(".parentId"))))';
             }
-            opts.query += '&sort=promoKinds.kindname';
+            opts.query += '&sort=promoKinds.sortnum,promoKinds.kindname';
             const self = this;
             const p = (resolve, reject) => {
                 $http.post(opts).then((resp)=>{
@@ -187,10 +201,17 @@ export default {
                         var o = $utils.sin2obj(resp.result.columnIndexes, item);
                         o.level = (!!parent) ? parent.level + 1 : 0;
                         o.parent = parent;
+                        if (o.childcount > 0){
+                            o.childs = [];
+                            o.loaded = false;   //must child`s load
+                        } else {
+                            o.loaded = true;
+                        }
                         objs.push(o);
                     });
                     if (!!parent){
                         parent.childs = objs;
+                        parent.loaded = true;
                     } else {
                         self.kinds = objs;
                     }
@@ -203,17 +224,10 @@ export default {
             return new Promise(p);
         },
         async oncat(cat){
-            cat.active = true;
-            const n = await this.getcats(cat);
-            console.log('2.found cat(s):', n);
-            if ( n > 0 ){   //has child`s
-                this.$nextTick(()=>{
-                    this.activeKind = cat;
-                });
-            } else {
-                this.find('#' + cat.id);
-                this.showParams = false;
-            }
+            console.log('oncat', cat);
+            this.activeKind = cat;
+            this.find('#' + cat.id);
+            this.showParams = false;
         },  //oncat
         onabc(a){
             this.abc.map((_a)=>{
@@ -222,11 +236,6 @@ export default {
             this.find(a.a);
             this.showParams = false;
         },   //onabc
-        _backCat(){
-            if (!!this.activeKind){
-                this.activeKind = this.activeKind.parent;
-            } 
-        },
         _text_find(e){
             if (e){
                 e.stopPropagation();
@@ -244,6 +253,15 @@ export default {
             this.showParams = false;
             this.find(this.q);
             return false;
+        },
+        find_by(mode){
+            this.mode = mode;
+            this.showParams = (new Date()).getTime();
+            if (mode === FIND_MODE.q){
+                this.$nextTick(()=>{
+                    $('.sk-find-text input').trigger('focus');
+                });
+            }
         },
         async open(prod){
             this.showParams = false; 
@@ -285,6 +303,7 @@ export default {
         }
     },
     render: function(h){
+        const self = this;
         const color = this.parent.brandcolor || 'orange',
               logo  = $utils.isEmpty(this.parent.brandlogo) 
                         ? undefined 
@@ -299,11 +318,37 @@ export default {
                         ]),
                         h('v-toolbar-title', this.parent.title),
                         h('v-spacer'),
-                        h('v-btn', {
-                                        props: {icon: true},
-                                        on: {click: ()=>{this.showParams = (new Date()).getTime();}}
-                                   }, [h('sk-svg', {props:{xref:'#ico-search', width:16, height: 16}})]
-                        )
+                        h('v-tooltip', {
+                            props: {bottom: true},
+                            scopedSlots: {
+                                activator: ({on})=>{
+                                        on['click'] = ()=>{this.find_by(FIND_MODE.cat);};
+                                        return h('v-btn', {props: {icon: true},on: on}, [
+                                                    h('sk-svg', {props:{xref:"#ico-boxes", width: 24}})
+                                        ]);
+                                }
+                            }
+                        }, [h('span', 'Поиск по категории')]),
+                        h('v-tooltip', {
+                            props: {left: true},
+                            scopedSlots: {
+                                activator: ({on})=>{
+                                        on['click'] = ()=>{this.find_by(FIND_MODE.abc);};
+                                        return h('v-btn', {props: {icon: true}, on: on}, 'АБВ');
+                                }
+                            }
+                        }, [h('span', 'Поиск по алфавиту')]),
+                        h('v-tooltip', {
+                            props: {bottom: true},
+                            scopedSlots: {
+                                activator: ({on})=>{
+                                        on['click'] = ()=>{this.find_by(FIND_MODE.q);};
+                                        return h('v-btn', {props: {icon: true}, on: on}, [
+                                                h('sk-svg', {props:{xref:"#ico-search"}})
+                                        ]);
+                                }
+                            }
+                        }, [h('span', 'Произвольный поиск')])
                     ])
         );
 
@@ -318,7 +363,7 @@ export default {
         } else {
             if (!!this.data){
                 childs.push(
-                    h('v-list', {props:{dense:true}, class: {'sk-find-prods': true}}, [
+                    h('v-list', {props:{dense: true}, class: {'sk-find-prods': true}}, [
                         (this.data.length > 0)
                             ? this.data.map((d)=>{
                                 return h('v-list-item', {
@@ -345,13 +390,50 @@ export default {
                                         ])
                                 ]);
                             })
-                            : h('v-list-item', {key: 'prod-not-found'}, [ 
-                                'По Вашему запросу ничего не найдено - попробуйте изменить условия поиска.'
+                            : h('v-list-item', {key: 'prod-not-found', props: {'three-line': true}}, [ 
+                                h('v-list-item-content', [
+                                    h('v-list-item-subtitle', 'По Вашему запросу ничего не найдено - попробуйте изменить условия поиска.')
+                                ])
                             ])
                     ])
                 );
+            } else {
+                childs.push(h('v-card', {class:{'sk-find-info': true}, props:{flat: true}}, [
+                    h('v-card-title', [
+                        h('div', [
+                            h('v-badge', {props: {color: color, content: (!!this.totals) ? this.totals.n : ''}}, 'всего позиций')
+                        ]),
+                        h('div', [
+                            h('v-badge', {props: {color: color, content: (!!this.totals) ? this.totals.dt: ''}}, 'информация обновлена')
+                        ])
+                    ]),
+                    h('v-card-text', [
+                        h('h2', {style: {color: color}}, 'Поиск'),
+                        h('v-btn', {
+                                props: {color: color, dark: true, outlined: true}, 
+                                on: {click: ()=>{this.find_by(FIND_MODE.cat);}}
+                            }, [
+                                h('sk-svg', {props:{xref: '#ico-boxes'}}),
+                                'по категории'
+                        ]),
+                        h('v-btn', {
+                            props: {color: color, dark: true, outlined: true},
+                            on: {click: ()=>{this.find_by(FIND_MODE.abc);}}
+                        }, [
+                            'АБВ - по алфавиту'
+                        ]),
+                        h('v-btn', {
+                            props: {color: color, dark: true, outlined: true},
+                            on: {click: ()=>{this.find_by(FIND_MODE.q);}}
+                        }, [
+                            h('sk-svg', {props:{xref: '#ico-search'}}),
+                            'по наименованию'
+                        ])
+                    ])
+                ]));
             }
-        }
+        }   //else loading
+        
         
         childs.push(h('v-bottom-sheet', {
             props: {value: this.showParams, width: '100%', scrollable: true},
@@ -363,46 +445,41 @@ export default {
             }, [
                 h('v-card-title', {
                     style: {"background-color": color, color: "#fff"}
-                }, [
-                    'поиск',
+                }, ['поиск ' + 
+                            ( (this.mode === FIND_MODE.q) 
+                                ? 'по наименованию' 
+                            : (this.mode === FIND_MODE.cat)
+                                ? 'по категории'
+                            : (this.mode === FIND_MODE.abc)
+                                ? 'по алфавиту'
+                            : ''),
                     h('v-spacer'),
                     (!!this.totals) ? this.totals.dt : null
                 ]),
                 h('v-card-text', [
-                    h('v-form', {
-                        on: {submit: this._text_find}
-                    }, [
-                        h('div', {class:{'sk-find-text': true}}, [
-                            h('v-text-field', {props: {
-                                    label: 'наименование',
-                                    rules: [
-                                        value => (!!value && value.length >= 3) || 'не менее 3-х символов'
-                                    ]
-                                }, ref:'sk-find-inp',
-                                   on: {input:(v)=>{
-                                           this.q = v;
-                                       }}
-                                }),
-                            h('v-btn', {
-                                props: {icon: true, type: 'submit'}    //small: true, fab: true, color: color, dark: true, 
-                            }, [
-                                h('sk-svg', {props:{xref: '#ico-search', width:16, height: 16}})
+                    (this.mode === FIND_MODE.q)
+                        ? h('v-form', {
+                            on: {submit: this._text_find}
+                        }, [
+                            h('div', {class:{'sk-find-text': true}}, [
+                                h('v-text-field', {props: {
+                                        label: 'наименование',
+                                        rules: [
+                                            value => (!!value && value.length >= 3) || 'не менее 3-х символов'
+                                        ]
+                                    }, ref:'sk-find-inp',
+                                       on: {input:(v)=>{
+                                               this.q = v;
+                                           }}
+                                    }),
+                                h('v-btn', {
+                                    props: {icon: true, type: 'submit'}    //small: true, fab: true, color: color, dark: true, 
+                                }, [
+                                    h('sk-svg', {props:{xref: '#ico-search', width:16, height: 16}})
+                                ])
                             ])
                         ])
-                    ]),
-                    h('v-chip-group', {
-                        props: {}
-                    }, [
-                        h('v-chip', {
-                            props: {color: (this.mode === FIND_MODE.cat) ? color : 'default'},
-                            on: {click: ()=>{this.mode = FIND_MODE.cat;}}
-                        }, 'по категории'),
-                        h('v-chip', {
-                            props: {color: (this.mode === FIND_MODE.abc) ? color : 'default'},
-                            on: {click: ()=>{this.mode = FIND_MODE.abc;}}
-                        }, 'по алфавиту')
-                    ]),
-                    (this.mode === FIND_MODE.abc) 
+                    : (this.mode === FIND_MODE.abc) 
                         ? h('v-chip-group', {
                             props: {column: true},
                             class: {'sk-abc': true}
@@ -417,46 +494,48 @@ export default {
                                 })
                                 : null
                         ]) 
-                        : (this.mode === FIND_MODE.cat)
-                        ? h('v-chip-group', {
-                            props: {},
-                            class: {'sk-cats': true}
-                        }, [ 
-                            (!!this.kinds) ?
-                                this.kinds.map((a, i)=>{
-                                    return h('v-chip', {
-                                        key: 'search-c-' + a.id,
-                                        props: {color: !!a.active ? color : 'default', value: i},
-                                        on: {click: ()=>{this.oncat(a);}}
-                                    }, a.kindname);
-                                })
-                            : null
-                        ])
-                        : null,
-                    (
-                        (this.mode === FIND_MODE.cat)
-                     && (!!this.activeKind)
-                     && (!!this.activeKind.childs)
-                    ) ? h('v-chip-group', {
-                            props: {column: true},
-                            class: {'sk-cats-childs': true}
-                        }, [
-                            h('v-btn', {
-                                props: {icon: true}, 
-                                class:{'mr-3': true}, 
-                                on: {click: this._backCat}
-                            }, [
-                                h('sk-svg', {props:{xref:'#ico-left', width:16, height: 16}})
-                            ]),
-                            this.activeKind.childs.map((a)=>{
-                                return h('v-chip', {
-                                        key: 'search-c-' + a.id,
-                                        props: {color: a.active ? color : 'default'},
-                                        on: {click: ()=>{this.oncat(a);}}
-                                }, a.kindname);
-                            })
-                        ])
-                        : null
+                    : (this.hasKinds)
+                        ?  h('v-treeview', {
+                                props: {
+                                    activatable: true,
+                                    transition: true,
+                                    "open-on-click": true,
+                                    items: this.kinds,
+                                    "item-children": "childs",
+                                    "item-key": "id",
+                                    "return-object": true,
+                                    "load-children": this.getcats,
+                                    "expand-icon": "fas fa-chevron-down",
+                                    "item-text": "kindname",
+                                    "selection-type": "independent",
+                                    "value": [this.activeKind]
+                                },
+                                class: {'d-none': (this.mode !== FIND_MODE.cat)},
+                                on: {
+                                    input: (item)=>{
+                                        console.log('cat-input:', item);
+                                    },
+                                    'update:active':(actives)=>{
+                                        if (actives.length>0){
+                                            this.oncat(actives[0]);
+                                        }
+                                    }
+                                },
+                                scopedSlots: {
+                                    prepend: (props)=>{
+                                        if (!!props.item.kindimage){
+                                            return h('v-img',{
+                                                props: {
+                                                    height:'32px',
+                                                    width: '32px',
+                                                    src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=fs:id:' + props.item.kindimage
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                        })
+                    : null
                 ])
             ])
         ]));
@@ -465,6 +544,18 @@ export default {
     }
 }
 </script>
+<style lang="scss">
+    .v-icon.v-icon.v-treeview-node__toggle{
+        font-size: 12px !important;
+        width: 24px;
+        height: 24px;
+        text-align: center;
+        &::before{
+            margin-top: 4px; 
+        }
+    }
+</style>
+
 <style lang="scss" scoped>
     @import "@/assets/styles/index";
     
@@ -492,6 +583,47 @@ export default {
                 color: #fff;
             }
         }
+        
+        & .v-treeview-node__toggle{
+            &.fas{
+                font-size: 0.8rem !important;
+            }
+        }
+        & .v-treeview{
+            & .v-treeview-node__prepend{
+                & .v-image.v-responsive{
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.28);
+                    border-radius: 500px;
+                }
+            }
+        }   /*.v-treeview*/
+    }       /*.sk-find-params*/
+    .sk-find-info{
+        padding-top: 96px;
+        h2 {
+            font-weight: 300;
+            margin: 2rem 0 0 0;
+        }
+        & .v-card__title{
+            flex-direction: column;
+            align-content: flex-start;
+            text-align: left;
+            align-items: flex-start;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+        & .v-card__text{
+            display: flex;
+            flex-direction: column;
+            & .v-btn{
+                margin-top: 1rem;
+                width: 14rem;
+                align-self: center;
+                & svg{
+                    margin-right: 1rem;
+                }
+            }
+        }
     }
     
     .sk-find-prods{
@@ -501,9 +633,8 @@ export default {
         padding-top: 64px;
         & .v-list-item {
             border-bottom: 1px solid #ccc;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
+            line-height: 1.115;
+            font-size: 1rem;
             & .v-list-item__icon{
                 align-self: center !important;
                 &.sk-prod-image{
@@ -519,5 +650,4 @@ export default {
             }
         }
     }
-    
 </style>

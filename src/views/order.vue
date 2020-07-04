@@ -19,6 +19,7 @@ import SkSvg from '@/components/SkSvg';
 import SkBottom from '@/components/SkBottom';
 import SkMap from '@/components/map';
 import geo from '@/utils/geo';
+import { ellipsis } from 'ellipsed';
 
 const modes = {
     OM_ERROR:  -1,
@@ -164,25 +165,38 @@ export default {
     mounted(){
         this.self = !(!!this.magaz.hasdelivery) 
                     || this.$store.getters['basket/self'](this.magaz.id);
-        var d = new Date();
-        if (d.getHours()<12){
+        const h = (new Date()).getHours();
+        if (h < 12){
             this.time = times.TM_AM;
-        } else if (d.getHours()<18){
-            this.time = times.TM_AM;
+        } else if (h < 16){
+            this.time = times.TM_PM;
+        } else if (h > 18){
+            this.today = false;
+            this.time  = times.TM_AM;
         } else {
             this.time = times.TM_EV;
         }
+        console.log('mounted', h + ': ' + this.time + ' / ' + this.today);
         this.$nextTick(()=>{
             var i = $(this.$el).find('.sk-choice input');
             i.css({'text-align': 'center', 'max-height': '3rem'});
             this.state = modes.OM_READY;
+            const descr = $(this.$el).find('.sk-descr');
+            descr.click(()=>{
+                if ('ellipsis'===descr.attr('data-trunc')){
+                    descr.attr('data-trunc', 'none');
+                    descr.html(this.prod.promodesc);
+                } else {
+                    ellipsis('.sk-descr', 3);
+                    descr.attr('data-trunc', 'ellipsis');
+                }
+            });
+            descr.trigger('click');
             $([document.documentElement, document.body]).animate({scrollTop: 0}, 100);
         });
-        console.log('order (mnt)' + this);
-        
     },
     activated(){
-        console.log('order (active)' + this);
+        console.log('order (active):' + this);
     },
     watch: {
         prod(val){
@@ -327,6 +341,7 @@ export default {
                         ? null
                         : h('div', {class:{'sk-units': true}}, prod.unitname)
                 ]),
+                h('h2',{class:{'sk-full-name':true}}, prod.promogoods),
                 $utils.isEmpty(prod.promodesc) ? null : h('div', {class:{'sk-descr': true}}, prod.promodesc),
                 h('div', {class:{'sk-days': true}}, [
                     h('v-btn', {props: {
@@ -599,6 +614,13 @@ export default {
         & .sk-prod{
             font-size: 0.85rem;
             font-weight: 400;
+        }
+        & .sk-full-name{
+            font-weight: 500;
+            font-size: 1rem;
+            color: $gray-color;
+            line-height: 1.115;
+            margin-bottom: 1rem;
         }
         & .sk-descr{
             font-size: 0.85rem;
