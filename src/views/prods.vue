@@ -554,6 +554,9 @@ export default {
             margin-top: 4px; 
         }
     }
+    .v-treeview-node__label{
+        font-size: 1.125rem;
+    }
 </style>
 
 <style lang="scss" scoped>
