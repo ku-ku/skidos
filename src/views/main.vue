@@ -19,6 +19,7 @@ import {
         VCol
 } from 'vuetify/lib';
 import color from 'color';
+import {eventBus} from '@/main';
 
 function num2str(n, text_forms) {  
     n = Math.abs(n) % 100; var n1 = n % 10;
@@ -76,6 +77,10 @@ export default {
       hasStores(){
         return ((!!this.stores)&&(this.stores.data.length>0));
      }
+  },
+  created(){
+      const self = this;
+      eventBus.$on('new-store', self._cards_ready);  //TODO: delay load
   },
   mounted() {
     if (!this.cards){

@@ -12,7 +12,9 @@ import { VBtn,
          VRow,
          VCol,
          VFabTransition,
-         VBadge
+         VBadge,
+         VSkeletonLoader,
+         VTooltip
        } from 'vuetify/lib';
 
 import SkFilials from '@/views/fils';
@@ -23,6 +25,9 @@ import SkSvg from '@/components/SkSvg';
 import SkBottom from '@/components/SkBottom';
 import SkMap from '@/components/map';
 import geo from '@/utils/geo';
+
+import {eventBus} from '@/main';
+
 
 const ST_MODE = {
     'none': -1,
@@ -60,6 +65,8 @@ export default {
         VFabTransition,
         SkShare,
         VBadge,
+        VSkeletonLoader,
+        VTooltip,
         SkFilials,
         SkActions,
         SkChat,
@@ -103,6 +110,9 @@ export default {
         },
         hasStore(){
             return this.iStore.id !== "00";
+        },
+        storeTitle(){
+            return this.hasStore ? this.iStore.title : "";
         },
         hasCard(){
             return ((this.card)&&(this.card.data)&&(this.card.data.length>0));
@@ -218,6 +228,11 @@ export default {
           i.animate({opacity:1});
       },
       take_card: async function(){
+        if (this.hasCard) {
+            app.msg({text:'У Вас уже есть подписка на "' + this.storeTitle + '"', type:'info'});
+            return;
+        }
+          
         var url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
             id_to_take = $utils.uuidv4();
       
@@ -239,9 +254,14 @@ export default {
                 throw resp.error;
             }
             this.card_by(id_to_take, 'id');
+            eventBus.$emit('new-store', id_to_take);
         } catch(e){
-            app.msg({text:'Ошибка регистрации, попробуйте получить позднее.', type:'warning'});
             console.log('ERR on reg card:', e);
+            if ((!!e.data)&&/already\sexist/gi.test(e.data)){
+                app.msg({text:'У Вас уже есть подписка на "' + this.storeTitle + '"', type:'info'});
+            } else {
+                app.msg({text:'Ошибка регистрации, попробуйте получить позднее.', type:'warning'});
+            }
         }
         this.sending = false;
       },     //take_card
@@ -326,11 +346,7 @@ export default {
             fab    = null,
             showActions = true;
         if ((this.mode === ST_MODE.loading)||(!this.store)) {
-            childs.push(
-                h('v-card',{class:{'store-loading':true},key:'store-loading'},[
-                    h('v-progress-linear',{props:{indeterminate:true}})   //TODO: when card register
-                ])
-            );
+            childs.push(h('v-skeleton-loader', {props:{type:'card-avatar'}}));
         } else if (this.error){
             childs.push(
                 h('v-card',{class:'store-error',key:'store-error'},[
@@ -368,13 +384,26 @@ export default {
                             props: {dark: true, icon: true, small: true, tile: true},
                             on: {click: ()=>{this.$router.go(-1);}}
                         }, [
-                            h('svg',{attrs:{viewBox:'0 0 192 512'}, domProps:{innerHTML:'<use xlink:href="#ico-left" />'}})
+                            h('sk-svg',{props:{xref:"#ico-left"}})
                         ]),
-                        h('v-btn', {props: {dark: true, icon: true, small: true, tile: true, to: '/profile'}}, [
-                            h('svg',{attrs:{viewBox:'0 0 512 512'}, domProps:{innerHTML:'<use xlink:href="#ico-cog" />'}})
-                        ])
-                    ])
-                );
+                        $utils.isEmpty(web2)
+                            ? h('v-btn', {props: {dark: true, icon: true, small: true, tile: true, to: '/profile'}}, [
+                                h('sk-svg', {props:{xref:"#ico-cog"}})
+                            ])
+                            : h('v-tooltip', {
+                                    props: {left: true},
+                                    scopedSlots: {
+                                        activator: ({on})=>{
+                                            return h('v-btn', {
+                                                        props: {dark: true, icon: true, small: true, tile: true, color: (this.hasCard) ? 'grey darken-2' : ''},
+                                                        on: {on, click: this.take_card}
+                                                    }, [h('sk-svg',{props:{xref:"#ico-qrcode"}})]);
+                                            }
+                                    }
+                                }, [
+                                    this.hasCard ? 'Вы подписаны' : 'Добавить в подписки'
+                                ])
+                    ]));
                 if (!$utils.isEmpty(web2)) {    //
                     showActions = false;
                     titleVNodes.push(
