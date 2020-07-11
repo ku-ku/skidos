@@ -13,7 +13,8 @@ import { VBtn,
          VCardText,
          VToolbar,
          VToolbarTitle,
-         VSpacer
+         VSpacer,
+         VDivider
     } from 'vuetify/lib';
 import SkSvg from '@/components/SkSvg';
 
@@ -40,6 +41,7 @@ export default {
         VToolbar,
         VToolbarTitle,
         VSpacer,
+        VDivider,
         SkSvg
     },
     data(){
@@ -65,6 +67,15 @@ export default {
                 this.basket = false;
             }
             return false;
+        },
+        pm(prod, add){
+            var n = prod.num + ((add) ? 1 : -1);
+            if (n < 1){
+                n = 1;
+            }
+            prod.num = n;
+            prod.total = n*prod.newprice;
+            this.$store.dispatch('basket/add', prod);
         }
     },
     render(h){
@@ -74,9 +85,7 @@ export default {
             h('v-list', [
                 (this.prods.length > 0)
                     ? this.prods.map((prod)=>{
-                        return h('v-list-item', {
-                                    key: 'sk-prod-' + prod.id
-                                }, [
+                        return [h('v-list-item', {key: 'sk-prod-' + prod.id}, [
                                     h('v-list-item-icon', {class:{"mr-3": true}}, [
                                         (!!prod.promoimage)
                                             ? h('v-img',{props: {
@@ -87,12 +96,13 @@ export default {
                                             : h('sk-svg', {props:{xref:"#ico-box-full"}, style:{color:color}})
                                     ]),
                                     h('v-list-item-content', [
-                                        h('div',{class:{'sk-name': true}}, prod.promogoods),
-                                        h('div',{class:{'sk-price': true}}, [
-                                            $utils.isEmpty(prod.newprice)
+                                        h('div',{class:{'sk-name': true}}, prod.promogoods), 
+                                            $utils.isEmpty(prod.total)
                                                 ? null
-                                                : prod.newprice + ' р.'
-                                        ]),
+                                                : h('div',{class:{'sk-price': true}}, [
+                                                    h('span', '(' + prod.newprice + ')'),
+                                                    prod.total + ' р.'
+                                                  ]),
                                         $utils.isEmpty(prod.promoproducer)
                                                 ? null
                                                 : h('div', {class: {'sk-produ': true}}, prod.promoproducer),
@@ -108,14 +118,23 @@ export default {
                                                 ])
                                     ]),
                                     h('v-list-item-action', [
+                                        h('v-btn', {
+                                                        props:{icon: true, 'small': true},
+                                                        on:{click:()=>{this.pm(prod, true);}}
+                                                }, '+'),
                                         prod.num,
                                         $utils.isEmpty(prod.unitname)
                                             ? null
-                                            : h('div', {class:{'sk-units': true}}, prod.unitname)
-                                        
+                                            : h('div', {class:{'sk-units': true}}, prod.unitname),
+                                        h('v-btn', {
+                                                        props:{icon: true, 'small': true},
+                                                        on:{click:()=>{this.pm(prod, false);}}
+                                                    }, '-')
                                     ])
-                                ]);
-                    })
+                                ]),
+                                h('v-divider')
+                            ];
+                        })
                     : h('v-list-item', {key: 'sk-prod-empty'}, [
                         h('v-list-item-icon', {class:{"mr-3": true}}, [
                             h('sk-svg', {props:{xref:"#ico-empty"}, style:{color:color}})
@@ -171,6 +190,21 @@ export default {
                 & .sk-price{
                     font-size: 1.25rem;
                     color: $red-color;
+                    span{
+                        font-size: 0.9rem;
+                        color: $gray-color;
+                        margin-right: 0.5rem;
+                    }
+                }
+                & .v-list-item__action{
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    & .v-btn{
+                        background-color: #efefef;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+                        border: 1px solid #ccc;
+                    }
                 }
             }
         }

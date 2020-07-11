@@ -394,10 +394,11 @@ export default {
                                     props: {left: true},
                                     scopedSlots: {
                                         activator: ({on})=>{
+                                            on.click = this.take_card;
                                             return h('v-btn', {
                                                         props: {dark: true, icon: true, small: true, tile: true, color: (this.hasCard) ? 'grey darken-2' : ''},
-                                                        on: {on, click: this.take_card}
-                                                    }, [h('sk-svg',{props:{xref:"#ico-qrcode"}})]);
+                                                        on: on
+                                                    }, [h('sk-svg',{props:{xref:"#ico-star"}})]);
                                             }
                                     }
                                 }, [

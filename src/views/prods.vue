@@ -27,7 +27,9 @@ import {
          VForm,
          VSkeletonLoader,
          VTooltip,
-         VTreeview
+         VTreeview,
+         VDivider,
+         VAlert
     } from 'vuetify/lib';
 import SkSvg from '@/components/SkSvg';
     
@@ -37,7 +39,8 @@ const FIND_MODE = {
     'abc':     1,
     'cat' :    2,
     'q':       3,
-    'loading': 999
+    'loading': 999,
+    'error':   9999
 };
 
 export default {
@@ -71,6 +74,8 @@ export default {
         VSkeletonLoader,
         VTooltip,
         VTreeview,
+        VDivider,
+        VAlert,
         SkSvg
     },
     data(){
@@ -94,14 +99,19 @@ export default {
         },
         hasKinds(){
             return (!!this.kinds)&&(this.kinds.length > 0);
+        },
+        canFind(){
+            return (!!this.totals)&&(this.totals.n > 0);
         }
     },
     created(){
         this.refresh();
     },  //created
     activated(){
-        if (this.mode === FIND_MODE.none){
-            this.refresh();
+        if (!(!!this.data)){
+            this.refresh().then(()=>{
+                this.show_find_params();
+            });
         }
     },
     deactivated(){
@@ -110,7 +120,12 @@ export default {
     },
     methods: {
         async refresh(){
+            this.mode = FIND_MODE.loading;
             try {
+                
+                /* Categories */
+                this.getcats(null);
+                
                 /* totals */
                 const opts = {
                     type: "query",
@@ -126,8 +141,7 @@ export default {
                 if (!!resp.error){
                     throw resp.error;
                 }
-                /* Categories */
-                this.getcats(null);
+                
                 /* ABC */
                 var abc = [];
                 resp.result.data.map((a)=>{
@@ -140,6 +154,7 @@ export default {
                 this.abc = abc;
                 this.mode = FIND_MODE.default;
             }catch(e){
+                this.mode = FIND_MODE.error;
                 console.log('ERR: load abc:', e);
             }
         },
@@ -248,20 +263,20 @@ export default {
                   || (this.q.length < 3)
                 ){
                 inp.valid = false;
+                inp.error = true;
+                $(inp.$el).find('input').trigger('focus');
+                app.msg({text:'Для поиска введите не менее 3-х символов', color:'warning'});
                 return false;
             }
             this.showParams = false;
             this.find(this.q);
             return false;
         },
-        find_by(mode){
-            this.mode = mode;
+        show_find_params(){
             this.showParams = (new Date()).getTime();
-            if (mode === FIND_MODE.q){
-                this.$nextTick(()=>{
-                    $('.sk-find-text input').trigger('focus');
-                });
-            }
+            this.$nextTick(()=>{
+                $('.sk-find-text input').trigger('focus');
+            });
         },
         async open(prod){
             this.showParams = false; 
@@ -270,7 +285,6 @@ export default {
                     type: "core-read",
                     query: 'sin2:/v:286cf6de-309f-4eba-b335-25a46591463b?filter=eq(field(".nameId"),param("' + prod.id + '", "id"))'
                 });
-                console.log('Open', prod, res);
                 if (!!res.error){
                     throw res.error;
                 }
@@ -282,6 +296,14 @@ export default {
                 });
             } catch(e) {
                 console.log('Error:', e);
+            }
+        },
+        back(){
+            if (!!this.data){
+                this.data = null;
+                this.show_find_params();
+            } else {
+                this.$router.go(-1);
             }
         }
     },
@@ -298,7 +320,9 @@ export default {
         },
         showParams(val){
             if (!!val){
-                $(".sk-find-params").css({display:''});
+                const pane = $(".sk-find-params");
+                pane.css({display:''});
+                pane.find('input').trigger('focus');
             }
         }
     },
@@ -313,42 +337,15 @@ export default {
                     h('v-toolbar', {
                         props: {color: color, dark: true, absolute: true, tile: true}
                     }, [
-                        h('v-btn', {props: {icon: true}, on:{click: ()=>{this.$router.go(-1);}}}, [
+                        h('v-btn', {props: {icon: true}, on:{click: this.back}}, [
                             h('sk-svg', {props:{xref:'#ico-left', width:16, height: 16}})
                         ]),
                         h('v-toolbar-title', this.parent.title),
                         h('v-spacer'),
-                        h('v-tooltip', {
-                            props: {bottom: true},
-                            scopedSlots: {
-                                activator: ({on})=>{
-                                        on['click'] = ()=>{this.find_by(FIND_MODE.cat);};
-                                        return h('v-btn', {props: {icon: true},on: on}, [
-                                                    h('sk-svg', {props:{xref:"#ico-boxes", width: 24}})
-                                        ]);
-                                }
-                            }
-                        }, [h('span', 'Поиск по категории')]),
-                        h('v-tooltip', {
-                            props: {left: true},
-                            scopedSlots: {
-                                activator: ({on})=>{
-                                        on['click'] = ()=>{this.find_by(FIND_MODE.abc);};
-                                        return h('v-btn', {props: {icon: true}, on: on}, 'АБВ');
-                                }
-                            }
-                        }, [h('span', 'Поиск по алфавиту')]),
-                        h('v-tooltip', {
-                            props: {bottom: true},
-                            scopedSlots: {
-                                activator: ({on})=>{
-                                        on['click'] = ()=>{this.find_by(FIND_MODE.q);};
-                                        return h('v-btn', {props: {icon: true}, on: on}, [
-                                                h('sk-svg', {props:{xref:"#ico-search"}})
-                                        ]);
-                                }
-                            }
-                        }, [h('span', 'Произвольный поиск')])
+                        h('v-btn', {props: {icon: true}, 
+                                    on: {click: this.show_find_params}
+                                }, [h('sk-svg', {props:{xref:"#ico-search"}})]
+                        )
                     ])
         );
 
@@ -398,147 +395,112 @@ export default {
                     ])
                 );
             } else {
-                childs.push(h('v-card', {class:{'sk-find-info': true}, props:{flat: true}}, [
-                    h('v-card-title', [
-                        h('div', [
-                            h('v-badge', {props: {color: color, content: (!!this.totals) ? this.totals.n : ''}}, 'всего позиций')
-                        ]),
-                        h('div', [
-                            h('v-badge', {props: {color: color, content: (!!this.totals) ? this.totals.dt: ''}}, 'информация обновлена')
-                        ])
-                    ]),
-                    h('v-card-text', [
-                        h('h2', {style: {color: color}}, 'Поиск'),
-                        h('v-btn', {
-                                props: {color: color, dark: true, outlined: true}, 
-                                on: {click: ()=>{this.find_by(FIND_MODE.cat);}}
-                            }, [
-                                h('sk-svg', {props:{xref: '#ico-boxes'}}),
-                                'по категории'
-                        ]),
-                        h('v-btn', {
-                            props: {color: color, dark: true, outlined: true},
-                            on: {click: ()=>{this.find_by(FIND_MODE.abc);}}
-                        }, [
-                            'АБВ - по алфавиту'
-                        ]),
-                        h('v-btn', {
-                            props: {color: color, dark: true, outlined: true},
-                            on: {click: ()=>{this.find_by(FIND_MODE.q);}}
-                        }, [
-                            h('sk-svg', {props:{xref: '#ico-search'}}),
-                            'по наименованию'
-                        ])
-                    ])
-                ]));
+                //TODO: no-search, no-data
             }
         }   //else loading
         
-        
-        childs.push(h('v-bottom-sheet', {
-            props: {value: this.showParams, width: '100%', scrollable: true},
-            class: {'sk-find-bottom': true}
-        }, [
-            h('v-card', {
-                props: {width: '100%', 'min-height': 420},
-                class: {'sk-find-params': true}
+        if (this.canFind) {
+            childs.push(h('v-bottom-sheet', {
+                props: {value: this.showParams, width: '100%', scrollable: true},
+                class: {'sk-find-bottom': true}
             }, [
-                h('v-card-title', {
-                    style: {"background-color": color, color: "#fff"}
-                }, ['поиск ' + 
-                            ( (this.mode === FIND_MODE.q) 
-                                ? 'по наименованию' 
-                            : (this.mode === FIND_MODE.cat)
-                                ? 'по категории'
-                            : (this.mode === FIND_MODE.abc)
-                                ? 'по алфавиту'
-                            : ''),
-                    h('v-spacer'),
-                    (!!this.totals) ? this.totals.dt : null
-                ]),
-                h('v-card-text', [
-                    (this.mode === FIND_MODE.q)
-                        ? h('v-form', {
+                h('v-card', {
+                    props: {width: '100%', 'min-height': 420},
+                    class: {'sk-find-params': true}
+                }, [
+                    h('v-card-title', {
+                        style: {"background-color": color, color: "#fff"}
+                    }, ['поиск',
+                        h('v-spacer'),
+                        (!!this.totals) ? this.totals.dt : null
+                    ]),
+                    h('v-card-text', [
+                        h('v-form', {
                             on: {submit: this._text_find}
                         }, [
                             h('div', {class:{'sk-find-text': true}}, [
-                                h('v-text-field', {props: {
+                                h('v-text-field', {
+                                    props: {
                                         label: 'наименование',
                                         rules: [
-                                            value => (!!value && value.length >= 3) || 'не менее 3-х символов'
+                                            value => ($utils.isEmpty(value)||(!!value && value.length > 2)) || 'не менее 3-х символов'
                                         ]
-                                    }, ref:'sk-find-inp',
-                                       on: {input:(v)=>{
-                                               this.q = v;
-                                           }}
+                                    }, 
+                                    ref:'sk-find-inp',
+                                    on: {input:(v)=>{this.q = v;}},
                                     }),
-                                h('v-btn', {
-                                    props: {icon: true, type: 'submit'}    //small: true, fab: true, color: color, dark: true, 
-                                }, [
-                                    h('sk-svg', {props:{xref: '#ico-search', width:16, height: 16}})
-                                ])
+                                    h('v-btn', {
+                                                    props: {tile: true, type: 'submit', color: 'grey lighten-3', elevation: 0}
+                                                }, [
+                                                    h('sk-svg', {props:{xref: '#ico-search', width:16, height: 16}})
+                                    ])
                             ])
-                        ])
-                    : (this.mode === FIND_MODE.abc) 
-                        ? h('v-chip-group', {
-                            props: {column: true},
-                            class: {'sk-abc': true}
-                        }, [
-                            (!!this.abc)
-                                ? this.abc.map((a)=>{
-                                    return h('v-chip', {
-                                        key: 'search-a-' + a.a,
-                                        props: {small: true, value: a.n, color: !!a.active ? color : 'default'},
-                                        on: {click: ()=>{this.onabc(a);}}
-                                    }, a.a);
-                                })
-                                : null
-                        ]) 
-                    : (this.hasKinds)
-                        ?  h('v-treeview', {
-                                props: {
-                                    activatable: true,
-                                    transition: true,
-                                    "open-on-click": true,
-                                    items: this.kinds,
-                                    "item-children": "childs",
-                                    "item-key": "id",
-                                    "return-object": true,
-                                    "load-children": this.getcats,
-                                    "expand-icon": "fas fa-chevron-down",
-                                    "item-text": "kindname",
-                                    "selection-type": "independent",
-                                    "value": [this.activeKind]
-                                },
-                                class: {'d-none': (this.mode !== FIND_MODE.cat)},
-                                on: {
-                                    input: (item)=>{
-                                        console.log('cat-input:', item);
+                        ]),
+                        (!!this.abc)
+                            ? [ h('v-subheader', 'по алфавиту'),
+                                h('v-chip-group', {
+                                    class: {'sk-abc': true}
+                                }, [
+                                        this.abc.map((a)=>{
+                                            return h('v-chip', {
+                                                key: 'search-a-' + a.a,
+                                                props: {small: true, value: a.n, color: !!a.active ? color : 'default'},
+                                                on: {click: ()=>{this.onabc(a);}}
+                                            }, a.a);
+                                        })
+                                ]),
+                               h('v-divider')
+                            ]
+                            : null,
+                        (this.hasKinds)
+                            ? [h('v-subheader', 'по категории'),
+                               h('v-treeview', {
+                                    props: {
+                                        activatable: true,
+                                        transition: true,
+                                        "open-on-click": true,
+                                        items: this.kinds,
+                                        "item-children": "childs",
+                                        "item-key": "id",
+                                        "return-object": true,
+                                        "load-children": this.getcats,
+                                        "expand-icon": "fas fa-chevron-down",
+                                        "item-text": "kindname",
+                                        "selection-type": "independent",
+                                        "value": [this.activeKind]
                                     },
-                                    'update:active':(actives)=>{
-                                        if (actives.length>0){
-                                            this.oncat(actives[0]);
+                                    on: {'update:active':(actives)=>{
+                                            if (actives.length>0){
+                                                this.oncat(actives[0]);
+                                            }
+                                        }
+                                    },
+                                    scopedSlots: {
+                                        prepend: (props)=>{
+                                            if (!!props.item.kindimage){
+                                                return h('v-img',{
+                                                    props: {
+                                                        height:'32px',
+                                                        width: '32px',
+                                                        src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=fs:id:' + props.item.kindimage
+                                                    }
+                                                });
+                                            }
                                         }
                                     }
-                                },
-                                scopedSlots: {
-                                    prepend: (props)=>{
-                                        if (!!props.item.kindimage){
-                                            return h('v-img',{
-                                                props: {
-                                                    height:'32px',
-                                                    width: '32px',
-                                                    src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=fs:id:' + props.item.kindimage
-                                                }
-                                            });
-                                        }
-                                    }
-                                }
-                        })
-                    : null
+                            })]
+                            : null
+                    ])
                 ])
-            ])
-        ]));
+            ]));
+        } else {
+            childs.push(h('v-alert', {
+                props: {border:'top', type: 'warning',  "colored-border": true, elevation: 2}, 
+                style:{"margin": "96px auto 0 auto", width: "95%"}
+            }, [
+                'Магазин пока не предоставил номенклатуру своих товаров, попробуйте зайти позже.'
+            ]));
+        }
         
         return h('v-sheet', {key:'search-' + this.tenant}, childs);
     }
@@ -580,6 +542,13 @@ export default {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            & button[type="submit"]{
+                margin-top: -8px;
+            }
+        }
+        & .v-subheader{
+            padding: 16px 0 4px 0;
+            font-style: italic;
         }
         & .v-chip-group {
             & .v-chip--active{
@@ -593,6 +562,7 @@ export default {
             }
         }
         & .v-treeview{
+            margin: 0 -24px;
             & .v-treeview-node__prepend{
                 & .v-image.v-responsive{
                     box-shadow: 0 2px 4px rgba(0,0,0,0.28);
