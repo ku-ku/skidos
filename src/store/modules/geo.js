@@ -9,7 +9,7 @@ const state = {
         lat: 45.035470, //Krd-center (city-sq)
         lon: 38.975313
     },
-    addr: null,
+    addr: null,         //string address
     last: new Date()
 };
 
@@ -50,10 +50,9 @@ const actions = {
                     reject(err);
                 });
             };
-            if(!!navigator.geolocation){
-                var hTm = setTimeout(()=>{reject({message:'no gps avail'});}, 5050);
-                navigator.geolocation.getCurrentPosition(
-                    function(pos){
+            if (!!navigator.geolocation){
+                var hTm = setTimeout(_by_ip, 5050);
+                navigator.geolocation.getCurrentPosition(function(pos){
                         console.log('by geolocation:', pos.coords);
                         ll = {
                             fine: true,
@@ -66,15 +65,14 @@ const actions = {
                         resolve(ll);
                     }, 
                     function(err){
-                        console.log('ERR by geolocation:', err);
                         clearTimeout(hTm);
+                        console.log('ERR by geolocation:', err);
                         _by_ip();
                     },
                     {maximumAge: 180000, timeout: 5000, enableHighAccuracy: true}
                 );
             } else {
                 _by_ip();
-                //reject({message:'no gps avail'});
             }
         };
         

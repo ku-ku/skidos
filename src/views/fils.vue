@@ -41,12 +41,16 @@ export default {
         return {
             loading: false,
             error:   null,
-            fills:   null,
-            coords:  {
-                latitude: 45.058129,
-                longitude: 38.982569
-            }
+            fills:   null
         };
+    },
+    computed:{
+        hasFils(){
+            return ((!!this.fills) && (!!this.fills.data) && (this.fills.data.length>0));
+        },
+        coords(){
+            return this.$store.state.geo.ll;
+        }
     },
     methods: {
         async refresh(self){
@@ -156,18 +160,12 @@ ssctenantsadds.lon
     },
     created() {
         this.refresh(false);
-        this.$store.dispatch('geo/current').then((ll)=>{
-            this.coords = ll;
+        this.$store.dispatch('geo/current').then(()=>{
             this.sortByDist();
-        },(err)=>{
+        }, (err)=>{
             console.log(err);
             app.msg({text:'Мы не можем определить Ваше местонахождение, возможно стоит включить службы геолокации.', color: 'warning'});
         });
-    },
-    computed: {
-        hasFils(){
-            return ((!!this.fills) && (!!this.fills.data) && (this.fills.data.length>0));
-        }
     },
     render: function(h){
         var childs = [];

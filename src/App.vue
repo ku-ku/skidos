@@ -68,6 +68,7 @@ export default {
             .catch( ()=> {
                 _go('signin');
             });
+        
         this.$store.dispatch('geo/current');
     },
     beforeDestroy(){
