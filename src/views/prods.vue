@@ -159,7 +159,7 @@ export default {
             }
         },
         async find(that){
-            this.loading = true;
+            this.mode = FIND_MODE.loading;
             this.data = null;
             const opts = {
                 type: "query",
@@ -192,7 +192,7 @@ export default {
             } catch(e) {
                 console.log('ERR: load data', e);
             }
-            this.$nextTick(()=>{this.loading = false;});
+            this.$nextTick(()=>{this.mode = FIND_MODE.default;});
         },
         getcats(parent){
             const opts = {
@@ -349,7 +349,7 @@ export default {
                     ])
         );
 
-        if (!!this.loading){
+        if (this.mode === FIND_MODE.loading){
             childs.push(
                 h('div',{style:{"margin-top":"64px"}},[
                     [1,2,3,4,5].map(()=>{
@@ -494,12 +494,14 @@ export default {
                 ])
             ]));
         } else {
-            childs.push(h('v-alert', {
-                props: {border:'top', type: 'warning',  "colored-border": true, elevation: 2}, 
-                style:{"margin": "96px auto 0 auto", width: "95%"}
-            }, [
-                'Магазин пока не предоставил номенклатуру своих товаров, попробуйте зайти позже.'
-            ]));
+            if (this.mode !== FIND_MODE.loading) {
+                childs.push(h('v-alert', {
+                    props: {border:'top', type: 'warning',  "colored-border": true, elevation: 2}, 
+                    style:{"margin": "96px auto 0 auto", width: "95%"}
+                }, [
+                    'Магазин пока не предоставил номенклатуру своих товаров, попробуйте зайти позже.'
+                ]));
+            }
         }
         
         return h('v-sheet', {key:'search-' + this.tenant}, childs);
