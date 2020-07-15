@@ -63,9 +63,9 @@ export default {
                     h('div', {
                         class:{'ya-share2':true}, 
                         attrs: {
-                            "data-services":"vkontakte,facebook,odnoklassniki,viber,whatsapp,telegram",
+                            "data-services":"telegram,whatsapp,viber,vkontakte,facebook,odnoklassniki",
                             "data-title": "моикарты.рф",
-                            "data-url": "https://play.google.com/store/apps/details?id=skidos.my.ru"
+                            "data-url": "Google: https://play.google.com/store/apps/details?id=skidos.my.ru \n\n\n\n Apple: https://apps.apple.com/ru/app/%D0%BC%D0%BE%D0%B8%D0%BA%D0%B0%D1%80%D1%82%D1%8B-%D1%80%D1%84/id1510411658 \n\n\n\n"
                     }})
                 ])
             ]));
@@ -75,12 +75,28 @@ export default {
 }
 </script>
 <style lang="scss">
-    .ya-share2__container_size_m {
-        & .ya-share2__icon {
-            height: 42px !important;
-            width: 42px !important;
-            background-size: 42px 42px !important;
-            border-radius: 4px;
+    .ya-share2__container{
+        margin-top: 2rem;
+        & ul{
+            display: flex;
+            padding: 0;
+            width: 100%;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            & .ya-share2__item{
+                margin: 0 0.5rem 2rem 0 !important;
+                text-align: center;
+                width: 30%;
+                & .ya-share2__link{
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.22);
+                    border: 1px solid #fff;
+                }
+            }
+            & .ya-share2__icon {
+                height: 56px !important;
+                width: 56px !important;
+                background-size: 56px 56px !important;
+            }
         }
     }
 </style>
