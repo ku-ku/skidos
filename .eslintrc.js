@@ -32,6 +32,7 @@ module.exports = {
         'no-useless-escape': 'off',
         'operator-linebreak': 'off',
         'comma-dangle': 'off',
+        'no-undef': 'off',
         'no-unused-vars': 'off',
         'vue/no-v-html': 'off',
         'vue/no-unused-components': 'off'
