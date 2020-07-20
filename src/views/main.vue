@@ -20,6 +20,7 @@ import {
 } from 'vuetify/lib';
 import color from 'color';
 import {eventBus} from '@/main';
+import SkSvg from '@/components/SkSvg';
 
 function num2str(n, text_forms) {  
     n = Math.abs(n) % 100; var n1 = n % 10;
@@ -56,7 +57,8 @@ export default {
         VListItemSubtitle,
         VImg,
         VProgressLinear,
-        VCol
+        VCol,
+        SkSvg
   },
   computed: {
       name: function(){return this.$store.state.profile.user.name;},
@@ -227,7 +229,7 @@ export default {
                     },[
                         h('v-card-title', [
                             h('h3','Мои подписки'),
-                            h('svg',{ domProps: {innerHTML:'<use xlink:href="#ico-star" />'}, attrs: {viewBox:'0 0 576 512'}})
+                            h('sk-svg', {props: {xref:"#ico-star"}})
                         ]),
                         h('v-card-text', [
                             h('v-list', [
@@ -235,7 +237,10 @@ export default {
                                     const id    = item[ci["accounts.id"]],
                                           title = item[ci["accounts.tenantid.title"]],
                                           bc    = $utils.isEmpty(item[ci["ssctenantsadds.brandcolor"]]) ? '' : item[ci["ssctenantsadds.brandcolor"]], 
-                                          loytt = item[ci["ssctenantsadds.shortloyalty"]];
+                                          loytt = item[ci["ssctenantsadds.shortloyalty"]],
+                                          img   = $utils.isEmpty(item[ci["ssctenantsadds.brandavatar"]]) 
+                                                    ? item[ci["ssctenantsadds.brandlogo"]] 
+                                                    : item[ci["ssctenantsadds.brandavatar"]];
                                     
                                     return h('v-list-item', {
                                         props: {key: id},
@@ -245,7 +250,12 @@ export default {
                                             h('div', {
                                                     class: {'sk-short': true}, 
                                                     style: {'background-color': bc}
-                                                }, this._short(title)),
+                                                }, 
+                                                (!!img) 
+                                                    ? [h('v-img', {props: {
+                                                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
+                                                        }})]
+                                                    : this._short(title)),
                                             h('div', {class:{'sk-title':true}}, title),
                                             h('div', {class:{'sk-loytt': true}}, loytt)
                                         ])
@@ -269,7 +279,7 @@ export default {
                     },[
                         h('v-card-title', [
                             h('h3','Все организации'),
-                            h('svg',{ domProps: {innerHTML:'<use xlink:href="#ico-store" />'}, attrs: {viewBox:'0 0 640 512'}})
+                            h('sk-svg', {props: {xref: "#ico-store"}})
                         ]),
                         h('v-card-text', [
                             h('v-list', [
@@ -277,7 +287,10 @@ export default {
                                     const id    = item[ci["ssctenants.id"]],
                                           title = item[ci["ssctenants.title"]],
                                           bc    = item[ci["ssctenantsadds.brandcolor"]], 
-                                          loytt = item[ci["ssctenantsadds.shortloyalty"]];
+                                          loytt = item[ci["ssctenantsadds.shortloyalty"]],
+                                          img   = $utils.isEmpty(item[ci["ssctenantsadds.brandavatar"]]) 
+                                                    ? item[ci["ssctenantsadds.brandlogo"]] 
+                                                    : item[ci["ssctenantsadds.brandavatar"]];
                                   
                                     return h('v-list-item', {
                                         props: {key: id},
@@ -286,7 +299,12 @@ export default {
                                         h('v-list-item-content', [
                                             h('div', {class: {'sk-title': true}}, title),
                                             h('div', {class: {'sk-loytt': true}}, loytt)
-                                        ])
+                                        ]),
+                                        (!!img)
+                                            ? h('v-list-item-icon', [h('v-img', {props: {
+                                                src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
+                                            }})])
+                                            : null
                                     ]);
                                 })
                             ])
@@ -425,6 +443,15 @@ export default {
                         border-top: 1px solid #ccc;
                          & .sk-title{
                              font-size: 1rem;
+                         }
+                         &__icon{
+                             & .v-image{
+                                 width: 42px !important;
+                                 height: 42px !important;
+                                 border-radius: 500px;
+                                 border: 1px solid #fff;
+                                 box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+                             }
                          }
                     }
                 }

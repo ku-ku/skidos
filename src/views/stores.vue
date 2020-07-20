@@ -104,7 +104,6 @@ export default {
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
         const options = {
             type: 'core-read',
-            //query: 'sin2:/v:bc202ffc-b364-4d0c-8b34-d96ce444e6fd?sort=ssctenants.name'
             query: 'sin2:/v:c2d6f08c-974a-4ff8-904a-57dab6b976cb?sort=ssctenants.name'
         };
         $http.post(url, options)
@@ -118,30 +117,7 @@ export default {
             .catch((err) => {
                 console.log('Stores error', err);
             });
-      },    //_stores_ready
-      _geo_ready: function(){
-        return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0
-            });
-        });
-      },        //_geo_ready
-      dist: function(ll) {
-        const _ready = async()=>{
-            try {
-                const { coords } = await this._geo_ready();
-                var distance = Math.sin(ll.latitude * Math.PI) * Math.sin(coords.latitude * Math.PI) +
-                        Math.cos(ll.latitude * Math.PI) * Math.cos(coords.latitude * Math.PI) * Math.cos(Math.abs(ll.longitude - coords.longitude) * Math.PI);
-                    // Return the distance in meters
-                return Math.acos(distance) * 6370981.162;
-            } catch(e){
-                console.log('No coords:', e);
-            }
-        };
-        return _ready();
-      }     //dist
+      }    //_stores_ready
   },
   render:function(h){
     if (!!this.stores){
