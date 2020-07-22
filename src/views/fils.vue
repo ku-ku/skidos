@@ -70,7 +70,7 @@ export default {
                 }
                 if ((!!res.result.data) && (res.result.data.length>0)){
                     this.fills = res.result;
-                    this.sortByDist();
+                    this.sortByDist();  //by native geolocation only
                 } else if (!self) {
                     this.refresh(true);
                 }
@@ -102,49 +102,21 @@ export default {
             var dt2 = new Date(
                 now.getFullYear(), now.getMonth(), now.getDate() + (tt[0] < 8 ? 1 : 0), tt[0], tt[1], 0
             );
-            console.log('times:', now, dt1, dt2);
             return now.getTime() >= dt1.getTime() && now.getTime() <= dt2.getTime();
         },
-        dist: function(ll) {
-            if ( (!this.coords) || (!ll.lat) || (!ll.lon) ){
-                return -1;
-            }
-            //радиус Земли
-            const R = 6372795;
-            //перевод коордитат в радианы
-            var lat1 = this.coords.lat * Math.PI / 180,
-                lat2 = ll.lat * Math.PI / 180,
-                long1 = this.coords.lon * Math.PI / 180,
-                long2 = ll.lon * Math.PI / 180;
-                //вычисление косинусов и синусов широт и разницы долгот
-            var cl1 = Math.cos(lat1);
-            var cl2 = Math.cos(lat2);
-            var sl1 = Math.sin(lat1);
-            var sl2 = Math.sin(lat2);
-            var delta = long2 - long1;
-            var cdelta = Math.cos(delta);
-            var sdelta = Math.sin(delta);
-            //вычисления длины большого круга
-            var y = Math.sqrt(Math.pow(cl2 * sdelta, 2) + Math.pow(cl1 * sl2 - sl1 * cl2 * cdelta, 2));
-            var x = sl1 * sl2 + cl1 * cl2 * cdelta;
-            var ad = Math.atan2(y, x);
-            var dist = ad * R; //расстояние между двумя координатами в метрах
-            return dist;
-        },     //dist
         sortByDist(){
+            if (!(!!this.coords.fine)) {
+                return;
+            }
             if ((!!this.coords)&&(this.hasFils)){
                 const ci = this.fills.columnIndexes;
                 const distIndex = ci["ssctenantsadds.distance"];
-/*                
-ssctenantsadds.lat	
-ssctenantsadds.lon
-*/
                 this.fills.data.map((f)=>{
                     var ll = {
                         lat:  f[ci["ssctenantsadds.lat"]],
                         lon: f[ci["ssctenantsadds.lon"]]
                     };
-                    f[distIndex] = this.dist(ll);
+                    f[distIndex] = this.$store.getters["geo/distance"](ll);
                 });
                 var sorted = this.fills.data.sort((a, b)=>{
                     if (!a[distIndex]){
@@ -164,7 +136,6 @@ ssctenantsadds.lon
             this.sortByDist();
         }, (err)=>{
             console.log(err);
-            app.msg({text:'Мы не можем определить Ваше местонахождение, возможно стоит включить службы геолокации.', color: 'warning'});
         });
     },
     render: function(h){

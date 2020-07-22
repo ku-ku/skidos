@@ -16,6 +16,9 @@ function a2s(a){
 
 function lookup(a){
     const p = (resolve, reject) => {
+        if (!a){
+            reject('no-addr');
+        }
         const params = (withNum)=>{
             const _params = new URLSearchParams();
             _params.append('country', 'Россия');

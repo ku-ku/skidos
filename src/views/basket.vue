@@ -1,5 +1,6 @@
 <script>
 import { 
+        VAlert,
         VCard,
         VCardText,
         VCardTitle,
@@ -15,6 +16,7 @@ import SkSvg from '@/components/SkSvg';
 export default {
         name: 'SkBasket',
         components:{
+            VAlert,
             VCard,
             VCardText,
             VCardTitle,
@@ -51,6 +53,13 @@ export default {
                 return (!!store) 
                             ? $utils.isEmpty(store.brandcolor) ? def : store.brandcolor
                             : def;
+            },
+            mustPoint(){
+                const store = this.$store.state.active.store;
+                if ((!!store.pointscount) && (Number(store.pointscount)>0)){
+                    return !(!!store.fill);
+                }
+                return false;
             }
         },
         methods: {
@@ -103,6 +112,22 @@ export default {
                                         style: {"border-top": "2px solid " + this.brandColor}
                                    }, [
                         h('v-card-text', [
+/** TODO:
+                            this.mustPoint 
+                                ? h('v-alert', {props: {
+                                            border: "left",
+                                            "colored-border": true,
+                                            color: "error",
+                                            elevation: 2
+                                        }, 
+                                        style: {width: '95%', margin: '-16px auto 2rem auto'}
+                                    }, [
+                                    h('sk-svg', {props: {xref:'#ico-warn', color: "error"}}),
+                                        'Для оформления заказа необходимо выбрать одну из точек сети!'
+                                ])
+                                : null,
+* 
+*/
                             h('v-badge',{props:{content: this.numof, value: this.numof, dark: true, color: this.brandColor}}, [
                                 h('sk-svg', {
                                                 props:{xref:'#ico-cart', width:28, height: 28},

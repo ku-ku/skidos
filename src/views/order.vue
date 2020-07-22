@@ -119,6 +119,15 @@ export default {
             }
             return dt;
         },
+        mustPoint(){
+            if (
+                    (this.magaz.pointscount) 
+                 && (Number(this.magaz.pointscount)>1)
+                ){
+                return !(!!this.fill);
+            }
+            return false;
+        },
         distance(){
             var dist = 0;
             if (!!this.fill){
@@ -144,7 +153,7 @@ export default {
             } else if (dist < 1000){
                 return Math.floor(dist) + ' м.';
             } else {
-                return Math.floor(dist/1000) + ' км.';
+                return (dist/1000).toFixed(1) + ' км.';
             }
         },
         fill: {
@@ -254,7 +263,6 @@ export default {
                         self.$refs.storeMap.addPoints(fills);
                     });
                 } else {
-                    //self.$refs.storeMap.toCenter(self.magaz);
                     self.$refs.storeMap.addPoints([self.magaz]);
                 }
             });
@@ -406,12 +414,20 @@ export default {
                                     this.self = !this.self;
                         }}})
                         : h('div',{class:{'mt-3':true, 'mb-3':true}}, 'магазин не осуществляет доставку'),
-                h('div', {class:{'sk-addr':true}}, 
+                h('div', {class:{'sk-addr': true}}, 
                         (this.self || !hasDeliv || isService)
-                            ? [h('div', {class:{'sk-self': true}}, [
-                                this.addr,
+                            ? [h('div', {class: {'sk-self': true}}, [
+                                this.mustPoint 
+                                    ? h('v-badge', {props: {color: accent, content: this.magaz.pointscount}}, [
+                                        'Необходимо выбрать место заказа!'
+                                        ])
+                                    : this.addr,
                                 h('v-btn', {
-                                        props: {small: true, outlined: true, rounded: true, color: gray}, 
+                                        props: {
+                                                    outlined: true, 
+                                                    rounded: true, 
+                                                    color: (this.mustPoint) ? accent : gray
+                                                }, 
                                         on:    {click: this.gomap},
                                         style: {'align-self': 'center'}
                                     }, [
@@ -478,17 +494,17 @@ export default {
                     ])
                     : h('v-btn',  {props: {
                                         rounded: true,
-                                        dark: true,
                                         outlined: true,
-                                        color: 'red darken-4',
+                                        color: accent,
                                         width: '12rem',
-                                        loading: this.adding
+                                        loading: this.adding,
+                                        disabled: (this.self && this.mustPoint)
                                     },
                              on: {click: this.to_basket},   //do_order
                              class: {'mt-5 sk-to-cart': true}
                         }, [
                             inCart
-                                ? h('div', {class:{'sk-in-cart': true}, style:{'background-color':'red darken-4'}}, [
+                                ? h('div', {class:{'sk-in-cart': true}, style:{'background-color': accent}}, [
                                      h('svg', {attrs: {viewBox:"0 0 576 512"}, domProps:{innerHTML: '<use xlink:href="#ico-check" />'}})
                                 ])
                                 : null,
