@@ -1,8 +1,8 @@
 <template>
     <v-row class="fill-height flex-md-column" align="center" justify="center">
-        <div class="v-banner sk-banner-signin"> 
+        <!--div class="v-banner sk-banner-signin"> 
             <img src="@/assets/imgs/hands.png" />
-        </div>
+        </div-->
         <v-col cols="10" sm="8" md="4">
             <v-form v-model="valid" v-on:submit="on_profile($event)" action="#">
                 <v-card class="elevation-4 pb-5">

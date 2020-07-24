@@ -144,7 +144,6 @@ export default {
     .v-list-item{
         & .sk-short {
             border: 1px solid transparent;
-            border-radius: 50%;
             text-align: center;
             font-size: 0.75rem;
             width: 2.25rem;

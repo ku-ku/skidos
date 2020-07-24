@@ -200,7 +200,7 @@ export default {
                     h('div', {
                         class:{'ya-share2':true}, 
                         attrs: {
-                            "data-services":"telegram,whatsapp,viber,vkontakte,facebook,odnoklassniki",
+                            "data-services":"telegram,whatsapp,viber",
                             "data-title": MSG_SHARE.title,
                             "data-url": MSG_SHARE.msg
                     }})

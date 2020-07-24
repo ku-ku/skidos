@@ -325,8 +325,6 @@ export default {
 <style lang="scss" scoped>
     @import "@/assets/styles/index";
 
-    main{
-    }
     .sk-logo{
         width: 38px;
         height: 38px;
@@ -408,7 +406,7 @@ export default {
                         padding-left: 28px;
                         & .sk-short{
                             display: block;
-                            border-radius: 8px;
+                            border-radius: 6px;
                             align-self: center;
                             position: absolute;
                             left: -22px;
@@ -467,6 +465,7 @@ export default {
                 }
             }
             
+            
             $group-size: 5;
             $step: 360/10;
             @mixin colors(){
@@ -484,6 +483,13 @@ export default {
             
         }   /*sk-card-list*/
     }
-    
 </style>    
-        
+<style lang="scss">
+    .sk-short{
+        border-radius: 6px;
+        & .v-image__image,
+        & .v-responsive__content{
+            border-radius: 4px !important;
+        }
+    }
+</style>

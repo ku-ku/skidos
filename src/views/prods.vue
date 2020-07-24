@@ -177,7 +177,7 @@ export default {
                 }
                 var data = [];
                 resp.result.data.map((a)=>{
-                    data.push({id: a[4], name: a[6], price: a[11], img: a[5]});
+                    data.push({id: a[4], name: a[6], price: a[11], img: a[5], unit: a[13]});
                 });
                 if (!this.totals){
                     this.totals = {n: 0};
@@ -380,7 +380,10 @@ export default {
                                         ]),
                                         h('v-list-item-content', [
                                             d.name,
-                                            h('div', {class:{'sk-price': true}}, (Number(d.price)>0) ? d.price + 'р.' : '')
+                                            h('div', {class:{'sk-price': true}}, [
+                                                (Number(d.price)>0) ? d.price + 'р.' : '',
+                                                $utils.isEmpty(d.unit) ? null : h('span', {class:{'sk-unit': true}}, ' (' + d.unit + ')')
+                                            ])
                                         ]),
                                         h('v-list-item-icon', [
                                             h('sk-svg', {props:{xref:"#ico-right"}, style:{color:"#ccc"}})
@@ -616,12 +619,16 @@ export default {
                     width:64px;
                     height: auto;
                     max-height: 64px;
-                    margin: 8px 0 !important;
+                    margin: 0.5rem 1rem 0.5rem 0 !important;
                 }
             }
             & .sk-price{
                 font-size: 1.25rem;
                 color: $red-color;
+                & .sk-unit{
+                    color: $gray-color;
+                    font-size: 0.85rem;
+                }
             }
         }
     }
