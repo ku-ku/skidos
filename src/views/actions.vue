@@ -450,10 +450,11 @@ export default {
         }
         & .v-list-item__icon{
             flex-direction: column;
-            margin: 0 16px 0 0 !important;
+            margin: 0 0.5rem 0 0 !important;
             align-self: center !important;
             justify-content: space-around;
             width: 72px;
+            padding: 0.5rem 0;
             & .v-image{
                 width: 72px;
                 height: auto;

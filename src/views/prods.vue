@@ -184,10 +184,13 @@ export default {
                 }
                 this.totals.n = data.length;
                 this.data = data;
+/*                
                 app.msg({
                             text: (data.length > 0) ? 'Найдено ' + data.length + ' позиций' : 'Ничего не найдено', 
                             color: this.parent.brandcolor
                         });
+* 
+*/
                 this.$nextTick(()=>{this.$forceUpdate();});
             } catch(e) {
                 console.log('ERR: load data', e);
@@ -332,10 +335,21 @@ export default {
               logo  = $utils.isEmpty(this.parent.brandlogo) 
                         ? undefined 
                         : process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.parent.brandlogo.ref; //TODO:
-        var childs = [];
+        var childs = [], 
+            b = h('sk-svg', {props:{xref:"#ico-search"}});
+        if ((!!this.totals.n)&&(this.totals.n>0)){
+            b = h('v-badge', {
+                                props: {content: this.totals.n, color: color},
+                                class: {'sk-totals': true},
+                                attrs: {id: 'sk-find-totals'}
+                }, [ b ]);
+        } 
+        
+        
         childs.push(
                     h('v-toolbar', {
-                        props: {color: color, dark: true, absolute: true, tile: true}
+                        props: {color: color, dark: true, absolute: true, tile: true},
+                        style: {'padding-right': '1.5rem'}
                     }, [
                         h('v-btn', {props: {icon: true}, on:{click: this.back}}, [
                             h('sk-svg', {props:{xref:'#ico-left', width:16, height: 16}})
@@ -343,9 +357,8 @@ export default {
                         h('v-toolbar-title', this.parent.title),
                         h('v-spacer'),
                         h('v-btn', {props: {icon: true}, 
-                                    on: {click: this.show_find_params}
-                                }, [h('sk-svg', {props:{xref:"#ico-search"}})]
-                        )
+                            on: {click: this.show_find_params}
+                            }, [ b ])
                     ])
         );
 
@@ -523,6 +536,19 @@ export default {
     }
     .v-treeview-node__label{
         font-size: 1.125rem;
+    }
+    .v-toolbar{
+        & #sk-find-totals {
+            margin-right: 1rem;
+            & .v-badge__wrapper{
+                top: 4px !important;
+            }
+            & .v-badge__badge{
+                border: 1px solid #fff;
+                border-color: #fff !important;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.22);
+            }
+        }
     }
 </style>
 
