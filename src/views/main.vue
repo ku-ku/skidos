@@ -15,7 +15,8 @@ import {
         VListItemTitle,
         VListItemSubtitle,
         VImg,
-        VProgressLinear,
+        VSkeletonLoader,
+        VLazy,
         VCol
 } from 'vuetify/lib';
 import color from 'color';
@@ -56,8 +57,9 @@ export default {
         VListItemTitle,
         VListItemSubtitle,
         VImg,
-        VProgressLinear,
+        VSkeletonLoader,
         VCol,
+        VLazy,
         SkSvg
   },
   computed: {
@@ -179,7 +181,7 @@ export default {
   render: function(h){
       var ci, data, childs = [];
       if ( this.loading ){
-          childs.push(h('v-progress-linear',{props:{indeterminate:true}}));
+            childs.push(h('v-skeleton-loader', {props: {type:'card-avatar'}}));
       } else if ( this.hasCards || this.hasStores ){
         /** 
          * list of all accounts 
@@ -292,19 +294,21 @@ export default {
                                                     ? item[ci["ssctenantsadds.brandlogo"]] 
                                                     : item[ci["ssctenantsadds.brandavatar"]];
                                   
-                                    return h('v-list-item', {
-                                        props: {key: id},
-                                        on: {click:()=>{this.use_card(item, 'store');}}
-                                    }, [
-                                        h('v-list-item-content', [
-                                            h('div', {class: {'sk-title': true}}, title),
-                                            h('div', {class: {'sk-loytt': true}}, loytt)
-                                        ]),
-                                        (!!img)
-                                            ? h('v-list-item-icon', [h('v-img', {props: {
-                                                src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
-                                            }})])
-                                            : null
+                                    return h('v-lazy', {props: {"min-height": 80,transition:"fade-transition", options:{threshold: .5}}}, [
+                                        h('v-list-item', {
+                                            props: {key: id},
+                                            on: {click:()=>{this.use_card(item, 'store');}}
+                                        }, [
+                                            h('v-list-item-content', [
+                                                h('div', {class: {'sk-title': true}}, title),
+                                                h('div', {class: {'sk-loytt': true}}, loytt)
+                                            ]),
+                                            (!!img)
+                                                ? h('v-list-item-icon', [h('v-img', {props: {
+                                                    src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
+                                                }})])
+                                                : null
+                                        ])
                                     ]);
                                 })
                             ])
