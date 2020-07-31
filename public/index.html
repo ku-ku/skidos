@@ -23,14 +23,16 @@
             overflow: hidden;
         }
     </style>
-    <!--script>
-        var _l = window.location.href;
-        var _n = _l.lastIndexOf("/");
-        if ((_n > 0)&&(_n < _l.length-1)){
-            _n = _l.indexOf("/", 10);
-            window.location.href = _l.substring(0, _n);
+    <script>
+        if (typeof(cordova) !== "object"){
+            var _l = window.location.href;
+            var _n = _l.lastIndexOf("/");
+            if ((_n > 0)&&(_n < _l.length-1)){
+                _n = _l.indexOf("/", 10);
+                window.location.href = _l.substring(0, _n);
+            }
         }
-    </script-->        
+    </script>
   </head>
   <body>
     <noscript>
