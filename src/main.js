@@ -7,9 +7,13 @@ import Store from '@/store';
 import pushes from '@/utils/push';
 
 Vue.config.productionTip = false;
+Vue.config.performance = true
+
 window.jQuery = jQuery;
 window.$ = jQuery;
-
+document.addEventListener('deviceready', function(){
+  return true;
+});
 new Vue({
   vuetify,
   router: Router,

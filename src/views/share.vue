@@ -20,7 +20,7 @@ require('@/utils/jquery.maskedinput.min');
 /*eslint-enable */
 
 const MSG_SHARE = {
-    title: 'моикарты.рф',
+    title: 'МоиКарты',
     msg: 'Google: https://play.google.com/store/apps/details?id=skidos.my.ru \n\n\n\n Apple: https://apps.apple.com/ru/app/%D0%BC%D0%BE%D0%B8%D0%BA%D0%B0%D1%80%D1%82%D1%8B-%D1%80%D1%84/id1510411658 \n\n\n\n'
 };
 const MSG_SEND = {
@@ -92,46 +92,34 @@ export default {
             });
         }
     },
+    computed: {
+        msg_text() {
+            return this.$store.state.profile.user.name + ' предлагает Вам установить приложение "МоиКарты" и стать клиентом ' + 
+                    this.$store.state.active.store.title + '\n' + MSG_SHARE.msg;
+        }
+    },
     methods: {
         sendSms(){
             if ($utils.isEmpty(this.tel)){
                 this.telValid = false;
                 return;
             }
-            
-            const sms = window["sms"],
-                  msg = {
-			phoneNumber:this.tel,
-			textMessage: MSG_SHARE.title + '\n' + MSG_SHARE.msg
+                                                    
+            const msg = {
+                        phoneNumber:this.tel,
+                        textMessage: MSG_SHARE.title + '\n' + this.msg_text
                   },
                   inp = $(this.$refs["phone"].$el).find('input');
-                  
-                    
+                                            
+                                
             this.telSend = MSG_SEND.sending;
-            
-            if (typeof sms === "undefined"){
-                const isApple = /iPhone|iPod|iPad/gi.test(navigator.platform);
-                var url = "sms:" + msg.phoneNumber;
-                url += (isApple) ? "&" : "?";
-                url += "body=" + encodeURIComponent(msg.textMessage);
-                window.location.href = url;
-                this.telSend = MSG_SEND.none;
-            } else {    
-                try {
-                    sms.sendMessage(msg, (m)=>{
-                        console.log("success: " + m);
-                        this.telSend = MSG_SEND.success;
-                    }, (err)=>{
-                        console.log("sms (error): " + err);
-                        this.telSend = MSG_SEND.error;
-                        inp.trigger('focus');
-                    });
-                }catch(e){
-                    console.log("sms (error): " + e);
-                    this.telSend = MSG_SEND.error;
-                    inp.trigger('focus');
-                }
-            }
+                            
+            const isApple = /iPhone|iPod|iPad/gi.test(navigator.platform);
+            var url = "sms:" + msg.phoneNumber;
+            url += (isApple) ? "&" : "?";
+            url += "body=" + encodeURIComponent(msg.textMessage);
+            window.location.href = url;
+            this.telSend = MSG_SEND.none;
         }
     },
     render: function(h){
@@ -202,7 +190,7 @@ export default {
                         attrs: {
                             "data-services":"telegram,whatsapp,viber",
                             "data-title": MSG_SHARE.title,
-                            "data-url": MSG_SHARE.msg
+                            "data-url": this.msg_text
                     }})
                 ])
             ]));
