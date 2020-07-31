@@ -304,8 +304,14 @@ export default {
                 }
             });
             this.$forceUpdate();
-      } //on_map
-  },
+      }, //on_map
+      ifrload(e){
+          console.log('ifrload', e);
+          console.log('ifrload (2)', $(this.$el).find("#ifr-" + this.id));
+          const ifr = $(this.$el).find("#ifr-" + this.id);
+          //ifr.css({position: "absolute", left: "0", top: "0", width: "100%", height: "100%"});
+      }
+  },  //methods
   
   watch: {
         id: function(val){
@@ -408,13 +414,18 @@ export default {
                 if (!$utils.isEmpty(web2)) {    //
                     showActions = false;
                     titleVNodes.push(
-                        h('iframe', {attrs:{src:web2}})
+                        h('iframe', {
+                            attrs: {id: "ifr-" + this.id, src: web2, frameborder: "0"},
+                            style: {position: "absolute", left: "0", top: "0", width: "100%", height: "100%"},
+                            on: {load: this.ifrload}
+                        })
                     );
                     childs.push(
                         h('v-card', {
                             key:'store-brand-' + data[0][ci["ssctenants.id"]],
                             class: {'sk-store-brand': true, 'sk-store-web2': true, 'fill-height': true},
                             props: {flat: true, tile: true},
+                            style: {"-webkit-overflow-scrolling": "touch", overflow: "auto"},
                             ref: "webCard"
                     }, [
                         h('v-card-text', {class: {'fill-height': true}}, titleVNodes)
