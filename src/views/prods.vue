@@ -184,13 +184,6 @@ export default {
                 }
                 this.totals.n = data.length;
                 this.data = data;
-/*                
-                app.msg({
-                            text: (data.length > 0) ? 'Найдено ' + data.length + ' позиций' : 'Ничего не найдено', 
-                            color: this.parent.brandcolor
-                        });
-* 
-*/
                 this.$nextTick(()=>{this.$forceUpdate();});
             } catch(e) {
                 console.log('ERR: load data', e);
@@ -337,7 +330,7 @@ export default {
                         : process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.parent.brandlogo.ref; //TODO:
         var childs = [], 
             b = h('sk-svg', {props:{xref:"#ico-search"}});
-        if ((!!this.totals.n)&&(this.totals.n>0)){
+        if ((!!this.totals)&&(!!this.totals.n)&&(this.totals.n>0)){
             b = h('v-badge', {
                                 props: {content: this.totals.n, color: color},
                                 class: {'sk-totals': true},

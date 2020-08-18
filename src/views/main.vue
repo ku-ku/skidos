@@ -19,6 +19,7 @@ import {
         VLazy,
         VCol
 } from 'vuetify/lib';
+import { Ripple } from 'vuetify/lib/directives';
 import color from 'color';
 import {eventBus} from '@/main';
 import SkSvg from '@/components/SkSvg';
@@ -63,7 +64,9 @@ export default {
         SkSvg
   },
   computed: {
-      name: function(){return this.$store.state.profile.user.name;},
+      name: function(){
+          return this.$store.getters["profile/name"];
+      },
       isAllow: function(){return this.$store.state.profile.user.isAuthenticated;},
       allBonuces: function(){
           var totals = 0;
@@ -80,7 +83,16 @@ export default {
       },
       hasStores(){
         return ((!!this.stores)&&(this.stores.data.length>0));
-     }
+      },
+      userId(){
+        return (!!this.$store.state.profile.user) ? this.$store.state.profile.user.id : 'xxx000xxx';
+      },
+      isAnon(){
+        return this.$store.getters["profile/isAnonymous"];
+      },
+      isopt(){
+          return this.$store.getters["profile/is"]("trader");
+      }
   },
   created(){
       const self = this;
@@ -105,43 +117,59 @@ export default {
           }
           return s;
       },
-      _cards_ready: async function() {
+      _cards_ready: async function(onlyStores) {
+        var fullRead = (typeof onlyStores === "undefined") ? true : !onlyStores;
+        
         var url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
             options = {
                 type: 'core-read',
                 query: 'sin2:/v:3dee7321-8e0c-4e79-99bb-f8b74a1c13ee?sort=ssctenants.name'
-            };
+            },
+            brands = [],
+            res;
         this.loading = true;
         try {
-            /* My-cards */
-            var res = await $http.post(url, options);
-            if (!!res.error){
-                throw res.error;
-            }
-            this.cards = Object.freeze(res.result);
-            
-            /* All others */    
-            options.query = 'sin2:/v:c2d6f08c-974a-4ff8-904a-57dab6b976cb?sort=ssctenants.name&filter=eq(field("sscTenantsAdds.hasAccount"), param(false, "boolean"))';
-            res = await $http.post(url, options);
-            if (res.result){
-                this.stores = Object.freeze(res.result);
-            }
-            
-            var brands = [];
             var _fill = function(i, data){
                 data.map((c)=>{
                     if (!$utils.isEmpty(c[i])){
                         brands.push(c[i]);
                     }
                 });
+            };
+            
+            /* My-cards (for non-anonymous) */
+            if (this.$store.getters["profile/isAnonymous"]){
+                //empty for anonymous
+                this.cards = {data:[], columnIndexes:{}};
+            } else {
+                if (fullRead){
+                    res = await $http.post(url, options);
+                    if (!!res.error){
+                        throw res.error;
+                    }
+                    this.cards = res.result;
+                    _fill(this.cards.columnIndexes["ssctenantsadds.brandlogo"], this.cards.data);
+                }
             }
-            _fill(this.cards.columnIndexes["ssctenantsadds.brandlogo"], this.cards.data);
-            _fill(this.stores.columnIndexes["ssctenantsadds.brandlogo"], this.stores.data);
+            
+            /* All others */
+            var fltr = 'and(eq(field("sscTenantsAdds.hasAccount"), param(false, "boolean")),' 
+                      + '   eq(field("sscTenantsAdds.isTrader"), param(' + ((this.isopt) ? 'true' : 'false') + ', "boolean")))';
+            options.query = 'sin2:/v:c2d6f08c-974a-4ff8-904a-57dab6b976cb?sort=ssctenants.name' + 
+                            '&filter=' + fltr; //eq(field("sscTenantsAdds.hasAccount"), param(false, "boolean"))';
+            res = await $http.post(url, options);
+            if (res.result){
+                this.stores = res.result;
+                _fill(this.stores.columnIndexes["ssctenantsadds.brandlogo"], this.stores.data);
+            } else {
+                console.log('ERR on stores: ', res.error);
+                this.stores = {data:[], columnIndexes:{}};
+            }
+            
             if (brands.length > 0){
                 var randomIndex = Math.floor(Math.random() * brands.length);
                 this.branding = brands[randomIndex];
             }
-            
             this.loading = false;
         } catch(err) {
             this.loading = false;
@@ -174,11 +202,17 @@ export default {
                 res = title;
             }
             return res.toUpperCase();            
-      }  //_short
-      
-      
+      }     //_short
+  },        //methods
+  watch: {
+    isAnon(val){
+        this._cards_ready();
+    }
   },
   render: function(h){
+      const isAnon = this.isAnon,
+            name = this.$store.getters["profile/name"];
+
       var ci, data, childs = [];
       if ( this.loading ){
             childs.push(h('v-skeleton-loader', {props: {type:'card-avatar'}}));
@@ -199,7 +233,8 @@ export default {
             }));
         }
         childs.push(
-                    h('v-card',{
+                    h('v-card', {
+                        key: 'sk-brand-' + this.userId,
                         class: {'sk-card-user': true},
                         props: {flat: true},
                         style: {'background-color': my_branding ? 'transparent' : ''}
@@ -207,18 +242,20 @@ export default {
                         h('v-card-title', {class:{'d-flex':true}}, [
                             h('div', {class: {'sk-name': true}}, [
                                 this.tod(),
-                                ', ',
-                                h('div', {class:{'sk-go-profile':true}}, [
-                                    h('v-btn', {props:{text:true, to:{name:'profile'}, dark:true, 'x-large': true}}, this.name + '!')
+                                isAnon ? '!' : ', ',
+                                isAnon ? null : h('div', {class:{'sk-go-profile': true}}, [
+                                    h('v-btn', {props:{text:true, to:{name:'profile'}, dark:true, 'x-large': true}}, name + '!')
                                 ])
                             ]),
                             h('img', {attrs: {src: require('@/assets/imgs/my-logo.png'), viewBox:"0 0 512 512"}, class:'sk-logo'})
                         ]),
-                        h('v-card-text',[
-                            (this.hasCards)
-                                ? 'у Вас ' + data.length + num2str(data.length, [' подписка', ' подписки', ' подписок'])
-                                : 'у Вас еще нет подписок'
-                        ])
+                        isAnon 
+                            ? null
+                            : h('v-card-text',[
+                                (this.hasCards)
+                                    ? 'у Вас ' + data.length + num2str(data.length, [' подписка', ' подписки', ' подписок'])
+                                    : 'у Вас еще нет подписок'
+                            ])
                     ])
         );
         /**
@@ -272,15 +309,20 @@ export default {
         /**
          * Other's
          */
-        if ( this.hasStores ){
-            data = this.stores.data;
-            ci   = this.stores.columnIndexes;
+        data = this.stores.data||[];
+        ci   = this.stores.columnIndexes||{};
+//        if ( this.hasStores ){
             childs.push(
                     h('v-card', {
                         class: {'sk-card-list': true, 'sk-stores': true}
                     },[
-                        h('v-card-title', [
-                            h('h3','Все организации'),
+                        h('v-card-title', {
+                            props: {tile: true}
+                        }, [
+                            h('h3', [
+                                'Все организации',
+                                h('div', {class: {'sk-small': true}}, this.isopt ? 'оптовики' : 'розничные предложения')
+                            ]),
                             h('sk-svg', {props: {xref: "#ico-store"}})
                         ]),
                         h('v-card-text', [
@@ -316,13 +358,16 @@ export default {
                 ])
             );
         }
-      } else {
-          childs = [h('h1',{}, this.tod() + ', ' + this.name)];
-          childs.push(h('p',{class:{'fill-height':true, 'pa-2': true}},[
-              'Список карт и магазинов недоступен, попробуйте позже.'
-          ]));
-      }
-      return h('main', {class:{'fill-height': true}}, childs);
+/*        
+        } else {
+            childs = [h('h1',{}, this.tod() + ', ' + this.name)];
+            childs.push(h('p',{class:{'fill-height':true, 'pa-2': true}},[
+                'Список карт и магазинов недоступен, попробуйте позже.'
+            ]));
+        }
+* 
+*/
+      return h('main', {key: 'main-'+this.userId, class: {'fill-height': true}}, childs);
   }
 };
 </script>
@@ -382,7 +427,6 @@ export default {
         border-color: transparent;
         box-shadow: none;
         &.sk-card-list{
-            border-radius: $brd-rrr;
             background-color: #fff;
             padding-bottom: 3rem;
             & .v-list {
@@ -428,17 +472,23 @@ export default {
             & .v-card__title{
                 justify-content: space-between;
                 & h3{
-                    font-size: 1rem;
+                    font-size: 1.125rem;
                     font-weight: 400;
                     padding:0;
                     margin:0;
+                    line-height: 1.125;
                 }
                 & svg{
                     width: 22px;
                     height: 22px;
                     color: $main-color;
                 }
+                & .sk-small{
+                    font-size: 0.75rem;
+                    color: $gray-color;
+                }
             }
+            
             &.sk-stores{
                 & .v-list{
                     & .v-list-item{

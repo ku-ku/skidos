@@ -3,12 +3,11 @@ require('@/assets/imgs/my-logo.png');
 import {
         VImg
 } from 'vuetify/lib';
+
 export default {
     name: 'Splash',
     data: function(){
-        return {
-            kuku: true
-        };
+        return {};
     },
     components: {
         VImg
@@ -18,9 +17,11 @@ export default {
            return !$utils.isEmpty(this.name);
         },
         name(){
-            return (this.$store.state.profile.user)
-                ? this.$store.state.profile.user.name
-                : '';
+            return this.$store.getters["profile/isAnonymous"] 
+                ? ''
+                : (this.$store.state.profile.user)
+                    ? this.$store.state.profile.user.name
+                    : '';
         },
         tod(){
             var s, h = (new Date()).getHours();

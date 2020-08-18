@@ -1,9 +1,7 @@
 <template>
     <v-row class="fill-height flex-md-column" justify="center">
         <div class="v-banner sk-banner-signin">
-            <img v-if="is('auth')" src="@/assets/imgs/family.png" />
-            <img v-else-if="is('register')" src="@/assets/imgs/hands.png" />
-            <div v-else class="d-flex align-center justify-space-between" style="padding:0 2rem;border-bottom: 1px solid #ccc;">
+            <div class="d-flex align-center justify-space-between" style="padding:0 2rem;border-bottom: 1px solid #ccc;">
                 <h2 style="font-weight:300;color:#5e6ff3;">моикарты.рф</h2>
                 <div style="width:32px;height:32px;">
                     <v-img src="@/assets/imgs/my-logo.png" />
@@ -181,6 +179,13 @@ const modes = {
 
 export default {
   name: 'ViewSignIn',
+  props: {
+      switch: {
+          type: String,
+          required: false,
+          default: 'auth'
+      }
+  },
   data() {
     return {
         mode: modes.AM_NONE,
@@ -206,7 +211,11 @@ export default {
     };
   },
   mounted: function(){
-      this.mode = modes.AM_AUTH;
+        if ($utils.isEmpty(this.switch)){
+            this.mode = modes.AM_AUTH;
+        } else {
+            this.set(this.switch);
+        }
   },
   watch: {
         mode: function(val){

@@ -25,19 +25,58 @@
           <svg viewBox="0 0 320 512"><use xlink:href="#close" /></svg>
       </v-btn>                    
     </v-snackbar>
+    <v-dialog
+      v-model="authMsg"
+      width="95%"
+    >
+        <v-card>
+            <v-card-title style="flex-wrap:nowrap;align-items:flex-start;word-break:break-word;font-size:1.25rem;line-height:1.25rem;font-weight:300;">
+                <div class="mr-3">Уважаемый пользователь, для того, чтобы использовать все возможности нашего приложения, необходимо:</div>
+                <v-btn 
+                    x-small 
+                    fab
+                    text
+                    @click="authMsg = false">
+                    <sk-svg xref="#close" />
+                </v-btn>
+            </v-card-title>
+            <v-card-text>
+                <div class="d-flex flex-column mt-5 text-center">
+                    <v-btn
+                        outlined
+                        color="error"
+                        rounded
+                        @click="goAuth">
+                        <sk-svg xref="#ico-signin" class="mr-2" />
+                        авторизоваться
+                    </v-btn> 
+                    <div class="my-3">или</div>
+                    <v-btn 
+                        text
+                        color="error"
+                        @click="goReg">
+                        зарегистрироваться
+                    </v-btn>
+                </div>
+            </v-card-text>
+        </v-card>
+    </v-dialog>
   </v-app>
+    
 </template>
 
 <script>
 import Splash from '@/views/splash';
 import PushController from '@/utils/push';
 import {eventBus} from './main';
+import SkSvg from '@/components/SkSvg';
 
 export default {
     name: 'App',
 
     components: {
-        Splash
+        Splash,
+        SkSvg
     },
 
     data: function(){
@@ -47,7 +86,8 @@ export default {
           snackbarColor: "primary",
           snackbarText: null,
           snackbarTimeout: 0,
-          activeBtn: -1
+          activeBtn: -1,
+          authMsg: false
       };
     },
     created: function(){
@@ -118,6 +158,17 @@ export default {
             this.snackbarTimeout = (!!e.timeout) ? e.timeout : 6000;
             this.snackbarText = e.text;
             this.snackbar = true;
+        },
+        authOrReg(){
+            this.authMsg = true;
+        },
+        goAuth(){
+            this.authMsg = false;
+            this.$router.replace({name: "signin"});
+        },
+        goReg(){
+            this.authMsg = false;
+            this.$router.replace({name: "signin", params:{switch:"register"}});
         },
         onUser(user){
             const PING_TM = 10*60*1000;

@@ -232,6 +232,10 @@ export default {
             app.msg({text:'У Вас уже есть подписка на "' + this.storeTitle + '"', type:'info'});
             return;
         }
+        if (this.$store.getters["profile/isAnonymous"]){
+            app.authOrReg();
+            return;
+        }
           
         var url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
             id_to_take = $utils.uuidv4();
@@ -310,6 +314,14 @@ export default {
           console.log('ifrload (2)', $(this.$el).find("#ifr-" + this.id));
           const ifr = $(this.$el).find("#ifr-" + this.id);
           //ifr.css({position: "absolute", left: "0", top: "0", width: "100%", height: "100%"});
+      },
+      gochat(e){
+        e.preventDefault();
+        if (this.$store.getters["profile/isAnonymous"]){
+            app.authOrReg();
+            return;
+        }
+        this.$router.push({name: 'chat'});
       }
   },  //methods
   
@@ -622,12 +634,12 @@ export default {
                                                 right: true,
                                                 small: true,
                                                 dark: true,
-                                                color: bg,
-                                                to: {name:'chat'}
+                                                color: bg
                                             },
-                                            class: {'sk-btn-chat': true}
+                                            class: {'sk-btn-chat': true},
+                                            on: {click: this.gochat}
                                         }, [
-                                    h('svg', {domProps: {innerHTML:'<use xlink:href="#ico-chat" />'}, attrs: {viewBox:'0 0 512 512'}})
+                                    h('sk-svg', {props: {xref:"#ico-chat"}})
                                 ])
                             ]);
                         }

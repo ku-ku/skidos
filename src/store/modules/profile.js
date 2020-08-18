@@ -1,11 +1,14 @@
-const user = $utils.lsRead('auth') || {
-  login: null,
-  password: null,
-  isAuthenticated: false
+const KNOWN_ROLES = {
+    "anonymous": "e7f9e9ab-4d83-4b5d-9ede-0910e8d4644e"
 };
 
 const state = {
-  user
+  user: $utils.lsRead('auth') || {
+            login: null,
+            password: null,
+            isAuthenticated: false
+        },
+  lastAccess: new Date()
 };
 
 const mutations = {
@@ -19,12 +22,13 @@ const mutations = {
     state.user.name  = payload.title;
     state.user.isAuthenticated = true;
     state.user.password = $utils.utf8ToB64(payload.password);
+    state.user.roles = payload.roles;
+    state.lastAccess = new Date();
     
     window["app"].onUser(state.user);
     
     var _user = Object.assign({}, state.user);
     _user.isAuthenticated = false;
-    _user.lastAccess = (new Date()).getTime();
     
     $utils.lsSave('auth', _user);
     if (!!state._hTimer){
@@ -75,6 +79,11 @@ const actions = {
                 console.log('Fail on login:', err);
                 reject(err);
             }
+            try {
+                document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            }catch(e){
+                console.log('exp cookie:', e);
+            }
             const options = {
                 type: 'auth',
                 basicAuth: 'Basic ' + btoa(user.login + ':' + user.password)
@@ -91,7 +100,8 @@ const actions = {
         const opts = {
               type: 'core-read',
               query: 'sin2:/v:b841fde1-394a-4ab1-8ca7-48446f58c27e?id=' 
-                      + store.state.user.id + '&fields=sscusersadds.addrstring,sscusersadds.email,sscusersadds.phone'
+                      + store.state.user.id 
+                      + '&fields=sscusersadds.addrstring,sscusersadds.email,sscusersadds.phone,sscusersadds.istrader'
         },
         p = (resolve, reject)=>{
             (async ()=>{
@@ -114,6 +124,7 @@ const actions = {
         
         return new Promise(p);
   },    //readAdds
+  
   check: function(store) {
     var pwd = '';
     
@@ -140,12 +151,12 @@ const actions = {
       
         if ($utils.isEmpty(state.user.login) || 
             $utils.isEmpty(state.user.password)) {
-            console.log('No user in store');
-            reject({message: 'No user in store'});
-            return;
+            state.user.login = "my-anonymous";
+            pwd = "AC0DB0A3E3030E21E050007F01013DB8";
+            console.log('Auth: using anonymous access');
+        } else {
+            pwd = $utils.b64ToUtf8(state.user.password);
         }
-        
-        pwd = $utils.b64ToUtf8(state.user.password);
         
         const options = {
             type: 'auth',
@@ -153,13 +164,11 @@ const actions = {
         };
         
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
-        $http
-             .post(url, options)
-             .then(onSuccess)
-             .catch(onFail);
+        $http.post(url, options).then(onSuccess).catch(onFail);
     };
     return new Promise(promise);
   },
+  
   logout(ctx) {
     const {commit} = ctx;
 
@@ -202,10 +211,39 @@ const getters = {
   isAuthenticated(state) {
     return (state.user) ? state.user.isAuthenticated : false;
   },
+  isAnonymous(state){
+      const roles = state.user.roles || {};
+      return (typeof roles[KNOWN_ROLES.anonymous] === "object");
+/*            
+        ? $utils.isEmpty(state.user.login)
+            ? false
+            : /anonymous+$/i.test(state.user.login)
+        : false;    
+* 
+*/
+  },
   login(state) {
     return state.user.login
         ? state.user.login
         : '';
+  },
+  name(state){
+    return $utils.isEmpty(state.user.name) 
+            ? '' 
+            : state.user.name;
+  },
+  is: state => q => {
+    if (!!state.user.adds){
+        switch(q){
+            case "anonymous":
+                return getters.isAnonymous(state);
+            case "trader":
+                return !!state.user.adds.istrader;
+            default:
+                return false;
+        }
+    }
+    return false;
   }
 };
 

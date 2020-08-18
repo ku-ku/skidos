@@ -7,7 +7,7 @@ import Store from '@/store';
 import pushes from '@/utils/push';
 
 Vue.config.productionTip = false;
-Vue.config.performance = true
+Vue.config.performance = true;
 
 window.jQuery = jQuery;
 window.$ = jQuery;

@@ -230,6 +230,11 @@ export default {
             return this.$store.getters["basket/has"](this.prod.id);
         },
         to_basket(){
+            if (this.$store.getters["profile/isAnonymous"]){
+                app.authOrReg();
+                return;
+            }
+            
             const tenantId = (!!this.fill) 
                                 ? this.fill.id
                                 : $utils.isEmpty(this.prod.orgid) 

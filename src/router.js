@@ -146,6 +146,7 @@ const router = new Router({
         path: '/signin',
         name: 'signin',
         component: ViewSignIn,
+        props: true,
         meta: {
             showAppBar: false,
             showNavi: false
