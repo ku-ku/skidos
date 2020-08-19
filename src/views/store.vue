@@ -260,9 +260,11 @@ export default {
             this.card_by(id_to_take, 'id');
             eventBus.$emit('new-store', id_to_take);
             try{
-                $http.post(process.env.VUE_APP_BACKEND_RPC + '/share', {
+                $http.post(process.env.VUE_APP_BACKEND_API + '/skidosapi/share', {
+                    contentType: 'application/json;charset=utf-8',
+                    dataType: 'text',
                     type: 'post',
-                    data: JSON.stringify({q:"card", account: id_to_take}),
+                    data: JSON.stringify({q:'card', account: id_to_take}),
                     processData: false
                 });
             } catch(e){
