@@ -119,6 +119,17 @@ export default {
             url += (isApple) ? "&" : "?";
             url += "body=" + encodeURIComponent(msg.textMessage);
             window.location.href = url;
+            try{
+                $http.post(process.env.VUE_APP_BACKEND_API + '/skidosapi/share', {
+                    contentType: 'application/json;charset=utf-8',
+                    dataType: 'text',
+                    type: 'post',
+                    data: JSON.stringify({q:'app', phone: msg.phoneNumber, user: this.$store.state.profile.user.id}),
+                    processData: false
+                });
+            } catch(e){
+                console.log('ERR on call /share app:', e);
+            }
             this.telSend = MSG_SEND.none;
         }
     },
