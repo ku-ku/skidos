@@ -6,7 +6,9 @@ const state = {
   user: $utils.lsRead('auth') || {
             login: null,
             password: null,
-            isAuthenticated: false
+            isAuthenticated: false,
+            isAnonymous: true,
+            roles: {}
         },
   lastAccess: new Date()
 };
@@ -24,6 +26,14 @@ const mutations = {
     state.user.password = $utils.utf8ToB64(payload.password);
     state.user.roles = payload.roles;
     state.lastAccess = new Date();
+    if (!!payload.roles){
+        state.user.isAnonymous = Object.keys(payload.roles).filter((r)=>{
+            return r===KNOWN_ROLES.anonymous;
+        }).length > 0;
+    } else {
+        state.user.isAnonymous = true;
+    }
+    
     
     window["app"].onUser(state.user);
     
@@ -37,12 +47,14 @@ const mutations = {
   },
   setAdds: function(state, adds){
       state.user.adds = adds;
+      state.lastAccess = new Date();
   },
   removeCredentials(state) {
     state.user = {
       login: null,
       password: null,
-      isAuthenticated: false
+      isAuthenticated: false,
+      roles: {}
     };
   }
 };
@@ -60,10 +72,12 @@ const actions = {
                     console.log('login-success:', res);
                     res.result.password = user.password;
                     store.commit('setSubject', res.result);
-                    store.dispatch('readAdds');
-                    if (resolve){
-                        resolve(res);
-                    }
+                    (async ()=>{
+                        await store.dispatch('readAdds');
+                        if (resolve){
+                            resolve(res);
+                        }
+                    })();
                 } else {
                     console.log('login-success.fail:', res.error);
                     if (reject){
@@ -80,15 +94,19 @@ const actions = {
                 reject(err);
             }
             try {
-                document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                document.cookie = 'JSESSIONID=;expires=Thu, 01 Jan 1970 00:00:01 GMT';
             }catch(e){
                 console.log('exp cookie:', e);
             }
-            const options = {
-                type: 'auth',
-                basicAuth: 'Basic ' + btoa(user.login + ':' + user.password)
-            };
             const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
+            (async ()=>{
+                await $http.post(url, {type: 'logout'});
+            })();
+            
+            const options = {
+                        type: 'auth',
+                        basicAuth: 'Basic ' + btoa(user.login + ':' + user.password)
+            };
             $http
                 .post(url, options)
                 .then(onSuccess)
@@ -180,7 +198,7 @@ const actions = {
       function onSuccess(res) {
         commit('removeCredentials');
         try {
-            document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.cookie = 'JSESSIONID=;expires=Thu, 01 Jan 1970 00:00:01 GMT';
         }catch(e){
             console.log(e);
         }
@@ -195,9 +213,7 @@ const actions = {
         reject(err);
       }
 
-      const options = {
-        type: 'logout'
-      };
+      const options = {type: 'logout'};
 
       const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
       $http.post(url, options).then(onSuccess).catch(onFail);
@@ -208,29 +224,29 @@ const actions = {
 };
 
 const getters = {
-  isAuthenticated(state) {
-    return (state.user) ? state.user.isAuthenticated : false;
+  isAuthenticated(state){
+    return (!!state.user) ? state.user.isAuthenticated : false;
   },
   isAnonymous(state){
-      const roles = state.user.roles || {};
-      return (typeof roles[KNOWN_ROLES.anonymous] === "object");
-/*            
-        ? $utils.isEmpty(state.user.login)
-            ? false
-            : /anonymous+$/i.test(state.user.login)
-        : false;    
-* 
-*/
+      return (!!state.user) ? state.user.isAnonymous : true;
   },
-  login(state) {
-    return state.user.login
-        ? state.user.login
-        : '';
+  login(state){
+    console.log('login is depricated, using get...');
+    return $utils.isEmpty(state.user.login) ? '' : state.user.login;
   },
   name(state){
-    return $utils.isEmpty(state.user.name) 
-            ? '' 
-            : state.user.name;
+    console.log('name is depricated, using get...');
+    return $utils.isEmpty(state.user.name) ? '' : state.user.name;
+  },
+  get: state => q =>{
+      switch(q){
+          case "login":
+            return $utils.isEmpty(state.user.login) ? '' : state.user.login;
+          case "name":
+              return $utils.isEmpty(state.user.name) ? '' : state.user.name;
+          default:
+              return "";
+      }
   },
   is: state => q => {
     if (!!state.user.adds){

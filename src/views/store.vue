@@ -259,6 +259,15 @@ export default {
             }
             this.card_by(id_to_take, 'id');
             eventBus.$emit('new-store', id_to_take);
+            try{
+                $http.post(process.env.VUE_APP_BACKEND_RPC + '/share', {
+                    type: 'post',
+                    data: JSON.stringify({q:"card", account: id_to_take}),
+                    processData: false
+                });
+            } catch(e){
+                console.log('ERR on call /share card:', e);
+            }
         } catch(e){
             console.log('ERR on reg card:', e);
             if ((!!e.data)&&/already\sexist/gi.test(e.data)){
@@ -360,6 +369,7 @@ export default {
         }   //card
   },
   render: function( h ){
+        const isAnon = this.$store.getters["profile/isAnonymous"];
         var childs = [],
             fab    = null,
             showActions = true;
@@ -639,7 +649,7 @@ export default {
                                             class: {'sk-btn-chat': true},
                                             on: {click: this.gochat}
                                         }, [
-                                    h('sk-svg', {props: {xref:"#ico-chat"}})
+                                    h('sk-svg', {props: {xref: isAnon ? "#ico-user-lock": "#ico-chat"}})
                                 ])
                             ]);
                         }

@@ -21,7 +21,7 @@ import {
 } from 'vuetify/lib';
 import { Ripple } from 'vuetify/lib/directives';
 import color from 'color';
-import {eventBus} from '@/main';
+import { eventBus } from '@/main';
 import SkSvg from '@/components/SkSvg';
 
 function num2str(n, text_forms) {  
@@ -94,13 +94,12 @@ export default {
           return this.$store.getters["profile/is"]("trader");
       }
   },
-  created(){
-      const self = this;
-      eventBus.$on('new-store', self._cards_ready);  //TODO: delay load
-  },
   mounted() {
     if (!this.cards){
-        this._cards_ready();
+            const self = this;
+        this._cards_ready().then(()=>{
+            eventBus.$on('new-store', self._cards_ready);  
+        });
     }
   },        //mounted
   methods: {
@@ -211,7 +210,7 @@ export default {
   },
   render: function(h){
       const isAnon = this.isAnon,
-            name = this.$store.getters["profile/name"];
+            name = isAnon ? "" : this.$store.getters["profile/get"]("name");
 
       var ci, data, childs = [];
       if ( this.loading ){
