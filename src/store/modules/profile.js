@@ -56,6 +56,7 @@ const mutations = {
       isAuthenticated: false,
       roles: {}
     };
+    $utils.lsDel('auth');
   }
 };
 
@@ -144,6 +145,8 @@ const actions = {
   },    //readAdds
   
   check: function(store) {
+    const { state } = store;
+    
     var pwd = '';
     
     const promise = (resolve, reject) => {
@@ -155,7 +158,7 @@ const actions = {
             if ((res)&&(res.result)){
                 res.result.password = pwd;
                 store.commit('setSubject', res.result);
-                store.commit('setFlag', {isAuthenticated:true});
+                store.commit('setFlag', {isAuthenticated: true});
                 store.dispatch('readAdds');
                 resolve(res);
             } else {
@@ -188,7 +191,7 @@ const actions = {
   },
   
   logout(ctx) {
-    const {commit} = ctx;
+    const {commit, store} = ctx;
 
     const promise = (resolve, reject) => {
       /**
@@ -197,11 +200,6 @@ const actions = {
        */
       function onSuccess(res) {
         commit('removeCredentials');
-        try {
-            document.cookie = 'JSESSIONID=;expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        }catch(e){
-            console.log(e);
-        }
         resolve(res);
       }
 
@@ -210,13 +208,18 @@ const actions = {
        * @param {Object} err
        */
       function onFail(err) {
+        commit('removeCredentials');
         reject(err);
       }
 
-      const options = {type: 'logout'};
 
       const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
-      $http.post(url, options).then(onSuccess).catch(onFail);
+      (async()=>{await $http.post(url, {type: 'logout'}).then(onSuccess).catch(onFail);})();
+      try {
+            document.cookie = 'JSESSIONID=;expires=Thu, 01 Jan 1970 00:00:01 GMT';
+      }catch(e){
+        console.log(e);
+      }
     };
 
     return new Promise(promise);

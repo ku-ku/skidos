@@ -1,6 +1,7 @@
 import {
     read as lsRead,
-    write as lsSave
+    write as lsSave,
+    del as lsDel
 } from './localStorage';
 
 /**
@@ -179,5 +180,6 @@ export {
   uuidv4,
   sin2obj,
   lsRead,
-  lsSave
+  lsSave,
+  lsDel
 };

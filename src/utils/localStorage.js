@@ -34,3 +34,8 @@ export function write(itemName, obj) {
 
   window.localStorage.setItem(itemName, JSON.stringify(item));
 }
+
+
+export function del(itemName) {
+  window.localStorage.removeItem(itemName);
+}

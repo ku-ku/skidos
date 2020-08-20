@@ -287,6 +287,7 @@ export default {
             $('input[name="eml"]').trigger('focus');
             return false;
         }
+        this.error = '';
 
         (async () => {
             try {
