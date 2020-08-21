@@ -191,6 +191,13 @@ export default {
             var ci = resp.result.columnIndexes;
             await this.card_by(this.store.data[0][ci["ssctenants.id"]], 'store');
             this.mode = (this.hasCard) ? ST_MODE.def : ST_MODE.qr;
+            
+            if (!$utils.isEmpty(this.store.data[0][ci["ssctenantsadds.uri2"]])){
+                if ((!!cordova)&&(!!cordova.InAppBrowser)){
+                    cordova.InAppBrowser.open(this.store.data[0][ci["ssctenantsadds.uri2"]], '_blank', 'location=no');
+                }
+            }
+            
         } catch(e){
             console.log('Err on store:', e);
             this.error = {error: e};

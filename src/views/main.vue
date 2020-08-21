@@ -335,8 +335,7 @@ export default {
                                                     ? item[ci["ssctenantsadds.brandlogo"]] 
                                                     : item[ci["ssctenantsadds.brandavatar"]];
                                   
-                                    return h('v-lazy', {props: {"min-height": 80,transition:"fade-transition", options:{threshold: .5}}}, [
-                                        h('v-list-item', {
+                                    return h('v-list-item', {
                                             props: {key: id},
                                             on: {click:()=>{this.use_card(item, 'store');}}
                                         }, [
@@ -349,7 +348,6 @@ export default {
                                                     src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
                                                 }})])
                                                 : null
-                                        ])
                                     ]);
                                 })
                             ])
