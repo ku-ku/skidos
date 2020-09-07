@@ -200,13 +200,31 @@ export default {
                     cordova.InAppBrowser.open(this.store.data[0][ci["ssctenantsadds.uri2"]], '_blank', 'location=no');
                 }
             }
-            
+            this.see();
         } catch(e){
             console.log('Err on store:', e);
             this.error = {error: e};
             this.mode = ST_MODE.def;
         }
       },    //refresh
+        see(){
+            const hasDev = (typeof device !== "undefined");
+            const opts = {
+                type: 'core-create',
+                query: 'sin2:/v:1cb7dc21-2866-4e29-905c-e183236ffa7a',
+                params: [
+                    {id: 'tenantid', type:'id', value: this.iStore.id},
+                    {id: 'userid', type:'id', value: this.$store.state.profile.user.id},
+                    {id: 'deviceip', type:'string', value: ''},
+                    {id: 'devicemodel', type:'string', value: (hasDev) ? device.model : ''},
+                    {id: 'deviceplatform', type:'string', value: (hasDev) ? device.platform : ''},
+                    {id: 'deviceuuid', type:'string', value: (hasDev) ? device.uuid : ''},
+                    {id: 'deviceversion', type:'string', value: (hasDev) ? device.version : ''},
+                    {id: 'regdt', type:'datetime', value: new Date()}
+                ]
+            };
+            $http.post(opts);
+        },
       card_by: async function(id, that){
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
         var options = {
