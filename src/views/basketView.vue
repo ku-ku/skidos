@@ -89,7 +89,8 @@ export default {
                                     h('v-list-item-icon', {class:{"mr-3": true}}, [
                                         (!!prod.promoimage)
                                             ? h('v-img',{props: {
-                                                                    src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref,
+//                                                                    src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref,
+                                                                    src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + prod.promoimage.id,
                                                                     'max-height': 86,
                                                                     contain: true
                                                                 }})

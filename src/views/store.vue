@@ -467,7 +467,8 @@ export default {
                         titleVNodes.push(
                             h('v-img', {
                                 props: {
-                                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + bi.ref, width:'100%', height:'auto', 
+//                                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + bi.ref, width:'100%', height:'auto', 
+                                            src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + bi.id, width:'100%', height:'auto', 
                                             eager: true
                                        }
                             })

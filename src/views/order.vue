@@ -322,7 +322,8 @@ export default {
                             'max-height': 280,
                             contain: true,
                             eager: true,
-                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref
+//                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + prod.promoimage.ref
+                            src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + prod.promoimage.id
                     }})
                     : h('sk-svg', {props:{xref:"#ico-box-full", width: 128, height: 128}, style:{color:color,margin: "1rem auto"}})
                 ,

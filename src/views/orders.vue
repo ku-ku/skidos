@@ -132,7 +132,8 @@ export default {
                                     ? null
                                     : h('v-list-item-icon', [
                                         h('v-img', {props:{
-                                                        src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref,
+//                                                        src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref,
+                                                        src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + img.id,
                                                         'max-height': 64,
                                                         contain: true
                                         }})

@@ -228,7 +228,9 @@ export default {
         if (my_branding){
             childs.push(h('div', {
                 class: {'sk-my-brand': true},
-                style: {'background-image':'url("' + process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.branding.ref + '")'}
+//                style: {'background-image':'url("' + process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.branding.ref + '")'}
+                style: {'background-image':'url("' + process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + this.branding.id + '")'}
+                
             }));
         }
         childs.push(
@@ -291,7 +293,8 @@ export default {
                                                 }, 
                                                 (!!img) 
                                                     ? [h('v-img', {props: {
-                                                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
+//                                                            src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
+                                                            src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + img.id, width:'100%', height:'auto', eager: true
                                                         }})]
                                                     : this._short(title)),
                                             h('div', {class:{'sk-title':true}}, title),
@@ -345,7 +348,8 @@ export default {
                                             ]),
                                             (!!img)
                                                 ? h('v-list-item-icon', [h('v-img', {props: {
-                                                    src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
+//                                                    src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref, width:'100%', height:'auto', eager: true
+                                                    src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + img.id, width:'100%', height:'auto', eager: true
                                                 }})])
                                                 : null
                                     ]);

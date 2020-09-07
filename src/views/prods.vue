@@ -327,7 +327,8 @@ export default {
         const color = this.parent.brandcolor || 'orange',
               logo  = $utils.isEmpty(this.parent.brandlogo) 
                         ? undefined 
-                        : process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.parent.brandlogo.ref; //TODO:
+//                        : process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + this.parent.brandlogo.ref; //TODO:
+                        : process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + this.parent.brandlogo.id;
         var childs = [], 
             b = h('sk-svg', {props:{xref:"#ico-search"}});
         if ((!!this.totals)&&(!!this.totals.n)&&(this.totals.n>0)){
@@ -380,7 +381,8 @@ export default {
                                                     props:{
                                                             contain: true,
                                                             'max-height': 86,
-                                                            src:process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=fs:id:' + d.img
+//                                                            src:process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=fs:id:' + d.img
+                                                            src:process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + d.img
                                                     }
                                                 })
                                         ]),
@@ -491,7 +493,8 @@ export default {
                                                     props: {
                                                         height:'32px',
                                                         width: '32px',
-                                                        src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=fs:id:' + props.item.kindimage
+                                                        src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + props.item.kindimage
+//                                                        src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=fs:id:' + props.item.kindimage
                                                     }
                                                 });
                                             }
