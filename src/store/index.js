@@ -17,6 +17,12 @@ const mutations = {
 const actions = {};
 
 const getters = {
+    is: state => q => {
+        switch(q){
+            case "cordova":
+                return (typeof cordova === "object");
+        }
+    }
 };
 
 const modules = {

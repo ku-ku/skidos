@@ -156,7 +156,10 @@ export default {
                 return ((!!n) && (Number(n) > 0));
             }
             return false;
-        }
+        },
+        inAppBrowse(){
+            return this.$store.getters["is"]("cordova") ? (!!cordova.InAppBrowser) : false;
+        }        
   },
   created(){
         this.refresh();
@@ -193,7 +196,7 @@ export default {
             this.mode = (this.hasCard) ? ST_MODE.def : ST_MODE.qr;
             
             if (!$utils.isEmpty(this.store.data[0][ci["ssctenantsadds.uri2"]])){
-                if ((!!cordova)&&(!!cordova.InAppBrowser)){
+                if (this.inAppBrowse){
                     cordova.InAppBrowser.open(this.store.data[0][ci["ssctenantsadds.uri2"]], '_blank', 'location=no');
                 }
             }
@@ -328,10 +331,6 @@ export default {
             this.$forceUpdate();
       }, //on_map
       ifrload(e){
-          console.log('ifrload', e);
-          console.log('ifrload (2)', $(this.$el).find("#ifr-" + this.id));
-          const ifr = $(this.$el).find("#ifr-" + this.id);
-          //ifr.css({position: "absolute", left: "0", top: "0", width: "100%", height: "100%"});
       },
       gochat(e){
         e.preventDefault();
@@ -445,11 +444,13 @@ export default {
                 if (!$utils.isEmpty(web2)) {    //
                     showActions = false;
                     titleVNodes.push(
-                        h('iframe', {
-                            attrs: {id: "ifr-" + this.id, src: web2, frameborder: "0"},
-                            style: {position: "absolute", left: "0", top: "0", width: "100%", height: "100%"},
-                            on: {load: this.ifrload}
-                        })
+                            this.inAppBrowse 
+                                ? h('div', {style:{display:'none'}})
+                                : h('iframe', {
+                                    attrs: {id: "ifr-" + this.id, src: web2, frameborder: "0"},
+                                    style: {position: "absolute", left: "0", top: "0", width: "100%", height: "100%"},
+                                    on: {load: this.ifrload}
+                                })
                     );
                     childs.push(
                         h('v-card', {

@@ -185,7 +185,6 @@ export default {
         } else {
             this.time = times.TM_EV;
         }
-        console.log('mounted', h + ': ' + this.time + ' / ' + this.today);
         this.$nextTick(()=>{
             var i = $(this.$el).find('.sk-choice input');
             i.css({'text-align': 'center', 'max-height': '3rem'});
@@ -203,14 +202,10 @@ export default {
             descr.trigger('click');
             $([document.documentElement, document.body]).animate({scrollTop: 0}, 100);
         });
+        this.see();
     },
     activated(){
         console.log('order (active):' + this);
-    },
-    watch: {
-        prod(val){
-            console.log('order (prod)' + val);
-        }
     },
     methods: {
         back(){
@@ -271,6 +266,25 @@ export default {
                     self.$refs.storeMap.addPoints([self.magaz]);
                 }
             });
+        },
+        see(){
+            const hasDev = (typeof device !== "undefined");
+            const opts = {
+                type: 'core-create',
+                query: 'sin2:/v:1cb7dc21-2866-4e29-905c-e183236ffa7a',
+                params: [
+                    {id: 'tenantid', type:'id', value: this.prod.tenantid},
+                    {id: 'userid', type:'id', value: this.$store.state.profile.user.id},
+                    {id: 'deviceip', type:'string', value: ''},
+                    {id: 'devicemodel', type:'string', value: (hasDev) ? device.model : ''},
+                    {id: 'deviceplatform', type:'string', value: (hasDev) ? device.platform : ''},
+                    {id: 'deviceuuid', type:'string', value: (hasDev) ? device.uuid : ''},
+                    {id: 'deviceversion', type:'string', value: (hasDev) ? device.version : ''},
+                    {id: 'productid', type:'id', value: this.prod.id},
+                    {id: 'regdt', type:'datetime', value: new Date()}
+                ]
+            };
+            $http.post(opts);
         }
     },
     
