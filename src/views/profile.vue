@@ -130,6 +130,11 @@ export default {
   },
   methods: {
     async load(){
+        if (this.$store.getters["profile/isAnonymous"]){
+            app.authOrReg();
+            return;
+        }
+        
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
               opts = {
                     type: 'core-read',

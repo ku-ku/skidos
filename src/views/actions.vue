@@ -351,9 +351,11 @@ export default {
                                         $utils.isEmpty(a[ci["userpromoactions.oldprice"]])
                                             ? null
                                             : h('span', {class:{'sk-old': true}}, a[ci["userpromoactions.oldprice"]]),
-                                        $utils.isEmpty(a[ci["userpromoactions.unitname"]])
-                                            ? null
-                                            : h('span', {class:{'sk-units': true}}, '(' + a[ci["userpromoactions.unitname"]] + ')')
+                                        h('div', {class:{'sk-units': true}},
+                                            'руб.' +
+                                            ($utils.isEmpty(a[ci["userpromoactions.unitname"]])
+                                                ? ''
+                                                : ' (' + a[ci["userpromoactions.unitname"]] + ')'))
                                     ]),
                                     $utils.isEmpty(a[ci["userpromoactions.promoproducer"]])
                                             ? null
@@ -474,11 +476,14 @@ export default {
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            & .sk-old, & .sk-units {
+            & .sk-old, & .sk-units{
                 font-size: 0.85rem;
                 display: inline-block;
                 margin-left: 0.5rem;
                 color: $gray-color;
+            }
+            & .sk-units{
+                display: block;
             }
             & .sk-old{
                 text-decoration: line-through;
