@@ -353,6 +353,11 @@ export default {
                         }, style: {
                             'font-size': '2rem',
                             'height': '2.5rem'
+                        }, on: {
+                            input: (e)=>{
+                                var n = Number(e);
+                                if (!!n){this.n = n;}
+                            }
                         }}),
                         h('v-btn',  {props: {
                                                 'x-small': true,
