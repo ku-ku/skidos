@@ -356,7 +356,7 @@ export default {
                         }, on: {
                             input: (e)=>{
                                 var n = Number(e);
-                                if (!!n){this.n = n;}
+                                this.n = (!!n) ? n : 1;
                             }
                         }}),
                         h('v-btn',  {props: {
@@ -376,6 +376,7 @@ export default {
                 ]),
                 h('h2',{class:{'sk-full-name':true}}, prod.promogoods),
                 $utils.isEmpty(prod.promodesc) ? null : h('div', {class:{'sk-descr': true}}, prod.promodesc),
+/*TODO: read by settings                
                 h('div', {class:{'sk-days': true}}, [
                     h('v-btn', {props: {
                                             outlined: true, rounded: true, 'small': true,
@@ -420,6 +421,7 @@ export default {
                                 on: {click: ()=>{this.time = times.TM_EV;}}
                                 }, '18:00 - 21:00')
                 ]), //.sk-times
+*/
                 h('v-textarea', {props: {
                     "value": this.note,
                     "full-width": true,

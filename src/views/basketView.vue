@@ -197,6 +197,15 @@ export default {
                         margin-right: 0.5rem;
                     }
                 }
+                & .sk-units{
+                    max-width: 6rem;
+                    word-wrap: break-word;
+                    white-space: normal;
+                    text-align: center;
+                    line-height: 1.115;
+                    margin-top: 0.5rem;
+                    font-size: 0.75rem;
+                }
                 & .v-list-item__action{
                     flex-direction: column;
                     align-items: center;
