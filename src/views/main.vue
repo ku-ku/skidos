@@ -94,12 +94,16 @@ export default {
           return this.$store.getters["profile/is"]("trader");
       }
   },
-  mounted() {
-    if (!this.cards){
-            const self = this;
-        this._cards_ready().then(()=>{
-            eventBus.$on('new-store', self._cards_ready);  
+  created(){
+        const self = this;
+        eventBus.$on('new-store', ()=>{
+            console.log('Re-read cards by new store...');
+            self._cards_ready();
         });
+  },
+  mounted(){
+    if (!this.cards){
+        this._cards_ready();
     }
   },        //mounted
   methods: {
