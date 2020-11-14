@@ -257,7 +257,6 @@ export default {
                                 on: {click: ()=>{void(0);}} //TODO:
                             }, [
                                 h('img',{
-                                    //attrs: {src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref}
                                     attrs: {src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + img.id}
                                 })
                         ])
@@ -330,7 +329,6 @@ export default {
                                 h('v-list-item-icon', {class:{"mr-3": true}}, [
                                     (!!img) 
                                         ? h('v-img',{props: {
-//                                                                src: process.env.VUE_APP_BACKEND_RPC + '/?d=file&uri=' + img.ref,
                                                                 src: process.env.VUE_APP_BACKEND_RPC + '/static/model/view/' + img.id,
                                                                 'max-height': 86,
                                                                 contain: true
@@ -387,11 +385,6 @@ export default {
                     return res;
                 })
             ));
-            childs.push( h('sk-basket', {
-                on: {'show-basket': (b)=>{
-                    this.basket = ((typeof b === 'boolean') && (!!b)) ? true : !this.basket;
-                }}
-            }) );
         } else if (this.loading) {
             for (var i=0; i<3; i++){
                 childs.push(
@@ -403,6 +396,12 @@ export default {
                 );
             }
         }
+
+        childs.push( h('sk-basket', {
+            on: {'show-basket': (b)=>{
+                this.basket = ((typeof b === 'boolean') && (!!b)) ? true : !this.basket;
+            }}
+        }) );
         
         return h('div', {
             key: 'sk-acts-' + this.store.id,
