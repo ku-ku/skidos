@@ -36,7 +36,11 @@
                     </v-card-text>
                     <v-card-actions>
                         <v-btn rounded type="submit" dark color="red darken-4">Войти</v-btn>
-                        <v-btn text small class="ref-register" v-on:click="set('register')">зарегистрироваться</v-btn>
+                        <v-btn text small 
+                               class="ref-register" 
+                               v-on:click="set('register')"
+                               :loading="sending"
+                               >зарегистрироваться</v-btn>
                         <v-btn text small v-on:click="set('forgot')">забыли пароль?</v-btn>
                     </v-card-actions>
                 </v-card>
@@ -101,7 +105,11 @@
                         </v-alert>
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn type="submit" rounded dark color="red darken-4">Зарегистрироваться</v-btn>
+                        <v-btn type="submit" 
+                               rounded dark 
+                               color="red darken-4"
+                               :loading="sending"
+                               >Зарегистрироваться</v-btn>
                         <v-btn text small class="ref-auth" v-on:click="set('auth')">авторизоваться</v-btn>
                     </v-card-actions>
                 </v-card>
@@ -159,7 +167,11 @@
                         </v-alert>
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn type="submit" rounded dark width="14rem" color="red darken-4">Сбросить пароль</v-btn>
+                        <v-btn type="submit" 
+                               rounded dark 
+                               width="14rem" 
+                               :loading="sending"
+                               color="red darken-4">Сбросить пароль</v-btn>
                         <v-btn text small class="ref-auth" v-on:click="set('auth')">авторизоваться</v-btn>
                     </v-card-actions>
                 </v-card>
@@ -207,7 +219,8 @@ export default {
         ],
         error: '',
         agree: false,
-        alert: 'warning'    //for messages, TODO:
+        alert: 'warning',    //for messages, TODO:
+        sending: false
     };
   },
   mounted: function(){
@@ -288,14 +301,17 @@ export default {
             return false;
         }
         this.error = '';
+        this.sending = true;
 
         (async () => {
             try {
                 var res = await this.$store.dispatch('profile/login', {user: { login: eml, password: pwd }});
+                this.sending = false;
                 console.log(res);
                 this.$router.replace({name: 'main'});
             } catch(e) {
                 console.log(e);
+                this.sending = false;
                 this.error = 'Логин или пароль неверный';
             }
         })();
@@ -325,7 +341,9 @@ export default {
             this.error = 'Вы должны согласиться с правилами использования нашего приложения';
             return false;
         }
-
+        
+        this.sending = true;
+        
         var self = this;
 
         const url = process.env.VUE_APP_BACKEND_API + '/skidosapi/reg-user';
@@ -346,6 +364,7 @@ export default {
 
         try {
             var res = await $.ajax(url, options);
+            this.sending = false;
             if (!$utils.isEmpty(res.id)&&("null"!==res.id)){
                 self.$store.dispatch('profile/login', {user: { login: self.eml, password: self.pwd }}).then(()=>{
                     self.$router.replace({name:'main'});
@@ -362,6 +381,7 @@ export default {
                 }
             }
         } catch(e){
+            this.sending = false;
             console.log(e);
             self.error = 'Возникла ошибка при регистрации - попробуйте повторить попытку позднее.<br />'
                         +'<small>Дополнительная информация: ' + e.message + '</small>';
@@ -407,6 +427,7 @@ export default {
             $('input[name="p1"]').trigger('focus');
             return false;
         }
+        this.sending = true;
         const url = process.env.VUE_APP_BACKEND_API + '/skidosapi/reset-pass';
         const opts = {
             dataType:'json',
@@ -416,6 +437,7 @@ export default {
         };
         try {
             var res = await $.ajax(url, opts);
+            this.sending = false;
             console.log('send pass:', res);
             if (!!res.success){
                 this.alert = 'success';
@@ -428,6 +450,7 @@ export default {
             }
         } catch(e){
             console.log('Error on get code:', e);
+            this.sending = false;
             this.valid = false;
             this.error = 'Возникла ошибка.<br />' 
                         + ((e)&&(e.message) 
