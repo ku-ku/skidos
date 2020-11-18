@@ -364,12 +364,13 @@ export default {
 
         try {
             var res = await $.ajax(url, options);
-            this.sending = false;
             if (!$utils.isEmpty(res.id)&&("null"!==res.id)){
                 self.$store.dispatch('profile/login', {user: { login: self.eml, password: self.pwd }}).then(()=>{
+                    self.sending = false;
                     self.$router.replace({name:'main'});
                 });
             } else {
+                this.sending = false;
                 if (   ("1"==res.res)
                     || ("2"==res.res)
                    ) {
