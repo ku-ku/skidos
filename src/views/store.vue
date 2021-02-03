@@ -179,6 +179,26 @@ export default {
       refresh: async function(id){
         id = $utils.isEmpty(id) ? this.id : id;
         this.mode = ST_MODE.loading;
+        try {
+            var res = await $http.post(process.env.VUE_APP_BACKEND_API + '/skidosapi/account', {
+                contentType: 'application/json;charset=utf-8',
+                dataType: 'text',
+                type: 'post',
+                data: JSON.stringify({userid: this.$store.state.profile.user.id, tenantid: id}),
+                processData: false
+            });
+            if ( !!res.success ) {
+                console.log('No card');
+            } else {
+                var b = res.balance;
+                if ( this.balance !== b ) {
+                    this.balance = b;
+                }
+            }
+                
+        } catch(e){
+            console.log('Err on refresh account balance:', e);
+        }
         const url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc';
         var options = {
             type: 'core-read',
@@ -265,46 +285,31 @@ export default {
             return;
         }
           
-        var url = process.env.VUE_APP_BACKEND_RPC + '?d=jsonRpc',
-            id_to_take = $utils.uuidv4();
-      
-        const options = {
-            type: 'core-create',
-            query: 'sin2:/v:e4737054-e251-44ff-8fc7-9eba56dd1faf',
-            params: [
-                {id: 'id', type:'id', value: id_to_take},
-                {id: 'userID', type:'id', value: this.$store.state.profile.user.id},
-                {id: 'tenantID', type:'id', value: this.id},
-                {id: 'regDt', type: 'dateTime', value: new Date()},
-                {id: 'Blocked', type: 'boolean', value: false}
-            ]
+        var id_to_take = $utils.uuidv4();
+        const params = {
+                id: id_to_take,
+                userid: this.$store.state.profile.user.id,
+                tenantid: this.id
         };
         this.sending = true;
-        try{
-            var resp = await $http.post(url, options);
-            if (resp.error){
-                throw resp.error;
-            }
-            this.card_by(id_to_take, 'id');
-            eventBus.$emit('new-store', id_to_take);
-            try{
-                $http.post(process.env.VUE_APP_BACKEND_API + '/skidosapi/share', {
-                    contentType: 'application/json;charset=utf-8',
-                    dataType: 'text',
-                    type: 'post',
-                    data: JSON.stringify({q:'card', account: id_to_take}),
-                    processData: false
-                });
-            } catch(e){
-                console.log('ERR on call /share card:', e);
+        try {
+            var resp = await $http.post(process.env.VUE_APP_BACKEND_API + '/skidosapi/account', {
+                contentType: 'application/json;charset=utf-8',
+                dataType: 'text',
+                type: 'post',
+                data: JSON.stringify(params),
+                processData: false
+            });
+            if (!!resp.success) {
+                console.log('ERR on reg card:', e);
+                app.msg({text:'Ошибка регистрации, попробуйте получить позднее.', type:'warning'});
+            } else {
+                console.log(resp);
+                this.card_by(id_to_take, 'id');
+                eventBus.$emit('new-store', id_to_take);
             }
         } catch(e){
-            console.log('ERR on reg card:', e);
-            if ((!!e.data)&&/already\sexist/gi.test(e.data)){
-                app.msg({text:'У Вас уже есть подписка на "' + this.storeTitle + '"', type:'info'});
-            } else {
-                app.msg({text:'Ошибка регистрации, попробуйте получить позднее.', type:'warning'});
-            }
+            console.log('ERR on call /create card:', e);
         }
         this.sending = false;
       },     //take_card
@@ -500,7 +505,7 @@ export default {
                                         style: {'color': $utils.isEmpty(bc) ? '' : bc},
                                         domProps: {
                                             innerHTML: ( this.bonuces > 0 ) 
-                                                        ? 'накоплено <b>' + this.bonuces + '</b> бонусов'
+                                                        ? '<b>' + this.bonuces + '</b> бонусов'
                                                         : '<b>0</b> бонусов'
                                         }
                                     })

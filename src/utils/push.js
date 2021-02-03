@@ -4,6 +4,7 @@ var PushController;
 
 function onNotification(data) {
   // @todo
+  //app.msg({text:data, type:'warning'});
   console.log('PUSH.onNotification', data);
 }
 

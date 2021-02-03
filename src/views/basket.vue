@@ -29,7 +29,9 @@ export default {
             SkSvg
         },
         data(){
-            return {};
+            return {
+                disabled: false
+            };
         },
         computed: {
             numof(){
@@ -65,6 +67,7 @@ export default {
         methods: {
             async do_order(){
                 console.log("basket/save");
+                this.disabled = true;
                 try{
                     var res = await this.$store.dispatch("basket/save");
                     setTimeout(()=>{
@@ -75,6 +78,7 @@ export default {
                         this.$store.commit('basket/error', null);
                     }, 6000);
                 }
+                this.disabled = false;
             },   //do_order
             show(e){
                 this.$router.push({name: 'basket'});
@@ -141,7 +145,7 @@ export default {
                         ]),
                         h('v-card-actions', [
                                     h('v-btn', {
-                                        props: {small:true, dark: true, color: this.brandColor, width: "10rem"},
+                                        props: {small:true, dark: true, color: this.brandColor, width: "10rem", disabled: this.disabled},
                                         on: {click: this.do_order}
                                     }, 'оформить'),
                                     this.confirmClear 

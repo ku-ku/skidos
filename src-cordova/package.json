@@ -37,8 +37,11 @@
       "cordova-support-google-services": {}
     },
     "platforms": [
-      "ios"
+      "ios",
+      "android"
     ]
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "cordova-android": "^9.0.0"
+  }
 }
